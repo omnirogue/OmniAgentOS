@@ -120,7 +120,7 @@ _CLOSES_RE_TEMPLATE = (
 _MENTION_RE_TEMPLATE = r"#%d\b"
 
 # git's well-known empty tree, for repositories whose main is a root commit.
-_EMPTY_TREE = "39c8dba61a47d87443b82bae54ae3e0998e3a537"
+_EMPTY_TREE = "4b825dc642cb6eb9a060e54bf8d69288fbee4904"
 
 
 class InstrumentError(RuntimeError):

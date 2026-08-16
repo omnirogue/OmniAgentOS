@@ -605,28 +605,28 @@ def test_production_launch_env_exports_are_byte_identical_to_base() -> None:
     record.
 
     Anchor history:
-      181728b4 -> 83122e6c  adds OMNIAGENTOS_CONTEXT_CAPSULE (U-C1 promoted the
+      2c5fd409 -> 104c4e8b  adds OMNIAGENTOS_CONTEXT_CAPSULE (U-C1 promoted the
                             context capsule to production shadow; the flag has to
                             reach child processes or the shadow never runs).
-      83122e6c -> e51dfde5  adds OMNIAGENTOS_BUDGET_ENFORCEMENT=block (autonomy
+      104c4e8b -> 7bd6c9d5  adds OMNIAGENTOS_BUDGET_ENFORCEMENT=block (autonomy
                             audit C3: enforcement was unset on the live daemons,
                             so every policy-gated budget control logged and
                             proceeded instead of blocking; the flag has to reach
                             child processes or no cap can ever trip).
-      e51dfde5 -> 7c63e598  adds OMNIAGENTOS_QUICK_PROJECT_ROUTING_MODE=shadow
-                            (7c63e598's own message: "default ... on the launch
+      7bd6c9d5 -> b8c413d4  adds OMNIAGENTOS_QUICK_PROJECT_ROUTING_MODE=shadow
+                            (b8c413d4's own message: "default ... on the launch
                             path"; a deliberate export the landing commit forgot
                             to re-pin here, which is exactly the accidental-drift
                             shape this test exists to catch — it went red on
-                            main from 7c63e598 until this re-pin. Re-pinning to
-                            7c63e598 rather than a later synthetic commit because
+                            main from b8c413d4 until this re-pin. Re-pinning to
+                            b8c413d4 rather than a later synthetic commit because
                             it is the last commit that actually touched
-                            scripts/launch-env.sh; `git log 7c63e598..main --
-                            scripts/launch-env.sh` is empty, and 7c63e598's copy
+                            scripts/launch-env.sh; `git log b8c413d4..main --
+                            scripts/launch-env.sh` is empty, and b8c413d4's copy
                             of the file diffs byte-identical to the one on disk
                             here, so the anchor and the file agree by
                             construction, not by coincidence).
-      7c63e598 -> 6a506e7e2 adds OMNIAGENTOS_MEMORY_HYBRID=1 (hybrid context
+      b8c413d4 -> 5fdcb26c9 adds OMNIAGENTOS_MEMORY_HYBRID=1 (hybrid context
                             assembly — sentence-grain history retrieval leg,
                             temporal stamps, abstention guard, reserved
                             packing — promoted to the launch path; memcert v2
@@ -634,13 +634,13 @@ def test_production_launch_env_exports_are_byte_identical_to_base() -> None:
                             by tests/memcert/test_sufficiency.py. Deliberate:
                             the flag must reach child processes or production
                             briefs silently revert to the v1 recency-only
-                            assembler. 6a506e7e2 is the commit that touched
-                            scripts/launch-env.sh; `git log 6a506e7e2..HEAD --
+                            assembler. 5fdcb26c9 is the commit that touched
+                            scripts/launch-env.sh; `git log 5fdcb26c9..HEAD --
                             scripts/launch-env.sh` is empty on this branch.)
     """
     anchor_resolves = (ROOT / ".git").exists() and (
         subprocess.run(
-            ["git", "cat-file", "-e", "6a506e7e2^{commit}"],
+            ["git", "cat-file", "-e", "5fdcb26c9^{commit}"],
             cwd=ROOT,
             stdout=subprocess.DEVNULL,
             stderr=subprocess.DEVNULL,
@@ -649,7 +649,7 @@ def test_production_launch_env_exports_are_byte_identical_to_base() -> None:
     )
     if not anchor_resolves:
         pytest.skip(
-            "anchor commit unresolvable in this checkout: the anchor SHA 6a506e7e2 above pins "
+            "anchor commit unresolvable in this checkout: the anchor SHA 5fdcb26c9 above pins "
             "a commit in the private estate's continuous history, and this "
             "repository is a scrubbed, single point-in-time public-release export "
             "that neither carries that estate's history (the anchor SHA is foreign "
@@ -663,7 +663,7 @@ def test_production_launch_env_exports_are_byte_identical_to_base() -> None:
             "once this checkout has its own git history to diff against."
         )
     base_source = subprocess.check_output(
-        ["git", "show", "6a506e7e2:scripts/launch-env.sh"],
+        ["git", "show", "5fdcb26c9:scripts/launch-env.sh"],
         cwd=ROOT,
         text=True,
     )
@@ -705,8 +705,8 @@ def test_production_launch_env_exports_are_byte_identical_to_base() -> None:
     # A bare `assert base_exports == current_exports` on two ~3.4 KB strings
     # gets prefix-elided by pytest ("Skipping N identical leading characters
     # in diff, use -v to show"), which cuts the offending line mid-token and
-    # was misread as byte-level capture corruption (finding sha256:ec0a9088,
-    # answered by measurement in sha256:9511b0a6: 0/440 reproductions across
+    # was misread as byte-level capture corruption (finding sha256:cb0cdc60,
+    # answered by measurement in sha256:80a32f81: 0/440 reproductions across
     # both a sequential run and a 12-way concurrent run). Compare by line SET first so the message names
     # the added/removed export in full, including its `declare -x ` prefix,
     # and states the remedy (re-pin the anchor SHA above). Do not "simplify"
@@ -718,7 +718,7 @@ def test_production_launch_env_exports_are_byte_identical_to_base() -> None:
     removed = sorted(base_lines - current_lines)
     assert not added and not removed, (
         "production launch-env exports drifted from the pinned anchor "
-        "6a506e7e2. If this is deliberate, re-pin the anchor SHA in "
+        "5fdcb26c9. If this is deliberate, re-pin the anchor SHA in "
         "scripts/launch-env.sh's history reference above IN THE SAME COMMIT "
         "that changes the export.\n"
         f"added (present now, absent at anchor): {added}\n"

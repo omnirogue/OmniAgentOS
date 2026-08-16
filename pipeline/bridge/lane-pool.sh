@@ -34,7 +34,7 @@
 #      is never reclaimed, no matter its age. We have no local way to probe
 #      whether that pid is alive on the OTHER machine, and assuming "can't
 #      see it locally" means "dead" is exactly the fail-open bug being fixed
-#      here (a rejected prior candidate, sha256:064ffcbb, did exactly this).
+#      here (a rejected prior candidate, sha256:d74c60f7, did exactly this).
 #   2. on a host match, the recorded pid must be gone OR a DIFFERENT process
 #      must now own that pid number (start-time mismatch after OS pid reuse).
 #      A holder whose pid is alive with a matching start time keeps its lease
