@@ -167,7 +167,7 @@ def test_opaque_dependency_warns():
 
 
 def test_conversation_reference_warns():
-    art = proposal_draft({"urgency": "Sam-named night focus"})
+    art = proposal_draft({"urgency": "Morgan-named night focus"})
     assert "lens.context" in _classes(lens_warnings(art))
 
 
@@ -191,7 +191,7 @@ def test_warn_mode_never_refuses(tmp_path, queue, root, monkeypatch, capsys):
     art = proposal_draft({
         "tests_required": ["the behaviour must be correct"],
         "dependencies": ["audit-5"],
-        "urgency": "Sam-named night focus",
+        "urgency": "Morgan-named night focus",
         "implementation_plan": "1. do. 2. redo. 3. verify.",
     })
     rc = file_proposal.main([
@@ -592,7 +592,7 @@ def test_reference_class_fires_at_most_once():
     everything_bad = proposal_draft({
         "tests_required": ["the behaviour must be correct"],
         "dependencies": ["audit-5"],
-        "urgency": "Sam-named night focus",
+        "urgency": "Morgan-named night focus",
         "implementation_plan": "1. do. 2. redo. 3. verify.",
     })
     warns = lens_warnings(everything_bad)

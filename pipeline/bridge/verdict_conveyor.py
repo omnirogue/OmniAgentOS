@@ -716,7 +716,7 @@ def seat_chain(
     answer the gate must ignore.
 
     WHY THERE IS A SECOND SEAT AT ALL (measured 2026-08-13, finding
-    sha256:ae0c224a72b3): codex and gemini seats both returned **exit 0 with
+    sha256:c748786e7405): codex and gemini seats both returned **exit 0 with
     output that was exactly the prompt echoed back** -- 4,940 bytes, zero model
     output -- on the same brief, while a probe proved transport and quota were
     fine. The failure was brief-content-dependent, which means an rc of 0 is
@@ -1073,7 +1073,7 @@ def seat_failure_reason(result: SeatResult, answer: str) -> str:
     from the same state, so this function exists to name the failure precisely
     instead of letting it fall through as silence.
 
-    THE MEASURED CASE THIS EXISTS FOR (2026-08-13, finding sha256:ae0c224a72b3):
+    THE MEASURED CASE THIS EXISTS FOR (2026-08-13, finding sha256:c748786e7405):
     codex and gemini both exited **0** having emitted exactly the prompt back --
     4,940 bytes, zero model output -- on the same brief, with transport and
     quota independently proven healthy. So `rc == 0` is not evidence of an

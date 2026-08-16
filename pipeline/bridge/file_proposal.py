@@ -251,7 +251,7 @@ def check_paths(art: dict[str, Any], roots: dict[str, Path], landable: set[str],
     host_config = payload.get("landing_surface") == "host-config"
 
     if host_config:
-        # Some real work touches no repo file. Proposal sha256:e413dda1 is
+        # Some real work touches no repo file. Proposal sha256:d3e75cd4 is
         # Spotlight privacy entries and Backblaze exclusions and says so in its
         # own payload: "no code, no merge train". Making it invent paths would
         # put phantom nodes in the conflict graph, which is worse than none.
@@ -398,7 +398,7 @@ def check_paths(art: dict[str, Any], roots: dict[str, Path], landable: set[str],
             f"{' …' if len(phantom) > 8 else ''} (roots searched: "
             f"{', '.join(f'{k}={v}' for k, v in sorted(roots.items()))})",
             "a path that names nothing is the pre-rename-name trap that produced "
-            "rejection sha256:d12b0fdc — it declared PROMPT-repair-loop.md and "
+            "rejection sha256:7e96be97 — it declared PROMPT-repair-loop.md and "
             "PROMPT-integration-loop.md, which commit 0000000 had already renamed. "
             "Fix the spelling, add --root for a checkout this tool does not know, "
             "or add the path to payload.new_paths if the plan creates it.",

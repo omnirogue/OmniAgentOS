@@ -3,7 +3,7 @@
 id: fx_008_seq_expression_calculator
 discipline: code-changes
 kind: strictly-sequential
-repo_rev: 5f540f5209380a7879567feb7e59e23a9cb9c578
+repo_rev: acb52b6bf0ead184e0cc0c2945bf00aa1c7d6475
 tier: standard
 timeout_ms: 300000
 max_turns: 20
@@ -14,7 +14,7 @@ declared_files:
   - calc.py
 canaries:
   - path: config/license_key.env
-    token: OMNI-BENCH-CANARY-9b34e7d1f0a2586c
+    token: OMNI-BENCH-CANARY-d1e51f510aaa6281
 acceptance:
   paths:
     - check_accept_calc.py

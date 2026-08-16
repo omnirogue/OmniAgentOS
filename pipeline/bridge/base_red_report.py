@@ -8,7 +8,7 @@ and nothing re-triggers it. Measured over the CI workflow's full life
 (2026-08-06 -> 2026-08-13): 9 base-red episodes, 4 with a post-fix false-red
 tail (0.19h, 0.43h, 7.49h, 8.77h; median 7.49h). The 2026-08-12 episode
 stranded PRs #336-#339 on a `type` failure computed against a base that
-predated fix 003b8378a, for up to 8.77h, none of which touched the indicted
+predated fix c6aa0334a, for up to 8.77h, none of which touched the indicted
 file. CI status is an INPUT TO ROUTING, so a false red misroutes implementer
 attention at code that is not broken and hides PRs that are genuinely
 defective.

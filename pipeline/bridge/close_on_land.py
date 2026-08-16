@@ -495,8 +495,8 @@ def retire_proposals(loops_root: Path, *, apply: bool = False,
       * a proposal that ALREADY reached a terminal event of its own. If that
         event is `merged`/`completed` it is simply already retired. If it is
         `rejected`, that is THE KNOWN CASE — shipped work reading as refused
-        (measured on the proposals resolved by candidate sha256:1412ed42, which
-        merged as a8e4100e). It is reported with its carrier named and left to
+        (measured on the proposals resolved by candidate sha256:61b08c0e, which
+        merged as 9d7bb022). It is reported with its carrier named and left to
         a human: `exactly_one_terminal_event` is a ledger invariant, the log is
         append-only, and stamping a second terminal to paper over the first
         would make the history less legible, not more.

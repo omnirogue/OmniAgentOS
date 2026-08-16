@@ -159,7 +159,7 @@ MAX_CONCURRENT_GATES = 1 + len(TWIN_SPECS)
 # before its state is parked. A push that never succeeds is not a schedule miss:
 # retrying it every tick until morning is the never-re-run-an-unchanged-input
 # violation wearing a network costume, and it hides the outage instead of
-# raising it (finding sha256:444a8713).
+# raising it (finding sha256:b1edeafa).
 PUSH_RETRY_LIMIT = 5
 class DaemonPoisoned(RuntimeError):
     """Local `main` may have diverged from origin and the daemon MUST NOT land
@@ -177,7 +177,7 @@ def _full_sha(val: object) -> str | None:
     return s if re.fullmatch(r"[0-9a-fA-F]{40}", s) else None
 
 
-# PUSH-REFUSAL CLASSIFICATION (finding sha256:444a8713). A refused push is one
+# PUSH-REFUSAL CLASSIFICATION (finding sha256:b1edeafa). A refused push is one
 # of two completely different things, and treating them alike is what blocked
 # every landing on 2026-08-11:
 #
@@ -2757,7 +2757,7 @@ class GateLoop:
         OBJECTS differ, content does not). Refusing it parks the entire
         pipeline behind a human to protect nothing; measured 2026-08-13/14 it
         held 233 candidates and 3 gate-PASSED trains for 5+ hours (finding
-        sha256:7e230fd3…, remedy executed by the operator's overnight session).
+        sha256:26be6580…, remedy executed by the operator's overnight session).
 
         This is deliberately NARROWER than the banned repairs. `reset --hard`
         and `push --force` destroy work by construction; this path first
@@ -3222,7 +3222,7 @@ class GateLoop:
                              Nothing moved; the base advances on a later tick
                              with a free slot.
 
-        WHY THIS EXISTS (finding sha256:444a8713). The daemon assembles trains on
+        WHY THIS EXISTS (finding sha256:b1edeafa). The daemon assembles trains on
         LOCAL main and pushes them to origin, but nothing ever moved local main
         FROM origin. A pull request merged through GitHub advances origin only;
         from that moment every train push is non-fast-forward, the daemon rebuilds
@@ -4019,7 +4019,7 @@ class GateLoop:
     def _on_push_refused(self, train: Train, reason: str) -> Outcome:
         """The gate PASSED, the ff-merge was clean, and origin refused the push.
 
-        Two refusals, two remedies (finding sha256:444a8713):
+        Two refusals, two remedies (finding sha256:b1edeafa):
 
         REMOTE AHEAD (``push-non-ff``) — a PR landed on origin. The push is not
         broken and there is nothing to wait for: the INPUT is wrong. Re-anchor
@@ -5542,7 +5542,7 @@ class GateLoop:
         if (self.root / "state" / "gate-loop-PAUSED").exists():
             self._log("gate-loop PAUSED (state/gate-loop-PAUSED present) -- no landing this tick")
             return outcomes
-        # PRE-ASSEMBLY ORIGIN SYNC (finding sha256:444a8713). This has to run
+        # PRE-ASSEMBLY ORIGIN SYNC (finding sha256:b1edeafa). This has to run
         # HERE — after the halt checks, before ANYTHING reads main's position.
         # Everything downstream binds the base it sees at this instant:
         # `_reconcile_already_merged`, train assembly, `MintOutcome.merge_base`

@@ -441,7 +441,7 @@ def _cross_lineage_count(c: Candidate) -> int:
     the producer's, or one outside the reviewer vocabulary does not count.
 
     THE VOCABULARY CHECK IS LOAD-BEARING, and it is not decoration. Since the
-    tiered-verify change (1bb016c3f), `load_candidates` appends a SYNTHETIC
+    tiered-verify change (991817d54), `load_candidates` appends a SYNTHETIC
     verdict to a LOW-risk candidate — `{"lineage": "mechanical-gate", "by":
     "merge-gate", ...}` — to record that a signed gate PASS stood in for the LLM
     verdict. That label is deliberately outside `KNOWN_LINEAGES` precisely so it

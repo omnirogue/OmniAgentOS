@@ -285,4 +285,4 @@ def test_slack_hides_all_zero_roster_members(
     assert any(person["employee_id"] == "emp_frank" for person in gathered["people"])
     assert "FRANK" in render(gathered)
     _fallback, blocks = render_slack(gathered)
-    assert "ANDY" not in json.dumps(blocks)
+    assert "FRANK" not in json.dumps(blocks)

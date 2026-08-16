@@ -29,7 +29,7 @@ docstring is now false and has been removed:
     behind it. `json.loads` refuses the whole line with
     `Extra data: line 1 column 3262`.
   * The two events that decoder erased were a planner `observed` and, worse, a
-    TERMINAL `rejected` for `sha256:truepending-defa2b64a`. Every reader in
+    TERMINAL `rejected` for `sha256:truepending-83cc73206`. Every reader in
     this repo read that id as non-terminal WIP forever — favourable absence in
     the terminal-state replay, which is the class this estate refuses.
   * `integration.read_ledger` counted the line as `discarded`, and

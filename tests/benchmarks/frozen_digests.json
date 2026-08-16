@@ -1,30 +1,30 @@
 {
-  "corpus_version": 5,
+  "corpus_version": 6,
   "fixtures": {
-    "fx_001_greenfield_palindrome": "9704c4140c509d4bf8068db5def02aabf3f08e4dc2250f976f3c041489864364",
-    "fx_002_bugfix_failing_test": "a660a57f7926252b2c77616b4c0cf3a36231774f672d6eefad79734d7a640efa",
-    "fx_003_multifile_refactor": "4795bdddb095366bb3d2ef18331f2a6181df24fb13a1614a305b7263e77e21ed",
-    "fx_004_migration_dal": "c6fac737785e57ade1cd04b11980098f80598ee497408ec161ceb3df57f05c67",
-    "fx_005_scope_discipline": "cea1f5dea1b4ffb82c8030213216ce4544159515cbd175ea5b9a0f0b71f1496e",
-    "fx_006_regression_sensitive_fix": "f8c2be0b06e86901b00b3a58b9ca2325a6651e01d2561f599d634903901d9098",
-    "fx_007_seq_config_pipeline": "2d9c648c5f69852c87e9431b048efc0554c20544a452d7e496de9562997a3077",
-    "fx_008_seq_expression_calculator": "798328d17719ddab04e8d283118beb926cc05b005db91d2bd9afa8c0d8cbf72d",
-    "fx_009_seq_diff_patch_roundtrip": "27261234f0e8e50bf6cdf797f28e9d6f080fd8c3fb246397968b663df314c266",
-    "fx_010_seq_template_engine": "0c2a61b5c79effa2dfb24f41fc1cc18ec7774d00cbdc5da7eded2c6af5d53be4",
-    "fx_011_indep_three_validators": "2bb065236bdd4c4eb487c3ee7799670174efdf48cf916a85ca26c5ec6ba826c6",
-    "fx_012_indep_three_formatters": "0cb050f709688d80eb75b12bab731de2a06b0f31fc0adab55656bb09c9df7927",
-    "fx_013_indep_four_codecs": "59f958f16cc92b2e7697772c3509b36a5ef024e971a4c63f76768e675fc3427a",
-    "fx_014_indep_three_statistics": "f368cfce269a62eed291477b3dde01a9d4a5bd07ecccbd386588d5d145121c83",
-    "fx_015_shared_schema_consistency": "2ef51a1aed23b6a5979049a115f363c8f85b31eb15afec14f751b5ad2ccb4626",
-    "fx_016_shared_ledger_invariants": "cbcff1976ecc693083a0854a2e7b8926f6fc61f2e8b411e666e26e0fd1c9e9ad",
-    "fx_017_shared_error_taxonomy": "e5d87f0af4fc5fd45d122ad02f34c7e579e9da628abe6600b4be2d1070b605eb",
-    "fx_018_shared_inverted_index": "65416ca036f8d43b3aa9635bf09c4209a511f0ca7bd90a87bb486fc605d35bb6",
-    "fx_019_tooldense_plugin_hook_rename": "8183e68d16e7e47916252b63af4e20e3e150623d15c857429126cfac88dea4f3",
-    "fx_020_tooldense_sensor_unit_sweep": "3f40f4f2cb97767847938816ecb3f76bb318e586a3ae96b2679a0de5794d372f",
-    "fx_021_tooldense_command_metadata": "61fde188d8e73b63cd150e0d1b9ea1f20cf51ce4c28dccca8312660c0d31828c"
+    "fx_001_greenfield_palindrome": "8c2b8269334b798f8e2668c9ef9001a25908838284b4678bd3b05beb9d8682cc",
+    "fx_002_bugfix_failing_test": "722403db72707597a5a8f63aeec5a9e403cfc247562c5762cb8fe31a674da024",
+    "fx_003_multifile_refactor": "43e27dbf83974f26de97bc9c7d30950825df4ae26b7e39900549cffd0ac3f8d5",
+    "fx_004_migration_dal": "10299d267f15d71a4137a232a3cd92e93fdc69c79e17bcbb90937d05c5d78264",
+    "fx_005_scope_discipline": "8322b0fe49f99255f26a5b709c40a30250eed5c2c029763c64063dd39322316e",
+    "fx_006_regression_sensitive_fix": "3895f6f701424226c312695e8a47455d89fa6345419e5a77a3d18e8cdbf14e9d",
+    "fx_007_seq_config_pipeline": "590c872654b9c68c18c65e690428be1b58c667b6c4b494841c37438cb63f33f6",
+    "fx_008_seq_expression_calculator": "53a17a3331f5df03f760e33eee3fb18b14b5e8afa5cf5bab5c9ac57cf8ef879c",
+    "fx_009_seq_diff_patch_roundtrip": "3ab0654f83b20316c41f3dd16e5a0edc2c27ac0e3a00743e8bffb1b8789914db",
+    "fx_010_seq_template_engine": "7ccff94e8823988f667ce8aafc63573ff73583e1a7303d0f7bc83c18d598345d",
+    "fx_011_indep_three_validators": "5965738cda9d812e3ad87bd5ca964b3ef019d7f0ae21cc12d480d78595e3500d",
+    "fx_012_indep_three_formatters": "6b82f8e571d1af978566b801c457f98f41575583d517bc4dfe3a823db32f8264",
+    "fx_013_indep_four_codecs": "41ce367ddd39f8058ac069d61f7789cdcf2aacfa40f16630dd0d796afc51ee88",
+    "fx_014_indep_three_statistics": "b80dc5ad97ba95af2081838eea46332269e9487aace74e0c4405d934b1c3513c",
+    "fx_015_shared_schema_consistency": "fbfdab08023b632b1eb97af92b517df33cad4a33dad2970df7faf6e4c1bdd257",
+    "fx_016_shared_ledger_invariants": "9c9ea9aa79f384c5bcb89f85056823593406e50e75157e0ba919f84f90cf9186",
+    "fx_017_shared_error_taxonomy": "3492c007c64f4c73d6aac8ecb1ad325b7b0be4766c00963de227cd49cd0c8b9f",
+    "fx_018_shared_inverted_index": "6da2760928cedb57fcd687a8b180aa7c04d92ba7a3a0059b6c3e0cafa2c18eca",
+    "fx_019_tooldense_plugin_hook_rename": "e6cd1c09b577635b09daa39d665398f18aba2ee6dafcafbbae56a9da0757cdaa",
+    "fx_020_tooldense_sensor_unit_sweep": "21f65380fcd5179796aab6b411fc7d63bbcfbf5cd8ee84ca7cebb00c1ecf858e",
+    "fx_021_tooldense_command_metadata": "19796a172267abff6e3503c194c4d9fe13de5a109d75d60979d0f41173542414"
   },
-  "frozen_at": "2026-08-16T12:16:25Z",
-  "frozen_at_repo_rev": "033f162b7c827409a74aa7e559295a1b5b16a7f9",
+  "frozen_at": "2026-08-16T13:33:44Z",
+  "frozen_at_repo_rev": "779e74707f78755281152970eb792d4f3715e27b",
   "meta": {
     "fx_001_greenfield_palindrome": {
       "declared_files": [
@@ -248,5 +248,5 @@
       "tier": "standard"
     }
   },
-  "set_digest": "08c4fa9f45aa59f1cfe56d0e68ef262bcd8db0359f904736be3167bc60e5be0e"
+  "set_digest": "ffef92bcf2b9f69736901068756a05b99c1809ddab84bd6d4b036ee12436be6b"
 }

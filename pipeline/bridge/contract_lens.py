@@ -1,7 +1,7 @@
 """Contract-lens WARNINGS for proposal quality — warn-only, by ruling.
 
 Reviewing all 18 queued plans on 2026-08-08 (anchors re-verified at main
-bc94156d; full deltas in ~/.omniagentos/ops/Research/loops/proposal-quality-review-
+47d61d17; full deltas in ~/.omniagentos/ops/Research/loops/proposal-quality-review-
 2026-08-08.md) found the SAME six defect classes recurring across authors and
 days. Each one costs a foreign executor — a model with no conversation history
 inheriting the plan cold — a clarification round or a wrong guess:

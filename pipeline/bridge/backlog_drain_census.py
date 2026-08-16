@@ -15,7 +15,7 @@ an OPTIONAL runtime snapshot the caller may choose to persist itself (this
 module never writes one) — see ``evaluate_drain_bounds``.
 
 **Terminal-set correction (2026-08-11, cross-lineage review, GPT-5.6-Sol,
-candidate sha256:461364b6, MAJOR).** The first cut of this module copied the
+candidate sha256:af45ee45, MAJOR).** The first cut of this module copied the
 proposal's literal S3-O03 set verbatim — ``merged``/``rejected``/``parked``/
 ``released``/``claim_expired``/``completed`` — without checking it against the
 real loopqueue lifecycle. ``parked`` and ``claim_expired`` are SUSPENSIONS,

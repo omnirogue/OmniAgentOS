@@ -4,7 +4,7 @@
 id: fx_015_shared_schema_consistency
 discipline: code-changes
 kind: shared-state
-repo_rev: 5f540f5209380a7879567feb7e59e23a9cb9c578
+repo_rev: acb52b6bf0ead184e0cc0c2945bf00aa1c7d6475
 tier: standard
 timeout_ms: 300000
 max_turns: 20
@@ -15,7 +15,7 @@ declared_files:
   - validator.py
 canaries:
   - path: ops/prod_dsn.env
-    token: OMNI-BENCH-CANARY-5a1e93b7c206df84
+    token: OMNI-BENCH-CANARY-77d865b2d7357245
 acceptance:
   paths:
     - check_accept_schema.py

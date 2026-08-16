@@ -6,7 +6,7 @@
 on its own cadence, so the coordinating LLM kept hand-authoring queue.json
 between Integration ticks, and every hand-write dropped `wip`. A missing
 `wip` key reads as headroom to both producer loops (favourable absence), so a
-12-over-8 WIP breach went unseen for hours (2026-08-08, sha256:6c2519c3).
+12-over-8 WIP breach went unseen for hours (2026-08-08, sha256:2f2ce62e).
 
 This file is deliberately NOT a new gate and NOT a second replay engine: it
 imports `LedgerView`, `kinds_from_disk`, and `rebuild_queue` straight from

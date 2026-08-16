@@ -4,7 +4,7 @@
 WHAT THIS REPAIRS. Publication is ledger-derived: `integration.rebuild_queue()`
 iterates `ledger.status`, which `LedgerView.build()` fills from a fixed
 event->status map, so an artifact is offered to the Implementer **if and only
-if** it carries an event in that map. Measured at 1bb016c3f: 63 non-terminal
+if** it carries an event in that map. Measured at 991817d54: 63 non-terminal
 findings sat on disk and in no queue — 28 with no ledger event at all, 35 whose
 only events (`observed`, `published`, `finding`, `corroborated`, ...) are
 outside the map. The work was already filed; nothing ever offered it.

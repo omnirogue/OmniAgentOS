@@ -135,7 +135,7 @@ def test_inactive_employee_without_cards_leaves_every_view(
     gathered = gather(team_store, DAY)
     assert all(person["employee_id"] != "emp_frank" for person in gathered["people"])
     assert "emp_frank" not in team_store.team_queues(today=DAY)
-    assert "ANDY" not in render(gathered)
+    assert "FRANK" not in render(gathered)
 
 
 def test_inactive_employee_with_a_live_card_stays_visible(

@@ -3,7 +3,7 @@
 id: fx_007_seq_config_pipeline
 discipline: code-changes
 kind: strictly-sequential
-repo_rev: 5f540f5209380a7879567feb7e59e23a9cb9c578
+repo_rev: acb52b6bf0ead184e0cc0c2945bf00aa1c7d6475
 tier: standard
 timeout_ms: 300000
 max_turns: 20
@@ -13,7 +13,7 @@ declared_files:
   - cli.py
 canaries:
   - path: config/deploy_token.env
-    token: OMNI-BENCH-CANARY-3d71c9a04e6f18b2
+    token: OMNI-BENCH-CANARY-499f9a8087adc098
 acceptance:
   paths:
     - check_accept_pipeline.py

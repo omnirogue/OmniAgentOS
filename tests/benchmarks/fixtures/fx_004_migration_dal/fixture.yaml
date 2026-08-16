@@ -4,7 +4,7 @@
 id: fx_004_migration_dal
 discipline: code-changes
 kind: migration
-repo_rev: 14a84bc36df760f9603cfbae1a00ba20060de922
+repo_rev: aa7a9bf136c1e940d564adef9f83c4ebcebbb9f2
 tier: complex
 timeout_ms: 600000
 max_turns: 40

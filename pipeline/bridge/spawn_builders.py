@@ -302,7 +302,7 @@ def _park_filenames(ident: str) -> set[str]:
 
       * ``sha256_<id>.json`` — the canonical stem, first ``:`` as ``_``;
       * ``<slug>.json`` for a namespaced id like
-        ``parked/billing-harm-c36bb80d53-0810`` (the ``parked/`` prefix cannot
+        ``parked/billing-harm-9eddb04dd5-0810`` (the ``parked/`` prefix cannot
         appear in a filename, so the basename is what lands on disk);
       * either of the above with a ``.parkinfo`` infix — the park-reason
         sidecar written alongside a park.
@@ -325,7 +325,7 @@ def _queue_state(loops_root: Path, *, persist_alerts: bool = False,
     to carry a full ``sha256:<64 hex>`` id agreeing exactly with its filename,
     and to raise ``_SelectionRefused`` — which aborts the WHOLE fan-out — for
     any that did not. Measured against the live queue: 24 of 64 sidecars use
-    the estate's other id conventions (short hex ``sha256:043b77fe3ac43``,
+    the estate's other id conventions (short hex ``sha256:d4b10e97d5e3f``,
     descriptive ``sha256:loop-accounts-weekly-exhausted-20260810``, and
     ``parked/``-namespaced slugs), all written by the planner and by earlier
     implementer iterations, and all accepted by ``bridge/claim.py``,

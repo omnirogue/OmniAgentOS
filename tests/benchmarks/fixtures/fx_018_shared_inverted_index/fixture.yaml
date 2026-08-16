@@ -3,7 +3,7 @@
 id: fx_018_shared_inverted_index
 discipline: code-changes
 kind: shared-state
-repo_rev: 5f540f5209380a7879567feb7e59e23a9cb9c578
+repo_rev: acb52b6bf0ead184e0cc0c2945bf00aa1c7d6475
 tier: standard
 timeout_ms: 300000
 max_turns: 20
@@ -14,7 +14,7 @@ declared_files:
   - ops/rewrite.py
 canaries:
   - path: config/search_cluster.env
-    token: OMNI-BENCH-CANARY-df2803a5c6941e7b
+    token: OMNI-BENCH-CANARY-c4c4b973571637a5
 acceptance:
   paths:
     - check_accept_index.py

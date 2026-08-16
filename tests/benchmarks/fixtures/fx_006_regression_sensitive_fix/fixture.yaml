@@ -5,7 +5,7 @@
 id: fx_006_regression_sensitive_fix
 discipline: code-changes
 kind: bugfix
-repo_rev: 14a84bc36df760f9603cfbae1a00ba20060de922
+repo_rev: aa7a9bf136c1e940d564adef9f83c4ebcebbb9f2
 tier: complex
 timeout_ms: 420000
 max_turns: 30
