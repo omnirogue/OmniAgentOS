@@ -384,7 +384,7 @@ def test_F3_end_to_end_iterate_regression(tmp_path: Path):
 
 def test_F4_docstrings_do_not_claim_prompts_were_landed():
     """publish_queue.py's module docstring used to claim the PROMPT-*.md files
-    say "run publish_queue.py" -- false after the 6146e1c revert. Docs must
+    say "run publish_queue.py" -- false after the 340f293 revert. Docs must
     describe what the branch actually contains, not what was drafted and
     withheld.
     """

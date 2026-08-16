@@ -1,6 +1,6 @@
 """The install-*.sh shims must be able to import the launchd renderer.
 
-Commit aa999b79 changed `scripts/scheduler/launchd.py` to a relative import
+Commit be023969 changed `scripts/scheduler/launchd.py` to a relative import
 (`from ..lib.plist_render import render`). Every `scripts/scheduler/install-*.sh`
 loads that file as a TOP-LEVEL module named `launchd` (it puts
 `scripts/scheduler/` on `sys.path`), and a relative import has no parent package
@@ -68,7 +68,7 @@ def test_every_installer_that_imports_the_renderer_is_covered() -> None:
     All eight import `launchd` top-level, but they do NOT share a sys.path
     shape — three add the repo root, five do not. The test above pins the
     weakest shape so a fix cannot pass for the strong callers while leaving the
-    weak ones broken, which is exactly how aa999b79 shipped.
+    weak ones broken, which is exactly how be023969 shipped.
     """
     shims = sorted(SCHEDULER_DIR.glob("install*.sh"))
     assert shims, "expected install-*.sh shims under scripts/scheduler/"

@@ -93,7 +93,7 @@ providers:
       - id: codex-second
         # example-org@example.com (acct 00000001, pro) — the ORIGINAL/old account,
         # re-homed here 2026-08-08 11:40 after the new account's login overwrote
-        # ~/.codex. codex-default (~/.codex) = owner@acmeuniversity.com (new,
+        # ~/.codex. codex-default (~/.codex) = owner@acmeuni.example (new,
         # acct 00000002). Live-probed OK (SECOND-OK, terra low).
         config_dir: ~/.codex-second
         enabled: true

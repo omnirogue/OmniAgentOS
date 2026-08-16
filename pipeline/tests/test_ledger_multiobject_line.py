@@ -15,7 +15,7 @@ Two live consequences, and the second is the worse one:
     `ledger state incomplete (torn_tail=False, discarded=1)` and starved the
     Implementer loop's entire build drain.
   * The erased pair included a TERMINAL `rejected` for
-    `sha256:truepending-defa2b64a`. Every reader in this repo therefore read
+    `sha256:truepending-83cc73206`. Every reader in this repo therefore read
     that id as non-terminal WIP, forever — favourable absence in the
     terminal-state replay. Starvation is loud; this is silent.
 
@@ -278,7 +278,7 @@ def test_integration_still_calls_a_partially_recovered_FINAL_line_torn(tmp_path:
 def test_the_terminal_event_hidden_behind_another_reaches_the_replay(tmp_path: Path) -> None:
     """The silent half of the incident, in one assertion.
 
-    `sha256:truepending-defa2b64a`'s `rejected` was object 2 on line 3323, so
+    `sha256:truepending-83cc73206`'s `rejected` was object 2 on line 3323, so
     the id read as live WIP to every reader of the replay.
     """
     _write(tmp_path, [DOUBLE])

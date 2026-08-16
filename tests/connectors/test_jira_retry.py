@@ -37,7 +37,7 @@ def test_non_retryable_transition_post_is_not_blindly_retried() -> None:
     sleeps: list[float] = []
     http = httpx.Client(transport=transport)
     client = JiraClient(
-        base_url="https://initech-team.atlassian.net",
+        base_url="https://example-team.atlassian.net",
         email="bot@example.com",
         api_token="tok",
         client=http,
@@ -86,7 +86,7 @@ def test_retry_after_honored_on_safe_get() -> None:
     sleeps: list[float] = []
     http = httpx.Client(transport=transport)
     client = JiraClient(
-        base_url="https://initech-team.atlassian.net",
+        base_url="https://example-team.atlassian.net",
         email="bot@example.com",
         api_token="tok",
         client=http,
@@ -110,7 +110,7 @@ def test_retry_after_caps_at_max_retries() -> None:
     sleeps: list[float] = []
     http = httpx.Client(transport=transport)
     client = JiraClient(
-        base_url="https://initech-team.atlassian.net",
+        base_url="https://example-team.atlassian.net",
         email="bot@example.com",
         api_token="tok",
         client=http,
@@ -142,7 +142,7 @@ def test_search_jql_get_is_retryable_on_429() -> None:
     sleeps: list[float] = []
     http = httpx.Client(transport=transport)
     client = JiraClient(
-        base_url="https://initech-team.atlassian.net",
+        base_url="https://example-team.atlassian.net",
         email="bot@example.com",
         api_token="tok",
         client=http,
@@ -178,7 +178,7 @@ def test_rate_limit_reason_burst_is_per_request_backoff() -> None:
     sleeps: list[float] = []
     http = httpx.Client(transport=transport)
     client = JiraClient(
-        base_url="https://initech-team.atlassian.net",
+        base_url="https://example-team.atlassian.net",
         email="bot@example.com",
         api_token="tok",
         client=http,
@@ -215,7 +215,7 @@ def test_rate_limit_reason_quota_pauses_client_wide() -> None:
     sleeps: list[float] = []
     http = httpx.Client(transport=transport)
     client = JiraClient(
-        base_url="https://initech-team.atlassian.net",
+        base_url="https://example-team.atlassian.net",
         email="bot@example.com",
         api_token="tok",
         client=http,
@@ -254,7 +254,7 @@ def test_rate_limit_reason_per_issue_backoffs_that_issue_only() -> None:
     sleeps: list[float] = []
     http = httpx.Client(transport=transport)
     client = JiraClient(
-        base_url="https://initech-team.atlassian.net",
+        base_url="https://example-team.atlassian.net",
         email="bot@example.com",
         api_token="tok",
         client=http,

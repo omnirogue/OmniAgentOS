@@ -141,7 +141,7 @@ def _git(repo: str, *args: str) -> subprocess.CompletedProcess[str]:
     """Fixed-argv, hooks-free git subprocess invocation."""
     identity = (
         "-c",
-        "user.email=4580856+omniagentos-bot[bot]@users.noreply.github.com",
+        "user.email=00000000+omniagentos-bot[bot]@users.noreply.github.com",
         "-c",
         "user.name=OmniAgentOS Improve",
     )

@@ -44,7 +44,7 @@ fields:
     transport = RecordingTransport()
     http = httpx.Client(transport=transport)
     client = JiraClient(
-        base_url="https://initech-team.atlassian.net",
+        base_url="https://example-team.atlassian.net",
         email="bot@example.com",
         api_token="tok",
         client=http,

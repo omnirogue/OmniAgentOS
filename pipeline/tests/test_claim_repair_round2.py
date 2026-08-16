@@ -1,6 +1,6 @@
 """Regression tests for the 2026-08-08 cross-lineage review of R5's first
 candidate (rejected id sha256:0cf6412cc291bab999ba7aa17b35e200bedb89a8834197ce
-3b1d86ba3d94b451, reviewer gemini-3.1-pro-preview): five findings, each with
+fa9e1b11e6b064f8, reviewer gemini-3.1-pro-preview): five findings, each with
 an executable repro on disk at .fusion/repro/{F1,F2,F3,F6}.py (F4 was a
 structural-proof stub). Each test below is the repro adapted into a
 permanent pytest test — every one FAILED against the pre-repair tree and

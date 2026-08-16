@@ -111,17 +111,17 @@ def test_parse_log_drops_lines_before_the_first_tick_rather_than_guessing() -> N
 # could catch that. Do not "tidy" this string.
 _REAL_LOG = (
     '{\n  "at": "2026-08-10T19:11:10Z",\n  "outcomes": [\n    {\n'
-    '      "train": "train/gl-0ee4fde6451d",\n      "action": "waiting",\n'
+    '      "train": "train/gl-85fe9011bfe9",\n      "action": "waiting",\n'
     '      "detail": ""\n    }\n  ]\n}\n'
-    "  skip 8f048ad14f26: risky diff requires a genuine cross-lineage build verdict: "
+    "  skip 3f1bdd8fe67f: risky diff requires a genuine cross-lineage build verdict: "
     "pipeline/prompts/PROMPT-planning-loop.md\n"
-    "  skip df35e71605ef: risky diff requires a genuine cross-lineage build verdict: "
+    "  skip 1dc3d5de715d: risky diff requires a genuine cross-lineage build verdict: "
     "pipeline/bridge/review_policy.py\n"
-    "  train/gl-0ee4fde6451d @ 65dbc79bb104 still gating (waiting)\n"
+    "  train/gl-85fe9011bfe9 @ 33aff05f5ad9 still gating (waiting)\n"
     '{\n  "at": "2026-08-10T19:12:14Z",\n  "outcomes": [\n    {\n'
-    '      "train": "train/gl-0ee4fde6451d",\n      "action": "waiting",\n'
+    '      "train": "train/gl-85fe9011bfe9",\n      "action": "waiting",\n'
     '      "detail": ""\n    }\n  ]\n}\n'
-    "  skip 8f048ad14f26: risky diff requires a genuine cross-lineage build verdict: "
+    "  skip 3f1bdd8fe67f: risky diff requires a genuine cross-lineage build verdict: "
     "pipeline/prompts/PROMPT-planning-loop.md\n"
 )
 
@@ -129,7 +129,7 @@ _REAL_LOG = (
 def test_parse_log_against_a_real_captured_gate_loop_slice() -> None:
     lines, newest = gw.parse_log(_REAL_LOG)
     assert newest == gw.parse_iso("2026-08-10T19:12:14Z")
-    skips = [ln for ln in lines if "skip 8f048ad14f26" in ln.text]
+    skips = [ln for ln in lines if "skip 3f1bdd8fe67f" in ln.text]
     assert len(skips) == 2
     # The first skip block sits BELOW the 19:11:10 header and so belongs to it.
     assert skips[0].ts == gw.parse_iso("2026-08-10T19:11:10Z")
@@ -280,14 +280,14 @@ _FAULT = "missing full immutable head_sha"
 
 
 def test_d4_fires_once_per_storming_fault_class_candidate() -> None:
-    lines = _lines(*[(-i * 60, f"  skip 8f048ad14f26: {_FAULT}") for i in range(40)])
-    lines += _lines(*[(-i * 60, "  skip bea6533e23af: real diff unreadable (instrument)")
+    lines = _lines(*[(-i * 60, f"  skip 3f1bdd8fe67f: {_FAULT}") for i in range(40)])
+    lines += _lines(*[(-i * 60, "  skip 28bd7e8efccd: real diff unreadable (instrument)")
                       for i in range(5)])
     result = gw.detect_skip_storm(lines=lines, now=NOW, th=TH)
     assert len(result.detections) == 1
     det = result.detections[0]
     assert det.detector == "D4"
-    assert det.evidence["candidate"] == "8f048ad14f26"
+    assert det.evidence["candidate"] == "3f1bdd8fe67f"
     assert det.evidence["skips_in_window"] >= TH.skip_storm
 
 
@@ -296,7 +296,7 @@ def test_d4_does_not_fire_on_the_sanctioned_awaiting_verdict_skip() -> None:
     queued — routinely for well over an hour. That is the review policy WORKING.
     Reporting it as a storm is a false alarm on healthy blocked-on-human work,
     and false alarms are how a real one stops being read."""
-    lines = _lines(*[(-i * 60, f"  skip 8f048ad14f26: {_VERDICT}") for i in range(40)])
+    lines = _lines(*[(-i * 60, f"  skip 3f1bdd8fe67f: {_VERDICT}") for i in range(40)])
     result = gw.detect_skip_storm(lines=lines, now=NOW, th=TH)
     assert not result.fired
     assert "awaiting-verdict" in result.note
@@ -304,7 +304,7 @@ def test_d4_does_not_fire_on_the_sanctioned_awaiting_verdict_skip() -> None:
 
 def test_d4b_fires_when_the_review_seat_itself_is_stuck() -> None:
     # Skipped continuously for 7h: the wait is legitimate, the seat is not.
-    lines = _lines(*[(-i * 60, f"  skip 8f048ad14f26: {_VERDICT}") for i in range(7 * 60)])
+    lines = _lines(*[(-i * 60, f"  skip 3f1bdd8fe67f: {_VERDICT}") for i in range(7 * 60)])
     result = gw.detect_skip_storm(lines=lines, now=NOW, th=TH)
     assert len(result.detections) == 1
     det = result.detections[0]
@@ -315,7 +315,7 @@ def test_d4b_fires_when_the_review_seat_itself_is_stuck() -> None:
 
 def test_d4b_does_not_fire_on_a_candidate_that_stopped_being_skipped() -> None:
     # Waited 7h, then moved on 3h ago: log history must not resurrect it.
-    lines = _lines(*[(-(3 * 3600 + i * 60), f"  skip 8f048ad14f26: {_VERDICT}")
+    lines = _lines(*[(-(3 * 3600 + i * 60), f"  skip 3f1bdd8fe67f: {_VERDICT}")
                      for i in range(7 * 60)])
     assert not gw.detect_skip_storm(lines=lines, now=NOW, th=TH).fired
 
@@ -335,12 +335,12 @@ def test_a_candidate_with_both_skip_classes_still_reports_its_fault_storm() -> N
     reclassifies a candidate that stormed with a fault all hour and the storm
     disappears from the report — last-write-wins, failing silent.
     """
-    lines = _lines(*[(-i * 60 - 120, f"  skip 8f048ad14f26: {_FAULT}") for i in range(40)])
-    lines += _lines((-30, f"  skip 8f048ad14f26: {_VERDICT}"))  # newest line, other class
+    lines = _lines(*[(-i * 60 - 120, f"  skip 3f1bdd8fe67f: {_FAULT}") for i in range(40)])
+    lines += _lines((-30, f"  skip 3f1bdd8fe67f: {_VERDICT}"))  # newest line, other class
     result = gw.detect_skip_storm(lines=lines, now=NOW, th=TH)
     faults = [d for d in result.detections if d.detector == "D4"]
     assert len(faults) == 1
-    assert faults[0].evidence["candidate"] == "8f048ad14f26"
+    assert faults[0].evidence["candidate"] == "3f1bdd8fe67f"
     # …and the fault count is not polluted by the verdict-class line.
     assert faults[0].evidence["skips_in_window"] == 40
     assert _FAULT in faults[0].evidence["last_skip_line"]
@@ -351,8 +351,8 @@ def test_d4b_span_is_order_independent() -> None:
     a span that silently depends on that collapses to zero the first time it is
     not — and a zero span never fires, so the failure is invisible."""
     offsets = [-i * 60 for i in range(7 * 60)]
-    forward = _lines(*[(o, f"  skip 8f048ad14f26: {_VERDICT}") for o in sorted(offsets)])
-    shuffled = _lines(*[(o, f"  skip 8f048ad14f26: {_VERDICT}")
+    forward = _lines(*[(o, f"  skip 3f1bdd8fe67f: {_VERDICT}") for o in sorted(offsets)])
+    shuffled = _lines(*[(o, f"  skip 3f1bdd8fe67f: {_VERDICT}")
                         for o in sorted(offsets, key=lambda x: (x * 7919) % 1013)])
     a = gw.detect_skip_storm(lines=forward, now=NOW, th=TH).detections
     b = gw.detect_skip_storm(lines=shuffled, now=NOW, th=TH).detections
@@ -363,15 +363,15 @@ def test_d4b_span_is_order_independent() -> None:
 def test_classify_skip_reason_maps_the_real_reason_strings() -> None:
     assert gw.classify_skip_reason(_VERDICT) == gw.SKIP_AWAITING_VERDICT
     for fault in ("missing full immutable head_sha",
-                  "approved head_sha c3dbcc2e9847 is unresolvable in omniagentos",
-                  "branch lane/x moved away from approved head_sha 2402abcd",
+                  "approved head_sha 3567e4a8d0c2 is unresolvable in omniagentos",
+                  "branch lane/x moved away from approved head_sha c8d601fe",
                   "candidate head/base unresolvable in omniagentos",
                   "real diff unreadable (instrument): boom"):
         assert gw.classify_skip_reason(fault) == gw.SKIP_FAULT
 
 
 def test_d4_ignores_skips_outside_the_window() -> None:
-    old = _lines(*[(-(3600 + i * 60), f"  skip 8f048ad14f26: {_FAULT}") for i in range(50)])
+    old = _lines(*[(-(3600 + i * 60), f"  skip 3f1bdd8fe67f: {_FAULT}") for i in range(50)])
     assert not gw.detect_skip_storm(lines=old, now=NOW, th=TH).fired
 
 
@@ -1311,9 +1311,9 @@ def test_content_id_differs_per_detector_and_per_subject() -> None:
 
 
 def test_detectors_never_put_volatile_data_in_the_payload() -> None:
-    lines = _lines(*[(-i * 60, "  skip 8f048ad14f26: missing head_sha") for i in range(40)])
+    lines = _lines(*[(-i * 60, "  skip 3f1bdd8fe67f: missing head_sha") for i in range(40)])
     a = gw.detect_skip_storm(lines=lines, now=NOW, th=TH).detections[0]
-    b = gw.detect_skip_storm(lines=lines + _lines((-30, "  skip 8f048ad14f26: missing head_sha")),
+    b = gw.detect_skip_storm(lines=lines + _lines((-30, "  skip 3f1bdd8fe67f: missing head_sha")),
                              now=NOW + 900, th=TH).detections[0]
     assert a.payload() == b.payload()
     assert a.evidence["skips_in_window"] != b.evidence["skips_in_window"]

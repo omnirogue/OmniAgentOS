@@ -847,7 +847,7 @@ def _construct_candidate(request: PromotionRequest, repo: Path, worktree: Path) 
             "-c",
             "user.name=omniagentos-promotion",
             "-c",
-            "user.email=4580856+omniagentos-bot[bot]@users.noreply.github.com",
+            "user.email=00000000+omniagentos-bot[bot]@users.noreply.github.com",
             "merge",
             "--no-ff",
             "--no-commit",
@@ -870,7 +870,7 @@ def _construct_candidate(request: PromotionRequest, repo: Path, worktree: Path) 
             "-c",
             "user.name=omniagentos-promotion",
             "-c",
-            "user.email=4580856+omniagentos-bot[bot]@users.noreply.github.com",
+            "user.email=00000000+omniagentos-bot[bot]@users.noreply.github.com",
             "commit",
             "-m",
             "merge(p0): finalize reviewed integration without merge-owned architecture oracles",
@@ -894,9 +894,9 @@ def _make_code_merge(repo: Path, main_sha: str, promotion_sha: str) -> str:
     env.update(
         {
             "GIT_AUTHOR_NAME": "omniagentos-promotion",
-            "GIT_AUTHOR_EMAIL": "4580856+omniagentos-bot[bot]@users.noreply.github.com",
+            "GIT_AUTHOR_EMAIL": "00000000+omniagentos-bot[bot]@users.noreply.github.com",
             "GIT_COMMITTER_NAME": "omniagentos-promotion",
-            "GIT_COMMITTER_EMAIL": "4580856+omniagentos-bot[bot]@users.noreply.github.com",
+            "GIT_COMMITTER_EMAIL": "00000000+omniagentos-bot[bot]@users.noreply.github.com",
         }
     )
     proc = _run(
@@ -952,7 +952,7 @@ def _default_archdocs_runner(worktree: Path) -> str:
             "-c",
             "user.name=archi-morning",
             "-c",
-            "user.email=4580856+omniagentos-bot[bot]@users.noreply.github.com",
+            "user.email=00000000+omniagentos-bot[bot]@users.noreply.github.com",
             "commit",
             "-m",
             "archi-morning: refresh map + diagram",

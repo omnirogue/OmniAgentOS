@@ -1,4 +1,4 @@
-"""Pins three fixes from sha256:999b41c1... (2026-08-08, "R2", incl. the
+"""Pins three fixes from sha256:54580d26... (2026-08-08, "R2", incl. the
 coordinator's post-review sibling-sweep correction):
 
 1. bridge/integration.py's `reject()` used to write

@@ -178,13 +178,13 @@ def test_d_refusal_keeps_the_branch_and_logs_an_alert(tmp_path: Path) -> None:
 def test_non_matching_branch_name_is_never_touched(tmp_path: Path) -> None:
     repo = _init_repo(tmp_path / "repo")
     tip = _git(repo, "rev-parse", "main")
-    _git(repo, "branch", "salvage/gl-contentfree-not-a-stamp-abc1234", tip)
+    _git(repo, "branch", "salvage/gl-contentfree-not-a-stamp-ef647f0", tip)
     _git(repo, "branch", "salvage/something-else-entirely", tip)
 
     j = janitor.Janitor(_queue(tmp_path), apply=True, repo=repo)
     j._sweep_salvage_refs(janitor._now())
 
-    assert "salvage/gl-contentfree-not-a-stamp-abc1234" in _salvage_branches(repo)
+    assert "salvage/gl-contentfree-not-a-stamp-ef647f0" in _salvage_branches(repo)
     assert j.actions == []
 
 

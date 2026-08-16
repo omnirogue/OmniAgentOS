@@ -1629,7 +1629,7 @@ def test_apply_update_autocommit_flag_gated_and_bot_identity(tmp_path: Path) -> 
         text=True,
         check=True,
     )
-    assert "archdocs-bot <4580856+omniagentos-bot[bot]@users.noreply.github.com>" in log.stdout
+    assert "archdocs-bot <00000000+omniagentos-bot[bot]@users.noreply.github.com>" in log.stdout
     assert "archdocs: update ARCHI.md" in log.stdout
 
 

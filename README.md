@@ -3,20 +3,27 @@
 [![CI](https://github.com/omnirogue/OmniAgentOS/actions/workflows/ci.yml/badge.svg)](https://github.com/omnirogue/OmniAgentOS/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
-**A local-first operating system for governed AI agent workflows.**
+**Your personal AI workforce — unlimited, self-learning agents that automate your life and business, running entirely on your own machine.**
 
-OmniAgentOS is a production-grade control plane for running fleets of AI agents
-on your own machine: a persistent task/run/step state machine, model-agnostic
-routing across Claude / GPT / Grok / Gemini coding CLIs, parallel swarm
-execution in fenced git worktrees, a mechanical merge gate with signed
-candidate receipts, cognitive budgets, an approvals system, a knowledge and
-memory layer, and a real-time mission-control dashboard — all running against
-a local SQLite database with no cloud dependency.
+Spin up as many agents as you want and point them at anything: email, calendars,
+CRM, payments, support desks, spreadsheets, code, browsers. They plan, build,
+review each other's work, and ship — around the clock, on your hardware, under
+your rules. And they get smarter every day: a memory layer that learns from every
+run, automated skill synthesis from what worked, and nightly reflection that
+turns experience into playbooks.
 
-It was extracted from a live multi-agent engineering estate that has been
-planning, building, reviewing, and merging its own code with minimal human
-intervention. This repository is that system, scrubbed and renamed for public
-release: real architecture, real gates, real tests — not a demo.
+Under the hood this is a production-grade agent operating system, not a demo:
+a persistent task/run/step state machine, model-agnostic routing across
+Claude / GPT / Grok / Gemini coding CLIs, parallel swarm execution in fenced
+git worktrees, a mechanical merge gate with signed candidate receipts,
+cognitive budgets, an approvals system so nothing consequential happens without
+you, and a real-time mission-control dashboard — all against a local SQLite
+database with no cloud dependency.
+
+It was extracted from a live multi-agent estate that has been planning,
+building, reviewing, and merging its own code with minimal human intervention.
+This repository is that system, scrubbed and renamed for public release: real
+architecture, real gates, real tests.
 
 ## What's inside
 

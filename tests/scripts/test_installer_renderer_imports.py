@@ -1,6 +1,6 @@
 """Every install-*.sh shim must be able to import its launchd renderer.
 
-Commit aa999b79 changed `scripts/scheduler/launchd.py` to a relative import
+Commit be023969 changed `scripts/scheduler/launchd.py` to a relative import
 (`from ..lib.plist_render import render`). Every `scripts/scheduler/install-*.sh`
 loads that file as a TOP-LEVEL module named `launchd`, and a relative import has
 no parent package to resolve against in that context — so all eight installers

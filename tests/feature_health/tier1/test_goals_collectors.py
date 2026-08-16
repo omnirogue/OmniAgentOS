@@ -109,7 +109,7 @@ def test_golden_stripe_pagination_and_meta_act_prefixed_env(
     assert spend is not None and spend["value"] == 42.5
     assert roas is not None and roas["value"] == 2.25
     # The snapshot records the BARE account id (normalized), never a doubled one.
-    assert spend["meta"]["ad_account_id"] == "1642534983554606"
+    assert spend["meta"]["ad_account_id"] == "0000000000000001"
     assert spend["meta"]["date"] == TARGET_DAY.isoformat()
 
 

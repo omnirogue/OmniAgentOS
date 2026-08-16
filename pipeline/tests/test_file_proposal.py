@@ -136,7 +136,7 @@ def test_path_shapes_that_cannot_be_graph_nodes_are_refused(bad, expected,
 
 
 def test_a_path_that_names_nothing_is_refused(tmp_path, queue, root):
-    """The pre-rename-name trap: rejection sha256:d12b0fdc named
+    """The pre-rename-name trap: rejection sha256:7e96be97 named
     PROMPT-repair-loop.md long after commit 0000000 renamed it."""
     code, err = run(draft(paths=["PROMPT-repair-loop.md"]), tmp_path, queue, root)
     assert code == file_proposal.EXIT_REFUSED_FIXABLE
@@ -387,7 +387,7 @@ def _host(**extra):
 
 
 def test_declared_host_config_work_may_have_no_repo_paths(tmp_path, queue, root):
-    """Refusing this would refuse real work — proposal sha256:e413dda1 is
+    """Refusing this would refuse real work — proposal sha256:d3e75cd4 is
     Spotlight privacy entries and Backblaze excludes, and says so itself. A
     gate that refuses valid work gets bypassed, and then it protects nothing."""
     code, err = run(_host(), tmp_path, queue, root)

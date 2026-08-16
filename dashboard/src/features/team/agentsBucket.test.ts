@@ -81,9 +81,9 @@ describe("buildAgentsBucket", () => {
   });
 
   it("merges other-employee server buckets (e.g. emp_frank, not one of the three sectioned people)", () => {
-    const andy = emptyBucket("emp_frank");
-    andy.ready.push({ id: "a1", title: "Frank's card", ref: null, status: "open", size: "M" });
-    const merged = buildAgentsBucket([andy], [], TODAY);
+    const frank = emptyBucket("emp_frank");
+    frank.ready.push({ id: "a1", title: "Frank's card", ref: null, status: "open", size: "M" });
+    const merged = buildAgentsBucket([frank], [], TODAY);
     expect(merged?.ready.map((c) => c.id)).toEqual(["a1"]);
     expect(merged?.counts.ready).toBe(1);
   });

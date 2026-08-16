@@ -1,7 +1,7 @@
 """Pins the claim-reaper half of bridge/janitor.py.
 
 Before this file: the janitor deleted expired/stale-unparseable claim markers
-SILENTLY. Evidence attached to proposal sha256:75ba9c5e...: `launchctl print
+SILENTLY. Evidence attached to proposal sha256:5a29760f...: `launchctl print
 gui/501/com.threeloops.janitor` showed `runs = 0` and a plist with
 `RunAtLoad=false, StartInterval=86400` — the reaper had NEVER fired, so a
 4-5h claim TTL was decorative. A silent unlink also made "no claim has ever

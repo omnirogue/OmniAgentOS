@@ -84,7 +84,7 @@ elif git -C "$ROOT_DIR" add -- $OWNED && git -C "$ROOT_DIR" diff --cached --quie
   log "no changes; nothing to commit"
 else
   git -C "$ROOT_DIR" \
-    -c user.name="archi-morning" -c user.email="4580856+omniagentos-bot[bot]@users.noreply.github.com" \
+    -c user.name="archi-morning" -c user.email="00000000+omniagentos-bot[bot]@users.noreply.github.com" \
     commit -m "archi-morning: refresh map + diagram"
   log "committed: archi-morning: refresh map + diagram ($(git -C "$ROOT_DIR" rev-parse --short HEAD))"
 fi

@@ -660,10 +660,9 @@ def test_false_measured_pin_lacks_the_d3_carrier(tmp_path: Path) -> None:
     creation must fail the historical-tree predicate -- proving the check
     reads Git history, not the live worktree where the file may be present.
 
-    The private-repo original pinned a real historical commit
-    (``8e16a995d936406f067a6e70f728e78e1b4d02a6``) against a real carrier path
-    in REPO_ROOT's own history. Neither is meaningful in this public-release
-    export: that SHA belongs to a different repository's object store, and
+    The original form of this test pinned a specific commit against a carrier
+    path in a source repository's own history. Neither is meaningful in this
+    public-release export: no such object exists in this repository, and
     REPO_ROOT itself currently has no git history at all (see the skip reason
     in the ``artifact_text`` fixture above). The same property -- a
     resolvable-but-too-early commit must not see a file that postdates it --

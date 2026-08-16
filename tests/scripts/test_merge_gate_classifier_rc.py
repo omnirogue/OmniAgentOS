@@ -123,7 +123,7 @@ def test_a_secret_scan_that_could_not_run_refuses_instead_of_reporting_ok(
     assert "the secrets classifier could not run" in out, out
     assert "classifier-unusable" in out, out
     # The favourable answer is the one that must be impossible. Measured against
-    # base_sha e6cdefd70 this exact run printed `secrets  ok` for a branch
+    # base_sha f97161b23 this exact run printed `secrets  ok` for a branch
     # carrying configs/accounts.yaml, and refused only for an unrelated reason.
     assert not re.search(r"^\s*secrets\s+ok\b", out, re.M), out
     # 2, not 1: a classifier that could not run is an INSTRUMENT failure, and the

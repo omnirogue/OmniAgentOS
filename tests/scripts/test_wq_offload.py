@@ -16,7 +16,7 @@ import pytest
 
 from scripts.ops import wq_offload
 
-SHA = "ccb059a921e2694f649fb8ac0b41dfca363d300b"
+SHA = "f0b65b799cab9f1804ce21dc8909792dc9592e61"
 
 
 # --------------------------------------------------------- unit construction --

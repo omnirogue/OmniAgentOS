@@ -49,7 +49,7 @@ def employees(goals_store: CompanyGoalsStore) -> dict[str, str]:
         "owner": ("emp_owner", "the operator", "operator"),
         "alice": ("emp_alice", "Alice", "reviewer-merger"),
         "bob": ("emp_bob", "Bob", "candidate-author"),
-        "andy": ("emp_frank", "Frank", "candidate-author"),
+        "frank": ("emp_frank", "Frank", "candidate-author"),
     }
     for employee_id, name, role in roster.values():
         goals_store.ensure_employee(employee_id=employee_id, name=name, role=role)
@@ -98,7 +98,7 @@ def slack_map(employees: dict[str, str]) -> dict[str, str]:
         "U0TEAM": employees["owner"],
         "U0ALICE": employees["alice"],
         "U0BOB": employees["bob"],
-        "U0ANDY": employees["andy"],
+        "U0ANDY": employees["frank"],
     }
 
 

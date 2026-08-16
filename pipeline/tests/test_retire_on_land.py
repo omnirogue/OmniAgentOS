@@ -474,7 +474,7 @@ def test_backfill_reports_shipped_work_that_reads_rejected_and_writes_nothing(
         tmp_path: Path) -> None:
     """THE KNOWN CASE. Proposals resolved by a merged candidate that later
     collected a `rejected` event read as refused although the work landed
-    (measured: candidate sha256:1412ed42, merged as a8e4100e). A second
+    (measured: candidate sha256:61b08c0e, merged as 9d7bb022). A second
     terminal event cannot repair that on an append-only ledger, so this is
     REPORTED with its carrier named and left for a human — never overwritten,
     and never silently counted as retired."""

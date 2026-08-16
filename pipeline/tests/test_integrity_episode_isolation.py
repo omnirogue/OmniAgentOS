@@ -1,7 +1,7 @@
 """Integrity's per-run state must be scoped to CATEGORY, and every alert needs
 a stable key that never carries a measurement.
 
-Reproduced at base_sha de98ec411b0820833bd3618826cc42ce821b532c (proposal
+Reproduced at base_sha fa042d854762a9928476cf4d4d116253fe1ad83e (proposal
 sha256:e447e8e633d18b5e61695afd56073d015e090d4b5b91bf79cb5463398b7017b3):
 one liveness run records 3 episodes and writes 3 ALERTS.md lines; one
 intervening invariants run (which raises zero alerts of its own) empties the
@@ -59,7 +59,7 @@ def test_quiet_category_does_not_wipe_liveness_episodes(tmp_path: Path) -> None:
     """A quiet category (raises zero alerts of its own) must not clear another
     category's episode state.
 
-    Must fail against current integrity.py at de98ec41, where emit() builds
+    Must fail against current integrity.py at 6486ba8b, where emit() builds
     one root-scoped state/integrity-episodes.json and reaps every key THIS
     category's run did not raise. Measured red: liveness -> invariants ->
     liveness yields 6 ALERTS.md lines for 3 conditions that never cleared,
@@ -91,7 +91,7 @@ def test_quiet_category_does_not_wipe_liveness_episodes(tmp_path: Path) -> None:
 def test_heartbeat_is_per_category(tmp_path: Path) -> None:
     """Each category's heartbeat must survive every other category's run.
 
-    Must fail against current integrity.py at de98ec41, where one
+    Must fail against current integrity.py at 6486ba8b, where one
     root-scoped state/integrity-heartbeat.json carries the category only as
     a field — the last writer wins and the other categories' heartbeats
     vanish.

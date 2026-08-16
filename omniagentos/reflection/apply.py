@@ -198,7 +198,7 @@ def git_commit_change(repo_root: Path, file_path: str, summary: str) -> None:
             "commit",
             "-m",
             f"reflection: {summary}",
-            "--author=reflection-loop <4580856+omniagentos-bot[bot]@users.noreply.github.com>",
+            "--author=reflection-loop <00000000+omniagentos-bot[bot]@users.noreply.github.com>",
         ]
         subprocess.run(cmd, cwd=str(repo_root), check=True)
         _LOG.info("Committed %s with reflection-loop author info.", file_path)

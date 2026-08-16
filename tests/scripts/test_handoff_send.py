@@ -151,15 +151,15 @@ def test_a_key_shape_in_the_doc_does_not_egress(doc_path: Path, slack_map: Path)
     from omniagentos.team.notify import SlackNotifier
 
     doc_path.write_text(
-        "# Alice — leaky\n\nRan against the MCP, key `apikey:mlk_c1ae2980abcdef`.\n",
+        "# Alice — leaky\n\nRan against the MCP, key `apikey:mlk_57bb37a0ec7199`.\n",
         encoding="utf-8",
     )
     doc = handoff_send.parse_doc(doc_path)
     alice = handoff_send.roster(slack_map)["alice"]
     text = handoff_send.render_message(doc, alice)
-    assert "mlk_c1ae2980abcdef" in text  # present before egress …
+    assert "mlk_57bb37a0ec7199" in text  # present before egress …
     payload = SlackNotifier._payload("D1", text, None, None)
-    assert "mlk_c1ae2980abcdef" not in payload["text"]  # … scrubbed at egress
+    assert "mlk_57bb37a0ec7199" not in payload["text"]  # … scrubbed at egress
     assert "[token omitted]" in payload["text"]
 
 

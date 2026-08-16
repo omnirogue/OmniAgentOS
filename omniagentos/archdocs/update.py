@@ -18,7 +18,7 @@ Safety properties, independent of the caller:
     `OMNIAGENTOS_ARCHDOCS_AUTOCOMMIT=1` (own flag — deliberately distinct from the
     vault's `OMNIAGENTOS_VAULT_AUTOCOMMIT`, since architecture docs live outside
     `vault/` and an operator may want one enabled without the other). Commits as
-    `archdocs-bot <4580856+omniagentos-bot[bot]@users.noreply.github.com>`, never pushes, and — mirroring
+    `archdocs-bot <00000000+omniagentos-bot[bot]@users.noreply.github.com>`, never pushes, and — mirroring
     `omniagentos.vault.gitops.commit_note` — refuses to commit (raising, without
     reverting the file write) if the staged set contains anything outside the owned
     doc set (a guard against committing an unrelated dirty index alongside ours).
@@ -39,7 +39,7 @@ _DEFAULT_HUMAN_SECTION = "## Notes (human)\n"
 
 AUTOCOMMIT_ENV = "OMNIAGENTOS_ARCHDOCS_AUTOCOMMIT"
 BOT_NAME = "archdocs-bot"
-BOT_EMAIL = "4580856+omniagentos-bot[bot]@users.noreply.github.com"
+BOT_EMAIL = "00000000+omniagentos-bot[bot]@users.noreply.github.com"
 
 
 class ArchdocsGuardError(Exception):

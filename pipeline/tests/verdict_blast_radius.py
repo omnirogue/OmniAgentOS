@@ -33,7 +33,7 @@ assert Path(_I.__file__).resolve() == (HERE / "bridge" / "integration.py").resol
 
 
 def old_guard(art: dict) -> str:
-    """The guard as it stands on main @ 76b476a.
+    """The guard as it stands on main @ 2da6097.
 
     This one IS a transcription, and has to be: it is the behaviour of a commit,
     which does not change. The NEW side must never be transcribed — see below.

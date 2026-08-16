@@ -192,7 +192,7 @@ def test_F8_integrity_treats_a_zero_disk_reading_as_a_genuine_stall(tmp_path: Pa
 
 # ======================================================================
 # Round 2 — raised by the google-lineage review seat (gemini-3.1-pro-preview)
-# against a752486. All four reproduced independently before being accepted.
+# against 64bb8d7. All four reproduced independently before being accepted.
 # ======================================================================
 
 @pytest.mark.parametrize("bad", [

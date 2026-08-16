@@ -248,7 +248,7 @@ def test_gate_diff_scope_escape_paths(repo: GitRepo, monkeypatch: pytest.MonkeyP
 def test_normalize_trace_and_trace_diff_equal() -> None:
     left = (
         "Error at 2026-07-27T18:21:03Z in /private/tmp/pytest-of-x/test_a0/mod.py:123\n"
-        "UUID: 12345678-1234-1234-1234-1234567890ab\n"
+        "UUID: 12345678-1234-1234-1234-d022d4a4ddcc\n"
         "Addr: 0xdeadBEEF"
     )
     right = (

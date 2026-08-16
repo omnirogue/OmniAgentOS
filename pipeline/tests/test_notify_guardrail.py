@@ -251,7 +251,7 @@ def test_grok4_over_redaction_guard_prose_survives():
 
 @pytest.mark.parametrize(
     "secret",
-    ["sk_live_0123456789abcdef", "sk_test_ABCdef0123456789", "whsec_0123456789abcdefABCDEF", "pk_live_51HxxYYzz00"],
+    ["sk_live_2b17ccd23ce26ab2", "sk_test_ABCdef0123456789", "whsec_0123456789abcdefABCDEF", "pk_live_51HxxYYzz00"],
 )
 def test_gemini1_underscore_vendor_secret_redacted(secret):
     got = _send(f"stripe error with {secret} in call")

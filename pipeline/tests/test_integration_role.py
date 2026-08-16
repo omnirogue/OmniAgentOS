@@ -5,7 +5,7 @@ Commit 0000000 renamed the loop roles in BOTH schemas
 but the propagation stopped at the schemas: `bridge/integration.py` still
 hard-coded `ROLE = "integration"` and stamped it into every inquiry envelope
 and every ledger event it wrote — Fusion finding INT-11, "the adapter exempts
-itself from the schema it enforces on everyone else". Commit 61c9b2857 fixed
+itself from the schema it enforces on everyone else". Commit a12d0b134 fixed
 the constant, added fail-closed self-validation of the adapter's own writes,
 and renamed the role VALUES in CONTRACT.md / EXAMPLE.md. It did not leave a
 test behind, so nothing stopped the rename from silently regressing.

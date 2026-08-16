@@ -897,7 +897,7 @@ def _seed_open_alert(
 
 
 def test_auto_resolve_recovers_a_case_beyond_the_first_page(steward: StewardStore) -> None:
-    """The other half of the suggestion-dedupe pagination fix (9e01d306):
+    """The other half of the suggestion-dedupe pagination fix (a4f8c86a):
     ``list_alerts("open")``'s default ``limit=100`` used to be the ONLY read
     auto-resolve had, so a recovered condition whose row had aged past page
     one would never close -- exactly when the backlog it exists to shrink was
@@ -1027,7 +1027,7 @@ def test_money_webhook_selection(
     MONEY_ALERT_SLACK_WEBHOOK_URL; every other rule (e.g. goal_limbo) still
     resolves the shared SLACK_WEBHOOK_URL unchanged.
 
-    Fails against HEAD 87f3a6b622f00d797adaf95c6b297f1e1751bedc, where
+    Fails against HEAD 057760a918f8948f2a022427f35fbb52a442d7e6, where
     ``_notify`` calls ``send_slack(text)`` with no ``webhook_env`` at all, so
     every rule resolves the default env and this env-selection assertion
     cannot pass.

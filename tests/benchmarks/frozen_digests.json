@@ -1,5 +1,5 @@
 {
-  "corpus_version": 4,
+  "corpus_version": 5,
   "fixtures": {
     "fx_001_greenfield_palindrome": "9704c4140c509d4bf8068db5def02aabf3f08e4dc2250f976f3c041489864364",
     "fx_002_bugfix_failing_test": "a660a57f7926252b2c77616b4c0cf3a36231774f672d6eefad79734d7a640efa",
@@ -23,8 +23,8 @@
     "fx_020_tooldense_sensor_unit_sweep": "3f40f4f2cb97767847938816ecb3f76bb318e586a3ae96b2679a0de5794d372f",
     "fx_021_tooldense_command_metadata": "61fde188d8e73b63cd150e0d1b9ea1f20cf51ce4c28dccca8312660c0d31828c"
   },
-  "frozen_at": "2026-08-16T00:52:02Z",
-  "frozen_at_repo_rev": "",
+  "frozen_at": "2026-08-16T12:16:25Z",
+  "frozen_at_repo_rev": "033f162b7c827409a74aa7e559295a1b5b16a7f9",
   "meta": {
     "fx_001_greenfield_palindrome": {
       "declared_files": [

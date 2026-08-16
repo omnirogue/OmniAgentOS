@@ -1,7 +1,7 @@
 # OmniAgentOS — Evaluation-Driven Optimization (Evolve) + Graph-Recall Upgrade Plan
 
 **Date:** 2026-07-27
-**Sources:** [WecoAI/weco-cli](https://github.com/WecoAI/weco-cli) (AIDE algorithm); "Graph Engineering" X article ([thread](https://x.com/sprytixl/status/2078778799064584535)) — see Source credibility below; `~/Desktop/Self_Optimizing_Research_and_Orchestration_Loop.docx` (Gap 3).
+**Sources:** [WecoAI/weco-cli](https://github.com/WecoAI/weco-cli) (AIDE algorithm); a public "Graph Engineering" research thread — see Source credibility below; an operator-supplied research document (Gap 3).
 **Product:** OmniAgentOS only (never merge into legacy OmniAgentOS)
 **Mode default:** `off` → `shadow` → `enforce` per the standard three-rung rollout.
 

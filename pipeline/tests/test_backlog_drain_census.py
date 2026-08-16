@@ -19,7 +19,7 @@ contingent on today's production backlog state.)
 `test_terminal_set_released_counts_as_closed` and
 `test_terminal_set_claim_expired_does_not_close` are the two pins the
 2026-08-11 cross-lineage review (GPT-5.6-Sol, MAJOR, candidate
-sha256:461364b6) named explicitly: `parked`/`claim_expired` must NOT close an
+sha256:af45ee45) named explicitly: `parked`/`claim_expired` must NOT close an
 id (they are suspensions, not terminals — see `backlog_drain_census.py`'s
 module docstring for the full correction), while `released` still must.
 """

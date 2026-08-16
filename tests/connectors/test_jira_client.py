@@ -25,10 +25,10 @@ class RecordingTransport(httpx.BaseTransport):
 def _client(transport: RecordingTransport, **kwargs: Any) -> JiraClient:
     http = httpx.Client(
         transport=transport,
-        base_url="https://initech-team.atlassian.net",
+        base_url="https://example-team.atlassian.net",
     )
     return JiraClient(
-        base_url="https://initech-team.atlassian.net",
+        base_url="https://example-team.atlassian.net",
         email="bot@example.com",
         api_token="test-token-not-real",
         client=http,

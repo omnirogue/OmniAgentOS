@@ -2208,7 +2208,7 @@ def test_push_failure_rolls_back_and_does_not_record_merged(tmp_path):
 
 # ================================================= CLOSING-REVIEW (Grok) FIXES
 # 3 push-failure edge-path findings. Each regression is written to FAIL against
-# the current source (e12e31c) and pass only after its fix.
+# the current source (8773cde) and pass only after its fix.
 
 
 def _fake_git_failing(*, fail_push=False, fail_reset=False):
@@ -4621,7 +4621,7 @@ def test_empty_active_pool_emits_ledger_and_alert(tmp_path, monkeypatch):
 
 
 # ============================== ORIGIN SYNC / PUSH CLASSIFICATION (0811) ======
-# Finding sha256:444a8713. The daemon assembles trains on the serving checkout's
+# Finding sha256:b1edeafa. The daemon assembles trains on the serving checkout's
 # LOCAL main and pushes them to origin, but never syncs main FROM origin. On
 # 2026-08-11 two PRs landed on origin through GitHub, local main fell two behind,
 # and EVERY train push was non-fast-forward: the daemon rebuilt the identical
@@ -7219,7 +7219,7 @@ def test_a_successful_cherry_pick_resets_the_strikes(tmp_path):
 def test_a_human_parked_candidate_is_never_assembled(tmp_path):
     """CONTRACT §9 drop-at-source: the marker is what a producer must obey.
 
-    Measured 2026-08-11: `sha256:e1c1fac6806d` was parked by a human at 22:55 and
+    Measured 2026-08-11: `sha256:912eda6033df` was parked by a human at 22:55 and
     was still being cherry-picked (and conflicting) by the assembler every 60s
     hours later, because the daemon's selector does not read `parked/`.
     """
@@ -7339,7 +7339,7 @@ def test_landing_refuses_a_prefix_that_is_not_a_contiguous_chain(tmp_path):
 
 # ======================================================== ROUND-2 REVIEW FIXES
 # Three findings from the second (gemini) lens, each written to FAIL against
-# a9945e854, plus the adversarial-strike-file vector the lens did not cover.
+# 0097dcb46, plus the adversarial-strike-file vector the lens did not cover.
 
 
 def _mock_cherry_pick_exit(monkeypatch, *, rc: int, stderr: str, stdout: str = ""):
@@ -7367,7 +7367,7 @@ def _mock_cherry_pick_exit(monkeypatch, *, rc: int, stderr: str, stdout: str = "
     # exact reason a substring match on that phrase is a trap, not a signature.
     (128, "error: Unable to create '.git/index.lock': File exists.\n"
           "fatal: cherry-pick failed\n"),
-    (128, "fatal: bad object 0123456789abcdef0123456789abcdef01234567\n"),
+    (128, "fatal: bad object 65c299bb731c340b3347ca3ca507f6aae2e9e0af\n"),
     (128, "fatal: Unable to write new index file\n"),          # ENOSPC shape
     (137, ""),                                                 # OOM-killed
 ])
@@ -7815,7 +7815,7 @@ def test_a_poisoned_record_cannot_crash_the_next_tick_heal_path(tmp_path, poison
 
 
 def test_a_synthetic_mechanical_gate_verdict_is_not_an_independent_review(tmp_path):
-    """Cross-commit interaction found at rebase (tiered-verify, 1bb016c3f).
+    """Cross-commit interaction found at rebase (tiered-verify, 991817d54).
 
     `load_candidates` now appends `{"lineage": "mechanical-gate"}` to a LOW-risk
     candidate to record that a signed gate PASS stood in for the cross-lineage

@@ -356,7 +356,7 @@ class TestAncestryProbeInstrumentErrorNeverTerminalizes:
 # --------------------------------------------------------------------------
 
 class TestSelfValidateFailsClosed:
-    """Ruled out at 8b0376c as "not the external ingest surface Lane C
+    """Ruled out at 05f4080 as "not the external ingest surface Lane C
     targets" -- that ruling did not hold. `_self_validate` guards the
     adapter's OWN writes to the ledger, which is APPEND-ONLY and cannot be
     repaired after the fact; "the adapter writes it, so it is trustworthy"

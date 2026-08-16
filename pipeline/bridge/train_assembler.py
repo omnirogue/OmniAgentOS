@@ -144,7 +144,7 @@ PARK_REMEDY = "re-anchor onto current main and re-file at the new head"
 # epoch — tips computed before the change stop matching recomputed ones — so
 # this value must only move at a clean tick boundary.
 _COMMITTER_NAME = "gate-loop"
-_COMMITTER_EMAIL = "4580856+omniagentos-bot[bot]@users.noreply.github.com"
+_COMMITTER_EMAIL = "00000000+omniagentos-bot[bot]@users.noreply.github.com"
 
 
 @dataclass

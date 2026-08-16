@@ -125,7 +125,7 @@ def test_failed_build_keeps_old_stamp_and_parks_after_two(repo: Path, monkeypatc
     seed("old0000")
     monkeypatch.setattr(watch, "build_dashboard", lambda head, _run: False)
 
-    run = FakeRun(head="bad2222", diff=["dashboard/src/x.ts"])
+    run = FakeRun(head="70c882c", diff=["dashboard/src/x.ts"])
     assert watch.tick(run) == 1
     assert state()["deployed_sha"] == "old0000"
     assert state()["fail_count"] == 1
@@ -134,7 +134,7 @@ def test_failed_build_keeps_old_stamp_and_parks_after_two(repo: Path, monkeypatc
     assert state()["fail_count"] == 2
 
     # Third tick on the SAME sha: parked, no work, quiet success.
-    run3 = FakeRun(head="bad2222", diff=["dashboard/src/x.ts"])
+    run3 = FakeRun(head="70c882c", diff=["dashboard/src/x.ts"])
     assert watch.tick(run3) == 0
     assert run3.kickstarted == []
 

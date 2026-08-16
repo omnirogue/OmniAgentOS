@@ -42,12 +42,12 @@ def test_health_401_sanitized(
     secret = "jira-api-token-MUST-NOT-LEAK-7c2e9a"
     monkeypatch.setenv("JIRA_API_TOKEN", secret)
     monkeypatch.setenv("JIRA_EMAIL", "bot@example.com")
-    monkeypatch.setenv("JIRA_BASE_URL", "https://initech-team.atlassian.net")
+    monkeypatch.setenv("JIRA_BASE_URL", "https://example-team.atlassian.net")
 
     def boom_myself(self: Any) -> JiraMyself:  # noqa: ANN401
         request = httpx.Request(
             "GET",
-            "https://initech-team.atlassian.net/rest/api/3/myself",
+            "https://example-team.atlassian.net/rest/api/3/myself",
             headers={"Authorization": "Basic dXNlcjpzZWNyZXQ="},
         )
         response = httpx.Response(401, request=request, text="Unauthorized")

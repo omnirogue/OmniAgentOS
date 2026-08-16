@@ -572,7 +572,7 @@ class TestAdhocAssign:
         employees: dict[str, str],
     ) -> None:
         store._connection.execute(
-            "UPDATE employees SET status = 'inactive' WHERE id = ?", (employees["andy"],)
+            "UPDATE employees SET status = 'inactive' WHERE id = ?", (employees["frank"],)
         )
         store._connection.commit()
         reply = _apply(
@@ -596,7 +596,7 @@ class TestAdhocAssign:
         employees: dict[str, str],
     ) -> None:
         store._connection.execute(
-            "UPDATE employees SET status = 'inactive' WHERE id = ?", (employees["andy"],)
+            "UPDATE employees SET status = 'inactive' WHERE id = ?", (employees["frank"],)
         )
         store._connection.commit()
         reply = _apply(
@@ -605,7 +605,7 @@ class TestAdhocAssign:
             slack_map,
             notifier,
             "/task assign <@U0BOB> review the pricing page",
-            employees["andy"],
+            employees["frank"],
         )
         assert "you're not on the active roster" in reply
         assert collab_store.list_board_tasks() == []

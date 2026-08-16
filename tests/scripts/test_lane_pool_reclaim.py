@@ -1,6 +1,6 @@
 """Fail-closed reclaim guard for pipeline/bridge/lane-pool.sh (R20 rebuild).
 
-This is a REBUILD of a rejected prior candidate (sha256:064ffcbb, remedy
+This is a REBUILD of a rejected prior candidate (sha256:e9aa01af, remedy
 "replan", reason: "fail-open TTL reclaim of a live holder"). Its bug: a
 lease past TTL_SECS was reclaimed purely on age, even when the recorded
 holder pid was still alive and running -- stealing a worktree out from

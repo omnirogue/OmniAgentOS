@@ -166,7 +166,7 @@ _pid_start() {
 _git() {
   local dir="$1"; shift
   "$TIMEOUT_BIN" "$GIT_TIMEOUT" git -C "$dir" \
-    -c user.email="4580856+omniagentos-bot[bot]@users.noreply.github.com" -c user.name="Lane Pool" \
+    -c user.email="00000000+omniagentos-bot[bot]@users.noreply.github.com" -c user.name="Lane Pool" \
     -c core.hooksPath= "$@"
 }
 

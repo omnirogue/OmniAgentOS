@@ -930,7 +930,7 @@ def test_a_stale_artifact_that_cannot_be_cleared_refuses(tmp_path: Path) -> None
 # ---------------------------------------------------------------------------
 # MGI-001 — a separator is not a discriminator; the VALUE is
 #
-# Sol's repro, reproduced against the real gate at 73411b1c: this file returned
+# Sol's repro, reproduced against the real gate at 2514adf1: this file returned
 # rc=0 and MERGED the lane, logging `Anthropic verdict: Verdict: Approve-flow
 # lane`. An ordinary human title with a colon whose first word STARTS with
 # "approve" beat the `VERDICT: REJECT` below it, because values were matched by
@@ -1191,7 +1191,7 @@ def test_a_lock_held_by_a_dead_process_is_reclaimed(tmp_path: Path) -> None:
 # ---------------------------------------------------------------------------
 # MGI-004 — a fail-closed guard with no correction path is its own outage
 #
-# The degenerate-branch refusal (d68ad67e) is right, but the operator who fixes
+# The degenerate-branch refusal (ac858221) is right, but the operator who fixes
 # the lane exactly as the refusal instructs got nothing back: the dispatch
 # payload hashed only the CONTRACT, so a repaired lane produced a byte-identical
 # payload, was blocked `verdict-repeat`, and was quarantined. Quarantine is
@@ -1204,7 +1204,7 @@ def _pump_env(tmp_path: Path, lane: str) -> tuple[dict[str, str], Path, Path]:
         (root / link).symlink_to(REPO_ROOT / link)
     marker = tmp_path / "verifier-invoked"
     # The side-log proves the fake EXECUTED even if the marker's visibility is
-    # in question (the runner-context anomaly, finding ac9cf1e08f0a); it feeds
+    # in question (the runner-context anomaly, finding 0f0956495800); it feeds
     # _await_dispatch_evidence's diagnosis, never an assertion.
     _fake_claude(
         tmp_path / "bin",
@@ -1258,7 +1258,7 @@ def _run_pump(env: dict[str, str]) -> subprocess.CompletedProcess[str]:
 
 
 # ESTATE-RUNNER FLAKE (2026-08-14) — 30s was itself the fix for an earlier race
-# (af809b60f, 2026-08-06) and is STILL not generous enough on the shared estate box.
+# (da3f3c6df, 2026-08-06) and is STILL not generous enough on the shared estate box.
 #
 # The async chain between "pump backgrounded the dispatch" and "the marker exists"
 # is a `( trap "" HUP; timeout ... dispatch-verifier.sh "$LANE" ) </dev/null &`
@@ -1320,7 +1320,7 @@ def _await_marker(marker: Path, timeout_s: float = 90.0, since: float = 0.0) -> 
 # a verdict-visible-but-marker-missing pass EMITS the full divergence as a
 # pytest warning (round-2 review blocker: the anomaly must never pass silently —
 # warnings survive a passing run in the CI summary, while tmp_path does not),
-# feeding finding ac9cf1e08f0a on its next runner-context occurrence.
+# feeding finding 0f0956495800 on its next runner-context occurrence.
 def _dispatch_diagnosis(marker: Path, verdict: Path, env: dict[str, str], header: str) -> str:
     import shutil as _shutil
 
@@ -1398,7 +1398,7 @@ def _await_dispatch_evidence(
                     marker,
                     verdict,
                     env,
-                    "DISPATCH-MARKER ANOMALY (finding ac9cf1e08f0a): verdict visible, marker not —",
+                    "DISPATCH-MARKER ANOMALY (finding 0f0956495800): verdict visible, marker not —",
                 )
             )
         return ""

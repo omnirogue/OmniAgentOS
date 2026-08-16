@@ -7,7 +7,7 @@ the harvester still has cwd inside it).
 CHANGE 2: only one harvest pass may run at a time; a live lock holder with a
 future deadline refuses; a dead or past-deadline holder is reclaimed.
 
-Round 2 (Gemini Class review of 653f1723c, REQUEST-CHANGES):
+Round 2 (Gemini Class review of 7793526dd, REQUEST-CHANGES):
   1. BLOCKER: lock acquisition was check-then-write (TOCTOU) -- replaced by
      an atomic O_CREAT|O_EXCL create; ``test_harvest_lock_concurrent_...``
      exercises two real racing threads and asserts exactly one wins.
@@ -178,7 +178,7 @@ def test_reconcile_path_closes_before_releasing_claim(
 # CHANGE 2 / Round 3 — harvest singleton lock (fcntl.flock design)
 # --------------------------------------------------------------------------
 #
-# Round 3 (Gemini Class review of 1db8b547b, REQUEST-CHANGES):
+# Round 3 (Gemini Class review of e01e1423e, REQUEST-CHANGES):
 #   1. BLOCKER: the round-2 "unlink + retry O_EXCL" takeover was itself a
 #      TOCTOU (a delayed racer could unlink a competitor's freshly-created
 #      VALID lock, letting both proceed). Redesigned so mutual exclusion
@@ -420,7 +420,7 @@ def test_evaluate_lock_holder_no_recorded_identity_refuses(
 # Round 4 (Gemini Class review) — recorded-child takeover, lease renewal
 # --------------------------------------------------------------------------
 #
-# Round 4 (Gemini Class review of 6ee397392, REQUEST-CHANGES):
+# Round 4 (Gemini Class review of 91347e4af, REQUEST-CHANGES):
 #   1. BLOCKER: a takeover killed only the HOLDER's own process group, but
 #      the verification child runs in its OWN session (start_new_session=
 #      True, deliberately -- see _run_verification_command) so the kill
@@ -596,7 +596,7 @@ def test_harvest_lease_without_renewal_expires_normally(
 # Round 5 (Gemini Class review) — per-thread lock-fd context, not a global
 # --------------------------------------------------------------------------
 #
-# Round 5 (Gemini Class review of 1626591db, BLOCKER):
+# Round 5 (Gemini Class review of 08fb54161, BLOCKER):
 #   the round-4 fix threaded the currently-held lock fd through a bare
 #   module-level global (_current_harvest_lock_fd) so
 #   _run_verification_command could reach it without re-signaturing

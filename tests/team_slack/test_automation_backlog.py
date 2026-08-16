@@ -419,7 +419,7 @@ def proposal(
 
 class TestTheOwnerOnlyGate:
     @pytest.mark.parametrize("verb", ["approve", "reject"])
-    @pytest.mark.parametrize("who", ["alice", "bob", "andy"])
+    @pytest.mark.parametrize("who", ["alice", "bob", "frank"])
     def test_only_owner_decides(
         self,
         collab_store: CollabStore,

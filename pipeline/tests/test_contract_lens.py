@@ -147,7 +147,7 @@ def test_missing_observed_at_main_sha_warns():
 def test_plan_delegation_without_authority_pin_warns():
     art = proposal_draft({
         "observed_at_main_sha": "0" * 40,
-        "implementation_plan": "1. execute ~/.omniagentos/ops/Plans/Some-Plan.md section 3",
+        "implementation_plan": "1. execute ~/Work/Ops/Plans/Some-Plan.md section 3",
     })
     warns = [w for w in lens_warnings(art) if "plan_authority_sha256" in w]
     assert warns and warns[0].startswith("lens.deps")
@@ -167,7 +167,7 @@ def test_opaque_dependency_warns():
 
 
 def test_conversation_reference_warns():
-    art = proposal_draft({"urgency": "the operator-named night focus"})
+    art = proposal_draft({"urgency": "Sam-named night focus"})
     assert "lens.context" in _classes(lens_warnings(art))
 
 
@@ -191,7 +191,7 @@ def test_warn_mode_never_refuses(tmp_path, queue, root, monkeypatch, capsys):
     art = proposal_draft({
         "tests_required": ["the behaviour must be correct"],
         "dependencies": ["audit-5"],
-        "urgency": "the operator-named night focus",
+        "urgency": "Sam-named night focus",
         "implementation_plan": "1. do. 2. redo. 3. verify.",
     })
     rc = file_proposal.main([
@@ -584,7 +584,7 @@ def test_reference_class_fires_at_most_once():
     class (2, lens.deps) and produce exactly ONE warning; an artifact tripping
     everything yields exactly six warnings with six unique prefixes."""
     art = proposal_draft({"implementation_plan":
-                          "1. execute ~/.omniagentos/ops/Plans/Some-Plan.md section 3",
+                          "1. execute ~/Work/Ops/Plans/Some-Plan.md section 3",
                           "dependencies": ["audit-5"]})
     refs = [w for w in lens_warnings(art) if w.startswith("lens.deps")]
     assert len(refs) == 1
@@ -592,7 +592,7 @@ def test_reference_class_fires_at_most_once():
     everything_bad = proposal_draft({
         "tests_required": ["the behaviour must be correct"],
         "dependencies": ["audit-5"],
-        "urgency": "the operator-named night focus",
+        "urgency": "Sam-named night focus",
         "implementation_plan": "1. do. 2. redo. 3. verify.",
     })
     warns = lens_warnings(everything_bad)

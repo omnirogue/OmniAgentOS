@@ -277,7 +277,7 @@ def test_environment_hash_ignores_timing_fields(tmp_path: Path) -> None:
     ("field", "value"),
     [
         ("model_id", "different-model"),
-        ("commit_sha", "abc123abc123abc123abc123abc123abc123abc1"),
+        ("commit_sha", "610a734b8fc3b508920669267e4c0de6eb134b64"),
         ("config_digests", {"configs/llm.yaml": "different_digest"}),
         ("sandbox_mode", "unavailable"),
         ("lock_digest", "different_lock_digest"),

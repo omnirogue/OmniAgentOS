@@ -88,7 +88,7 @@ class TestMorning:
         monkeypatch: pytest.MonkeyPatch,
         capsys: pytest.CaptureFixture[str],
     ) -> None:
-        make_card(title="Frank's card", ref="A1", owner_employee_id=employees["andy"])
+        make_card(title="Frank's card", ref="A1", owner_employee_id=employees["frank"])
         monkeypatch.setattr(notify, "load_slack_map", lambda: {})
         outbound = _Notifier()
 
@@ -181,7 +181,7 @@ class TestPulse:
         # pool index), and Bob renders first in the fixed person order.
         text = notify.render_pulse_message(
             team_store.team_queues(),
-            {"US": employees["bob"], "UA": employees["andy"]},
+            {"US": employees["bob"], "UA": employees["frank"]},
             [
                 {"id": "pool", "ref": "P1", "title": "Claim this"},
                 {"id": "pool2", "ref": "P2", "title": "Also this"},
@@ -692,13 +692,13 @@ class TestWatcherDurability:
             task_id=card.id,
             actor=employees["alice"],
             event="assign",
-            note=f"owner:{employees['andy']}",
+            note=f"owner:{employees['frank']}",
         )
         collab_store._store._connection.commit()
         monkeypatch.setattr(
             notify,
             "load_slack_map",
-            lambda: {"UBOB": employees["bob"], "UANDY": employees["andy"]},
+            lambda: {"UBOB": employees["bob"], "UANDY": employees["frank"]},
         )
         outbound = _Notifier()
         assert notify.run_watch_once(team_store, outbound, cursor_file=cursor) is True  # type: ignore[arg-type]

@@ -329,7 +329,7 @@ describe("TeamBoard owner name on Pool and Agents & unowned cards", () => {
       buckets: {
         emp_frank: bucket({
           employee_id: "emp_frank",
-          ready: [{ id: "andy-1", title: "Frank's card", ref: null, status: "open", size: "M", owner_employee_id: "emp_frank" }],
+          ready: [{ id: "frank-1", title: "Frank's card", ref: null, status: "open", size: "M", owner_employee_id: "emp_frank" }],
           counts: { ready: 1, active: 0, blocked: 0, review: 0, done_today: 0 },
         }),
       },

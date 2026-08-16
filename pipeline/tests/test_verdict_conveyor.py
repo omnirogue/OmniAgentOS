@@ -472,7 +472,7 @@ def test_the_prompts_own_grammar_examples_are_never_read_as_a_verdict(
     """The measured silent-seat failure, exactly: rc=0 and stdout IS the prompt.
 
     codex and gemini both returned exit 0 with 4,940 bytes that were the brief
-    echoed back (2026-08-13, finding sha256:ae0c224a72b3). The brief necessarily
+    echoed back (2026-08-13, finding sha256:c748786e7405). The brief necessarily
     quotes all four verdict forms, so a parser that scanned the raw stream would
     read OUR OWN placeholder rejection as the seat's decision — a fabricated
     verdict by the shortest possible path.

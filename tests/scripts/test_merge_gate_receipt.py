@@ -243,7 +243,7 @@ def _receipt(
         checks_failed=0,
         started_at=started,
         finished_at=finished,
-        nonce="0123456789abcdef0123456789abcdef",
+        nonce="6b5f01b9e87c9b4e67978f23b20a660d",
         workspace_sha=candidate,
         workspace_tree_clean=True,
         interpreter=str(REAL_PYTHON),

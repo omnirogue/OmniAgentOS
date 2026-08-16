@@ -422,7 +422,7 @@ def test_attestation_needs_the_real_head_sha_not_a_lookalike(tmp_path):
     head = _commit(repo, "work")
     _git(repo, "checkout", "-q", "main")
     _write(repo, "note.txt", "x\n")
-    _commit(repo, "chore: see deadbeefcafe1234 for context")
+    _commit(repo, "chore: see ad0dc62cf5966741 for context")
 
     d = _detector(repo)
     strong, _ = d._attestations(head, 99, "pr")

@@ -53,7 +53,7 @@ package writes vault files directly; they call p05's generator API.
 
 - Auto-commit is flag-gated: env `OMNIAGENTOS_VAULT_AUTOCOMMIT=1` (default OFF, and
   OFF in tests). When ON: `git add vault/<changed paths> && git commit` with author
-  `omniagentos-bot <4580856+omniagentos-bot[bot]@users.noreply.github.com>`, message `vault: <type> <id>`.
+  `omniagentos-bot <00000000+omniagentos-bot[bot]@users.noreply.github.com>`, message `vault: <type> <id>`.
   Commits touch vault/ paths ONLY — anything else staged is a bug (guard in code).
 - Never push. Never touch non-vault paths. Repo dirty state outside vault/ is
   ignored, not an error.

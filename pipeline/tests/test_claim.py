@@ -3,7 +3,7 @@
 Before this file, claim creation was prompt-prose only: no script wrapped it,
 and CONTRACT.md §6's arbitration rule ("the successful O_EXCL create is the
 ONLY arbiter of ownership") had no enforced writer. These tests pin the four
-behaviours the proposal (sha256:75ba9c5e...) required:
+behaviours the proposal (sha256:5a29760f...) required:
 
   * acquire refuses at cap, with remedy text in the message
   * an unreadable claims/ directory is an INSTRUMENT ERROR, never free

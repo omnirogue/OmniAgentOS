@@ -1,7 +1,7 @@
 """Pins bridge/reconcile_queue.py — the drain for artifacts publication skipped.
 
 RED-FIRST, and with the two shapes that were actually missing. Measured at
-1bb016c3f against a temp queue built by this file's own fixture:
+991817d54 against a temp queue built by this file's own fixture:
 
     (a) NO-EVENT finding      in queue.json = False   <- 28 real instances
     (b) OBSERVED-only finding in queue.json = False   <- 35 real instances
@@ -484,7 +484,7 @@ def test_unreadable_marker_json_report_names_the_id(queue):
 # used to sit AFTER an `ident in queue_ids` short-circuit, so this -- the exact
 # condition the marker reading exists to detect -- was absorbed into
 # rec.published, with no counter and no exit code. Measured on a copy of the
-# live queue at 363561bfc: 75 published ids carried a live tombstone (35
+# live queue at 751e5f551: 75 published ids carried a live tombstone (35
 # rejected-marker at status open and therefore CLAIMABLE, 39 parked-marker at
 # status parked, 1 parked-marker at status open).
 # --------------------------------------------------------------------------

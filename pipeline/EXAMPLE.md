@@ -30,7 +30,7 @@ Two traces: a **repair** (the common path) and an **inquiry** (the reverse edge)
   "payload": {
     "symptom": "tests/api/test_retry.py::test_backoff_bounds fails on CI, passes locally",
     "source": "failing-test",
-    "source_ref": "https://github.com/org/repo/actions/runs/92662324306",
+    "source_ref": "https://github.com/org/repo/actions/runs/00000000000",
     "repro": "pytest tests/api/test_retry.py -q"
   }
 }

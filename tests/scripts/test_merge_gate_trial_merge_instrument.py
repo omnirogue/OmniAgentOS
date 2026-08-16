@@ -19,7 +19,7 @@ That is not hypothetical.  PR #19 ("ci(security): enforce merge gate on pull
 requests") added a CI job that configured no git identity.  GitHub-hosted
 runners have no ``user.email``/``user.name`` and a hostname with no domain, so
 git's ident auto-detection fails too; the trial merge exited 128 with
-"Committer identity unknown" and job 92662324306 refused in 0.42s with
+"Committer identity unknown" and job 00000000000 refused in 0.42s with
 "conflicts against main" against a branch that merges perfectly cleanly.  The
 701-line log contains no ladder, counterfeit or ruff line anywhere.
 
@@ -241,7 +241,7 @@ def _record_receipt(gate_repo: GateRepo) -> None:
             checks_failed=0,
             started_at=(now - timedelta(minutes=1)).strftime("%Y-%m-%dT%H:%M:%SZ"),
             finished_at=now.strftime("%Y-%m-%dT%H:%M:%SZ"),
-            nonce="0123456789abcdef0123456789abcdef",
+            nonce="6b5f01b9e87c9b4e67978f23b20a660d",
             workspace_sha=gate_repo.candidate_sha,
             workspace_tree_clean=True,
             interpreter=str(REAL_PYTHON),

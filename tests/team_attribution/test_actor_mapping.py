@@ -35,7 +35,7 @@ def test_actor_mapping(actor: str, employee_id: str) -> None:
         "initech-bot",
         # The fleet GitHub App: its work is the fleet's, never a person's.
         "omniagentos-bot[bot]",
-        "4580856+omniagentos-bot[bot]@users.noreply.github.com",
+        "00000000+omniagentos-bot[bot]@users.noreply.github.com",
     ],
 )
 def test_bot_identities_are_not_employees(actor: str) -> None:

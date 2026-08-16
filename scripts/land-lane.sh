@@ -44,7 +44,7 @@ if [ "$DO_COMMIT" = "1" ]; then
     # environment on checkout.
     git -C "$DEST" reset -q -- node_modules .venv dashboard/node_modules 2>/dev/null || true
     git -C "$DEST" -c user.name="${LANE_AUTHOR:-swarm-lane}" \
-        -c user.email="${LANE_EMAIL:-4580856+omniagentos-bot[bot]@users.noreply.github.com}" commit -q -m "$MSG"
+        -c user.email="${LANE_EMAIL:-00000000+omniagentos-bot[bot]@users.noreply.github.com}" commit -q -m "$MSG"
     echo "committed in lane: $(git -C "$DEST" log --oneline -1)"
   else
     echo "nothing to commit in lane (already committed or empty)"

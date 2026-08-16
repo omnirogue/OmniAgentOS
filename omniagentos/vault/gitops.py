@@ -16,7 +16,7 @@ from omniagentos.vault.errors import VaultGitGuardError
 
 AUTOCOMMIT_ENV = "OMNIAGENTOS_VAULT_AUTOCOMMIT"
 BOT_NAME = "omniagentos-bot"
-BOT_EMAIL = "4580856+omniagentos-bot[bot]@users.noreply.github.com"
+BOT_EMAIL = "00000000+omniagentos-bot[bot]@users.noreply.github.com"
 
 
 def autocommit_enabled(explicit: bool | None) -> bool:
@@ -30,7 +30,7 @@ def autocommit_enabled(explicit: bool | None) -> bool:
 
 def commit_note(vault_dir: str, abs_path: Path, note_type: str, note_id: str) -> None:
     """`git add <abs_path> && git commit`, author/committer `omniagentos-bot
-    <4580856+omniagentos-bot[bot]@users.noreply.github.com>`, message `vault: <note_type> <note_id>`. Never
+    <00000000+omniagentos-bot[bot]@users.noreply.github.com>`, message `vault: <note_type> <note_id>`. Never
     pushes.
 
     HARD GUARD: after staging, inspects the FULL staged set (not just the file

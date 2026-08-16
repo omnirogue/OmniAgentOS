@@ -105,7 +105,7 @@ DEFAULT_TRANSCRIPT_ARCHIVE_ROOT = Path.home() / ".claude" / "archive" / "transcr
 LOG_ROTATE_EXCLUDE = frozenset({"hygiene.log"})
 
 _TS_FMT = "%Y-%m-%dT%H:%M:%SZ"
-_BOT_IDENTITY = ("-c", "user.name=hygiene", "-c", "user.email=4580856+omniagentos-bot[bot]@users.noreply.github.com")
+_BOT_IDENTITY = ("-c", "user.name=hygiene", "-c", "user.email=00000000+omniagentos-bot[bot]@users.noreply.github.com")
 
 
 # --------------------------------------------------------------------------

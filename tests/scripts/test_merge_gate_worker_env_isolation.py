@@ -168,10 +168,10 @@ def _install_marker_stub(repo: Path) -> None:
 # the ``cd "$SCRATCH" && \`` line, the indentation, the ``PYTHONPATH=`` line
 # that happened to sit underneath, and the exact list of keys handed to
 # ``env -u``. Every one of those is incidental to what is under test. So when
-# bac2719e widened the scrub from the pair (OMNIAGENTOS_GATE_WORKSPACE,
+# ed3d114a widened the scrub from the pair (OMNIAGENTOS_GATE_WORKSPACE,
 # MERGE_GATE_PY) to the trio (+ MERGE_GATE_PINNED) — a change that STRENGTHENED
 # the very property this module pins — the anchors stopped binding and this
-# module went red on every candidate that came near it (3fce04aa and 217304c9
+# module went red on every candidate that came near it (ab7985a8 and eaaf48eb
 # among them). Re-typing the anchors to match the new text fixes the day and
 # leaves the mechanism, which breaks again on the next refactor.
 #
@@ -415,7 +415,7 @@ def _gate_without_worker_env_scrub(tmp_path: Path) -> Path:
 #
 # The negative controls in this module are guards. Their binding to
 # merge-gate.sh was, until now, the only part of them nothing guarded — which
-# is why a strengthening refactor (bac2719e) could switch them off. These run
+# is why a strengthening refactor (ed3d114a) could switch them off. These run
 # in milliseconds on synthetic source and turn a drift into an instant, named
 # failure instead of one discovered inside a three-minute gate run.
 # ---------------------------------------------------------------------------
@@ -462,7 +462,7 @@ openapi_step() {
 """
 
 #: Reformattings of the workers that must NOT disturb either revert-check.
-#: "widened-key-list" is the literal 2026-08-08 drift (bac2719e added a third
+#: "widened-key-list" is the literal 2026-08-08 drift (ed3d114a added a third
 #: ``-u``); the rest are the neighbouring shapes an ordinary refactor produces.
 _REFACTORS: tuple[tuple[str, str, str], ...] = (
     (
@@ -508,7 +508,7 @@ def test_the_revert_checks_survive_reformatting_of_the_worker_bodies(
     """The anchors track merge-gate.sh through a refactor instead of breaking on it.
 
     This is the regression pin for 2026-08-08. The old anchors quoted the worker
-    bodies verbatim, so ``widened-key-list`` below — literally what bac2719e did
+    bodies verbatim, so ``widened-key-list`` below — literally what ed3d114a did
     — unbound them and took this whole module red on candidates that never
     touched the gate. Each shape here must still yield the SAME reverts.
     """

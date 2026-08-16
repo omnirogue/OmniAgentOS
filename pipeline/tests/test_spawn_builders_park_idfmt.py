@@ -34,9 +34,9 @@ from bridge import spawn_builders as sb  # noqa: E402
 
 # The three id shapes the live `parked/` directory actually carries alongside
 # full sha256s, verbatim from var/loopqueue/parked (2026-08-11).
-SHORT_ID = "sha256:043b77fe3ac43"
+SHORT_ID = "sha256:d4b10e97d5e3f"
 DESCRIPTIVE_ID = "sha256:loop-accounts-weekly-exhausted-20260810"
-NAMESPACED_ID = "parked/billing-harm-c36bb80d53-0810"
+NAMESPACED_ID = "parked/billing-harm-9eddb04dd5-0810"
 
 
 @pytest.fixture(autouse=True)
@@ -97,9 +97,9 @@ def _parked(root: Path) -> set[str]:
 
 
 @pytest.mark.parametrize(("ident", "filename"), [
-    (SHORT_ID, "sha256_043b77fe3ac43.json"),
+    (SHORT_ID, "sha256_d4b10e97d5e3f.json"),
     (DESCRIPTIVE_ID, "sha256_loop-accounts-weekly-exhausted-20260810.json"),
-    (NAMESPACED_ID, "billing-harm-c36bb80d53-0810.json"),
+    (NAMESPACED_ID, "billing-harm-9eddb04dd5-0810.json"),
 ])
 def test_odd_id_sidecar_does_not_starve_the_fan_out(
         loops_root: Path, ident: str, filename: str) -> None:
@@ -120,8 +120,8 @@ def test_odd_id_sidecar_does_not_starve_the_fan_out(
 
 
 @pytest.mark.parametrize(("ident", "filename"), [
-    (SHORT_ID, "sha256_043b77fe3ac43.json"),
-    (NAMESPACED_ID, "billing-harm-c36bb80d53-0810.json"),
+    (SHORT_ID, "sha256_d4b10e97d5e3f.json"),
+    (NAMESPACED_ID, "billing-harm-9eddb04dd5-0810.json"),
 ])
 def test_odd_id_sidecar_parks_both_body_and_filename_keys(
         loops_root: Path, ident: str, filename: str) -> None:
@@ -171,9 +171,9 @@ def test_conventional_live_filenames_raise_no_alerts(loops_root: Path) -> None:
     _write_park(loops_root, f"sha256_{'a' * 64}.json", {"id": full, "kind": "park"})
     _write_park(loops_root, f"sha256_{'a' * 64}.parkinfo.json",
                 {"id": full, "kind": "proposal", "reason": "blocked-on-human"})
-    _write_park(loops_root, "sha256_043b77fe3ac43.json",
+    _write_park(loops_root, "sha256_d4b10e97d5e3f.json",
                 {"id": SHORT_ID, "kind": "proposal"})
-    _write_park(loops_root, "billing-harm-c36bb80d53-0810.json",
+    _write_park(loops_root, "billing-harm-9eddb04dd5-0810.json",
                 {"id": NAMESPACED_ID, "kind": "park"})
 
     alerts: list[str] = []
@@ -201,7 +201,7 @@ def test_disagreeing_sidecar_alerts_once_not_every_iteration(
     ("corrupt.json", "{not json"),
     ("truncated.json", '{"id": "sha256:aaa'),
     ("list-body.json", [{"id": SHORT_ID}]),
-    ("string-body.json", '"sha256:043b77fe3ac43"'),
+    ("string-body.json", '"sha256:d4b10e97d5e3f"'),
     ("null-body.json", "null"),
     ("no-id.json", {"kind": "park", "reason": "operator ruling owed"}),
     ("null-id.json", {"id": None, "kind": "park"}),
@@ -248,7 +248,7 @@ def test_parked_dir_that_is_not_a_directory_still_refuses(tmp_path: Path) -> Non
 def test_ledger_hole_still_refuses_even_with_clean_sidecars(
         loops_root: Path) -> None:
     """The park relaxation must not have loosened the ledger gate beside it."""
-    _write_park(loops_root, "sha256_043b77fe3ac43.json", {"id": SHORT_ID})
+    _write_park(loops_root, "sha256_d4b10e97d5e3f.json", {"id": SHORT_ID})
     (loops_root / "ledger.jsonl").write_text("{torn")
     with pytest.raises(sb._SelectionRefused):
         _select(loops_root)
@@ -267,9 +267,9 @@ def test_park_ident_from_name_matches_the_estate_derivation() -> None:
     produce — deliberately, because this helper is the comparison point
     against them. It is NOT the exclusion key; see the `_park_idents_from_name`
     tests below, which is where the safety property lives."""
-    assert sb._park_ident_from_name("sha256_043b77fe3ac43.json") == SHORT_ID
+    assert sb._park_ident_from_name("sha256_d4b10e97d5e3f.json") == SHORT_ID
     assert sb._park_ident_from_name(
-        "billing-harm-c36bb80d53-0810.json") == "billing-harm-c36bb80d53-0810"
+        "billing-harm-9eddb04dd5-0810.json") == "billing-harm-9eddb04dd5-0810"
     assert sb._park_ident_from_name(
         f"sha256_{'d' * 64}.parkinfo.json") == f"sha256:{'d' * 64}.parkinfo"
 
@@ -281,7 +281,7 @@ def test_parkinfo_name_yields_the_bare_id_too() -> None:
     assert sb._park_idents_from_name(f"sha256_{'d' * 64}.parkinfo.json") == {
         f"{full}.parkinfo", full}
     # a name with no .parkinfo infix contributes exactly itself
-    assert sb._park_idents_from_name("sha256_043b77fe3ac43.json") == {SHORT_ID}
+    assert sb._park_idents_from_name("sha256_d4b10e97d5e3f.json") == {SHORT_ID}
 
 
 def test_parkinfo_only_carrier_with_stale_body_still_excludes(

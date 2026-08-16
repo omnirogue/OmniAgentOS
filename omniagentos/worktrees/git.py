@@ -253,7 +253,7 @@ class SubprocessWorktrees:
 
     _IDENTITY = (
         "-c",
-        "user.email=4580856+omniagentos-bot[bot]@users.noreply.github.com",
+        "user.email=00000000+omniagentos-bot[bot]@users.noreply.github.com",
         "-c",
         "user.name=OmniAgentOS Swarm",
     )

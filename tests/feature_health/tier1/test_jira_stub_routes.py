@@ -302,7 +302,7 @@ def test_per_issue_rate_limit_pauses_next_send_to_that_issue_only() -> None:
 
     http = httpx.Client(transport=transport)
     jira = JiraClient(
-        base_url="https://initech-team.atlassian.net",
+        base_url="https://example-team.atlassian.net",
         email="bot@example.com",
         api_token="tok",
         client=http,
