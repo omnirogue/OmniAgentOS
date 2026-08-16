@@ -1,4 +1,4 @@
-<!-- archdocs:stamp git_head=0195c8e max_migration=137 route_count=354 generated_at=2026-08-16T11:14:37Z -->
+<!-- archdocs:stamp git_head=7f7c64e max_migration=137 route_count=354 generated_at=2026-08-16T11:18:05Z -->
 # ARCHI.md — OmniAgentOS architecture map
 
 Compact top map for agents and humans: what exists, where it lives, how to extend it.
