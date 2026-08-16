@@ -1,0 +1,16 @@
+diff --git a/omniagentos/simgate.py b/omniagentos/simgate.py
+index 98b2b863..53bc2737 100644
+--- a/omniagentos/simgate.py
++++ b/omniagentos/simgate.py
+@@ -115,8 +115,9 @@ def resolve_sim_context(environ: Mapping[str, str] | None = None) -> SimContext:
+             f"OMNIAGENTOS_SIM_ROOT={sim_root_raw!r} is not absolute; set "
+             "OMNIAGENTOS_SIM_ROOT to an absolute existing simulations directory"
+         )
+-    campaign_parts = inode_relative_parts(campaign_root, sim_root)
+-    if campaign_parts is None:
++    # COUNTERFEIT: string prefix instead of inode containment (sibling-prefix escape)
++    campaign_parts = ("string-prefix",) if str(campaign_root).startswith(str(sim_root)) else None
++    if campaign_parts is None:
+         raise _refuse(
+             "OMNIAGENTOS_SIM_CAMPAIGN_ROOT is not inode-contained in "
+             f"OMNIAGENTOS_SIM_ROOT={sim_root_raw!r}; set both variables so the "

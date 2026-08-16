@@ -1,0 +1,34 @@
+# Scoped ruff config for tools/capmap.
+#
+# WHY THIS IS NOT IN THE ROOT pyproject.toml
+# ------------------------------------------
+# `pyproject.toml` is in scripts/testlanes/impacted.py's GLOBAL_FILES set:
+# "Changing any of these changes the whole run's configuration; no per-file edge
+# can bound it." So a two-line lint pin in the root file marks the ENTIRE suite
+# impacted, the impact closure jumps past FULL_ESCALATION_FRACTION (measured:
+# 1018/1324 test files, 77%), test-pr escalates to the whole fast-lane tree, and
+# the run takes ~47min against a ~48min budget and dies on timeout (exit 124).
+# The lane behaved exactly as designed; the diff was simply larger, in the one
+# way that matters, than it looked.
+#
+# WHY THESE RULES ARE PINNED
+# --------------------------
+# tools/capmap runs under launchd via /usr/bin/python3 — the macOS SYSTEM Python,
+# 3.9.6 on this Mac — not the py312 the repo targets. Its plist hardcodes that
+# interpreter, deliberately, so the capability checker keeps working in launchd's
+# stripped environment with stdlib only.
+#
+#   UP017  rewrites datetime.timezone.utc to datetime.UTC   (3.11+)
+#   B905   adds zip(..., strict=)                            (3.10+)
+#
+# Both raise at IMPORT under 3.9 (AttributeError; "zip() takes no keyword
+# arguments"). Applying them made the whole capmap suite fail to load — i.e. a
+# lint "modernisation" would have made the monitoring system die silently at
+# startup, which is precisely the failure class capmap exists to detect. Caught
+# by the test suite 2026-08-15; pinned here so a future cleanup pass cannot
+# quietly reintroduce them.
+
+extend = "../../pyproject.toml"
+
+[lint.per-file-ignores]
+"*.py" = ["UP017", "B905"]

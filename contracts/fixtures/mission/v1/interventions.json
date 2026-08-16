@@ -1,0 +1,99 @@
+[
+  {
+    "id": "int_clarification",
+    "variant": "clarification",
+    "execution_id": "exec_clarify_1",
+    "project_id": "proj_routing",
+    "company_id": "comp_alpha",
+    "kind": "clarification",
+    "status": "open",
+    "question": "Which project should own this execution?",
+    "decided": false
+  },
+  {
+    "id": "int_approval",
+    "variant": "approval",
+    "execution_id": "exec_approval_1",
+    "project_id": "proj_mission_rail",
+    "company_id": "comp_alpha",
+    "kind": "approval",
+    "status": "pending",
+    "approval_class": "consequential",
+    "decided": false
+  },
+  {
+    "id": "int_access",
+    "variant": "access-request",
+    "execution_id": "exec_approval_1",
+    "project_id": "proj_mission_rail",
+    "company_id": "comp_alpha",
+    "kind": "access_request",
+    "status": "pending",
+    "tool_name": "Bash",
+    "decided": false
+  },
+  {
+    "id": "int_cost_gate",
+    "variant": "cost-spend-gate",
+    "execution_id": "exec_ready_1",
+    "project_id": "proj_mission_rail",
+    "company_id": "comp_alpha",
+    "kind": "cost_spend_gate",
+    "status": "pending",
+    "threshold_usd_nanos": 25000000000,
+    "decided": false
+  },
+  {
+    "id": "int_expired",
+    "variant": "expired-approval",
+    "execution_id": "exec_approval_1",
+    "project_id": "proj_mission_rail",
+    "company_id": "comp_alpha",
+    "kind": "approval",
+    "status": "expired",
+    "decided": false,
+    "expires_at": "2026-07-30T12:00:00.000Z",
+    "expiry_events": [
+      {"time": "2026-07-30T11:59:59.999Z", "type": "1ms_before"},
+      {"time": "2026-07-30T12:00:00.000Z", "type": "exact"},
+      {"time": "2026-07-30T12:00:00.001Z", "type": "1ms_after"}
+    ]
+  },
+  {
+    "id": "int_conflict",
+    "variant": "already-decided-conflict",
+    "execution_id": "exec_approval_1",
+    "project_id": "proj_mission_rail",
+    "company_id": "comp_alpha",
+    "kind": "approval",
+    "status": "conflict",
+    "decided": true,
+    "prior_decision": "approved",
+    "conflicting_decision": "rejected",
+    "reason": "second decision against already-decided approval"
+  },
+  {
+    "id": "int_irreversible",
+    "variant": "irreversible-action",
+    "execution_id": "exec_risk_1",
+    "project_id": "proj_mission_rail",
+    "company_id": "comp_alpha",
+    "kind": "irreversible_action",
+    "status": "pending",
+    "decided": false,
+    "action": "drop_production_table",
+    "reversible": false
+  },
+  {
+    "id": "int_rollback_unavail",
+    "variant": "rollback-unavailable",
+    "execution_id": "exec_risk_1",
+    "project_id": "proj_mission_rail",
+    "company_id": "comp_alpha",
+    "kind": "rollback",
+    "status": "unavailable",
+    "decided": false,
+    "rollback_available": false,
+    "reason": "no snapshot to restore"
+  }
+]

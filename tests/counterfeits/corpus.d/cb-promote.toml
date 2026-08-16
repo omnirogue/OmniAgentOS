@@ -1,0 +1,99 @@
+# Lane cb-promote — chat → board promotion.
+#
+# Every patch here mutates PRODUCTION code on the real promote path, and every
+# must_fail entry names a test that runs the REAL `_extract_action_items`. An
+# earlier round of this lane guarded only the mocked path: the corpus was green
+# while a three-ask thread collapsed into one card, because the mock supplied
+# the provenance the extractor never produced.
+
+[[counterfeit]]
+id = "cf-promote-release-orphans-executor"
+title = "A failed dispatch archives the card and abandons the executor it started"
+description = "Release the reservation unconditionally on the dispatch failure path, without checking whether an executor was attached."
+patch = "patches/cf-promote-release-orphans-executor.patch"
+rationale = "dispatch_spec can start work and then raise: session mode spawns before recording result_ref, run mode creates the run before attaching run_id. Releasing blindly archives the card out of sight while its run/session keeps working the operator's repo, and frees the item so the next retry starts a SECOND executor. A cancelled card is not a cancelled executor — the same defect class that reserve-before-dispatch exists to prevent, on the failure path."
+must_fail = [
+  "tests/chats/test_promote.py::test_a_dispatch_that_dies_after_starting_work_cancels_it_and_holds_the_item",
+]
+failure_re = "never archive a card whose executor is alive|the item stays held|told to stop|AssertionError"
+applies_to = ["omniagentos/api/routes/chats.py"]
+
+[[counterfeit]]
+id = "cf-promote-reservation-not-a-claim"
+title = "Two racing promotes each start their own executor"
+description = "Drop the NOT EXISTS guard from the reservation INSERT, so creating the promoted card stops being an item claim."
+patch = "patches/cf-promote-reservation-not-a-claim.patch"
+rationale = "The (chat_id, item_key) claim is taken by the INSERT that creates the card, BEFORE dispatch_spec is called, precisely so the loser of a race never reaches an executor. Without the guard both racers insert and both dispatch: for execute_mode='session' that is two live sessions working the same ask against the operator's repo, and cancelling the loser's CARD does not cancel its SESSION. Guarded across processes, not just threads."
+# The in-process double-click test is NOT listed: the per-item gate alone still
+# holds it green under this mutation, and a must_fail entry that passes is the
+# same decoration this corpus exists to prevent. Both entries below fail because
+# the CLAIM is gone — one with the gate stubbed out, one across real processes.
+must_fail = [
+  "tests/chats/test_promote.py::test_the_reservation_is_atomic_even_without_the_in_process_gate",
+  "tests/chats/test_promote.py::test_two_processes_promoting_one_item_start_one_executor",
+]
+failure_re = "must not start two executors|must never start an executor|started two executors|AssertionError"
+applies_to = ["omniagentos/chats/store.py"]
+
+[[counterfeit]]
+id = "cf-promote-extractor-loses-source"
+title = "Extraction stops naming the message each item came from"
+description = "Pin the heuristic branch's source_message_index to 0 instead of the real enumerate() position."
+patch = "patches/cf-promote-extractor-loses-source.patch"
+rationale = "Item identity is derived from the SOURCE MESSAGE, so the extractor must report which message each item came from. When every item claimed message 0, three distinct asks deduped into one card and promote returned the same task id three times. This is the defect that shipped; the guard must live on the un-mocked path."
+must_fail = [
+  "tests/chats/test_promote.py::test_three_asks_promote_to_three_distinct_cards",
+]
+failure_re = "each card must record the message it actually came from|AssertionError"
+applies_to = ["omniagentos/api/routes/chats.py"]
+
+[[counterfeit]]
+id = "cf-promote-index-defaults-to-zero"
+title = "An unusable model index silently becomes message 0"
+description = "Restore the source_message_index default of 0 when the extractor names no valid source message."
+patch = "patches/cf-promote-index-defaults-to-zero.patch"
+rationale = "A missing or out-of-range index must fall back to the item's own content, never to message 0: keying an item to an unrelated message writes false provenance and makes the card's identity depend on prose it did not come from."
+must_fail = [
+  "tests/chats/test_promote.py::test_unusable_llm_source_index_still_yields_distinct_cards",
+]
+failure_re = "an unvalidated index is never recorded as provenance|AssertionError"
+applies_to = ["omniagentos/api/routes/chats.py"]
+
+[[counterfeit]]
+id = "cf-promote-chat-label-to-workfs"
+title = "A chat label is written to the operator's filesystem"
+description = "Restore the meta.folder fallback so a chat's colour-coded label is used as a Work-folder path."
+patch = "patches/cf-promote-chat-label-to-workfs.patch"
+rationale = "migration 088 defines meta.folder as a free-text chat LABEL for the sidebar. Treating it as a path makes promotion create real directories named after arbitrary chat groupings under the operator's WORK root; only the picker's work_folder may reach workfs."
+must_fail = [
+  "tests/chats/test_promote.py::test_chat_label_never_reaches_the_filesystem",
+]
+failure_re = "only the company folder may be created|AssertionError"
+applies_to = ["omniagentos/api/routes/chats.py"]
+
+[[counterfeit]]
+id = "cf-promote-not-idempotent"
+title = "Re-promoting an item creates a duplicate card"
+description = "Remove BOTH dedupe layers: the fast-path lookup in the route and the claim in the reservation INSERT."
+patch = "patches/cf-promote-not-idempotent.patch"
+rationale = "Re-promote idempotency is defended twice on purpose — the lookup answers cheaply from the card that already holds the item, and the reservation's claim is the backstop that also survives a race. Removing either alone is invisible (that is the point of defence in depth), so this counterfeit removes both, which is what an accidental 'simplify the dedupe' refactor does. The key is the source message's content, so it holds even when the LLM re-words the same ask."
+must_fail = [
+  "tests/chats/test_promote.py::test_repromote_idempotent",
+  "tests/chats/test_promote.py::test_repromote_with_reworded_llm_output_stays_one_card",
+  "tests/chats/test_promote.py::test_repromote_after_thread_grows_creates_only_the_new_cards",
+  "tests/chats/test_promote.py::test_two_concurrent_promotes_of_one_item_create_one_card",
+]
+failure_re = "assert .* == .*|AssertionError"
+applies_to = ["omniagentos/api/routes/chats.py", "omniagentos/chats/store.py"]
+
+[[counterfeit]]
+id = "cf-promoted-card-autoruns"
+title = "Promoted cards auto-run if the default execute mode is session"
+description = "Force a live session when no execute mode was requested, rather than leaving the card in To-Do."
+patch = "patches/cf-promoted-card-autoruns.patch"
+rationale = "A default promotion must pass readonly to dispatch_spec, leaving the card open until the operator explicitly selects an execution mode."
+must_fail = [
+  "tests/chats/test_promote.py::test_promoted_card_not_running_by_default",
+]
+failure_re = "readonly|AssertionError"
+applies_to = ["omniagentos/api/routes/chats.py"]

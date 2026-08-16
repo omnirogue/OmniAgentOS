@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!-- Hourly team-channel queue pulse. The 16:00 overnight suggestions use the
+     separate team-pulse-overnight job because launchd arguments are per job. -->
+<plist version="1.0">
+<dict>
+	<key>Label</key>
+	<string>com.omniagentos.team-pulse</string>
+	<key>EnvironmentVariables</key>
+	<dict>
+		<key>PATH</key>
+		<string>/usr/local/bin:/opt/homebrew/bin:/usr/bin:/bin:/usr/sbin:/sbin</string>
+		<key>OMNIAGENTOS_DB</key>
+		<string>/Users/youruser/OmniAgentOS/var/runtime/state.sqlite3</string>
+	</dict>
+	<key>ProgramArguments</key>
+	<array>
+		<string>/Users/youruser/OmniAgentOS/.venv/bin/python</string>
+		<string>-m</string>
+		<string>omniagentos.team.notify</string>
+		<string>--pulse</string>
+		<string>--db</string>
+		<string>/Users/youruser/OmniAgentOS/var/runtime/state.sqlite3</string>
+	</array>
+	<key>WorkingDirectory</key>
+	<string>/Users/youruser/OmniAgentOS</string>
+	<key>StartCalendarInterval</key>
+	<array>
+		<dict><key>Hour</key><integer>8</integer><key>Minute</key><integer>0</integer></dict>
+		<dict><key>Hour</key><integer>9</integer><key>Minute</key><integer>0</integer></dict>
+		<dict><key>Hour</key><integer>10</integer><key>Minute</key><integer>0</integer></dict>
+		<dict><key>Hour</key><integer>11</integer><key>Minute</key><integer>0</integer></dict>
+		<dict><key>Hour</key><integer>12</integer><key>Minute</key><integer>0</integer></dict>
+		<dict><key>Hour</key><integer>13</integer><key>Minute</key><integer>0</integer></dict>
+		<dict><key>Hour</key><integer>14</integer><key>Minute</key><integer>0</integer></dict>
+		<dict><key>Hour</key><integer>15</integer><key>Minute</key><integer>0</integer></dict>
+		<dict><key>Hour</key><integer>17</integer><key>Minute</key><integer>0</integer></dict>
+		<dict><key>Hour</key><integer>18</integer><key>Minute</key><integer>0</integer></dict>
+	</array>
+	<key>RunAtLoad</key>
+	<false/>
+	<key>KeepAlive</key>
+	<false/>
+	<key>StandardOutPath</key>
+	<string>/Users/youruser/OmniAgentOS/var/log/team-pulse.log</string>
+	<key>StandardErrorPath</key>
+	<string>/Users/youruser/OmniAgentOS/var/log/team-pulse.log</string>
+</dict>
+</plist>

@@ -1,0 +1,63 @@
+#!/usr/bin/env bash
+# Git post-merge hook for archdocs automated refresh.
+#
+# Runs on any merge to auto-update the Living Architecture Document (ARCHI.md/ARCHI.json).
+set -euo pipefail
+
+# 1. HEAD branch != main
+BRANCH=$(git branch --show-current 2>/dev/null || git rev-parse --abbrev-ref HEAD 2>/dev/null)
+if [ "$BRANCH" = "main" ]; then
+  exit 0
+fi
+
+# 2. git rev-parse --show-toplevel != /Users/youruser/OmniAgentOS
+TOPLEVEL=$(git rev-parse --show-toplevel 2>/dev/null)
+if [ "$TOPLEVEL" != "/Users/youruser/OmniAgentOS" ]; then
+  exit 0
+fi
+
+# 3. env OMNIAGENTOS_ARCHDOCS_HOOK=0
+if [ "${OMNIAGENTOS_ARCHDOCS_HOOK:-}" = "0" ]; then
+  exit 0
+fi
+
+# 4. last commit subject starts with archi-morning: or archdocs: (loop guard)
+SUBJECT=$(git log -1 --format=%s 2>/dev/null || true)
+case "$SUBJECT" in
+  archi-morning:*|archdocs:*)
+    exit 0
+    ;;
+esac
+
+# Execute foreground mechanical refresh with the loop-guard env set
+OMNIAGENTOS_ARCHDOCS_HOOK=0 bash "$TOPLEVEL/scripts/archi-morning/archi-morning.sh"
+
+# Narrative pass DISABLED by operator instruction 2026-07-31: the background
+# gemini-narrative auto-commit wrote hallucinated architecture claims onto
+# in-flight branches (one instance already reverted as 0d1a1c42). Mechanical
+# refresh above stays. Re-enable only behind a review step, never AUTOCOMMIT=1.
+
+# --- Ledger merge-row instrumentation (best-effort, never blocks a merge) ---
+# Appended to close the throughput-instrument gap: scripts/ops/merge_truth.py
+# is the authoritative git-truth counter (it reads `git log --merges`
+# directly and does not depend on this hook running at all). This block is a
+# best-effort supplement so the session ledger also gets an automatic merge
+# row going forward, instead of relying on a human/agent remembering to run
+# `ledger append`. It only runs for merges that already passed the guards
+# above (non-main branch, primary checkout, no loop-guard override), so it
+# is one input among several, not the source of truth -- always trust
+# merge_truth.py over raw ledger rows for throughput counts.
+#
+# Absolute path required: hooks (like launchd jobs) run with a stripped
+# PATH, so a bare `ledger` lookup would silently fail to resolve.
+LEDGER_BIN="/Users/youruser/Work/Ops/bin/ledger"
+if [ -x "$LEDGER_BIN" ]; then
+  MERGE_SHA=$(git -C "$TOPLEVEL" rev-parse HEAD 2>/dev/null || true)
+  "$LEDGER_BIN" append \
+    --agent "post-merge-hook" \
+    --event merge \
+    --project "OmniAgentOS" \
+    --summary "Auto-recorded by scripts/git-hooks/post-merge (git-truth instrumentation)" \
+    --refs "{\"branch\":\"${BRANCH}\",\"sha\":\"${MERGE_SHA}\"}" \
+    >/dev/null 2>&1 || true
+fi

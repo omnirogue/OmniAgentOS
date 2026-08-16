@@ -1,0 +1,24 @@
+diff --git a/omniagentos/scheduler/routines.py b/omniagentos/scheduler/routines.py
+index 3e2d3106..11c4de26 100644
+--- a/omniagentos/scheduler/routines.py
++++ b/omniagentos/scheduler/routines.py
+@@ -346,17 +346,8 @@ def _real_target_parts(target: str) -> tuple[str, ...]:
+     part of the evidence), so an effective alias must be COMMITTED, and a
+     committed alias resolves here too.
+     """
+-    from omniagentos.contracts import _repo_root
+-    from omniagentos.scheduler.gate_runner import TARGET_INSIDE, locate_gate_target
+-
+-    spelled = PurePosixPath(target.split("::", 1)[0]).parts
+-    try:
+-        located = locate_gate_target(Path(_repo_root()), target)
+-    except OSError:  # pragma: no cover — an unreadable checkout is not a verdict
+-        return spelled
+-    if located.status == TARGET_INSIDE and located.parts is not None:
+-        return located.parts
+-    return spelled
++    # COUNTERFEIT: the spelling is the path (no filesystem needed)
++    return PurePosixPath(target.split("::", 1)[0]).parts
+ 
+ 
+ def loop_gate_target_verdict(parts: tuple[str, ...]) -> str | None:

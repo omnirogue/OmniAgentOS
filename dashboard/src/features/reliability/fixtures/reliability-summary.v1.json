@@ -1,0 +1,57 @@
+{
+  "contract_version": "reliability-summary.v1",
+  "generated_at": "2026-07-25T16:30:00Z",
+  "health": "degraded",
+  "degraded_reasons": [
+    "open_events_unavailable",
+    "watch_state_unavailable"
+  ],
+  "open_events": {
+    "info": null,
+    "warning": null,
+    "critical": null
+  },
+  "open_events_state": "unavailable",
+  "open_info": null,
+  "open_warning": null,
+  "open_critical": null,
+  "last_audit": {
+    "id": "aud_fixture",
+    "kind": "twice_daily",
+    "status": "completed",
+    "findings": 2,
+    "started_at": "2026-07-25T06:30:00Z",
+    "finished_at": "2026-07-25T06:36:00Z"
+  },
+  "last_audit_state": "current",
+  "last_audit_status": "completed",
+  "last_audit_at": "2026-07-25T06:36:00Z",
+  "last_audit_kind": "twice_daily",
+  "last_audit_findings": 2,
+  "watch": {
+    "state": "last_known_good",
+    "heartbeat_at": "2026-07-25T16:29:00Z",
+    "cursor_at": "2026-07-25T16:20:00Z",
+    "age_seconds": 60,
+    "stale_after_seconds": 2700,
+    "error": "watch_state_unavailable"
+  },
+  "watch_heartbeat": "2026-07-25T16:29:00Z",
+  "watch_cursor_at": "2026-07-25T16:20:00Z",
+  "watch_cursor_age_s": 60,
+  "mode": "approve",
+  "incidents": [
+    {
+      "code": "open_events_unavailable",
+      "component": "open_events",
+      "severity": "critical",
+      "message": "Open reliability-event totals could not be read."
+    },
+    {
+      "code": "watch_state_unavailable",
+      "component": "watch",
+      "severity": "critical",
+      "message": "Watcher state could not be read; showing last known good state when available."
+    }
+  ]
+}

@@ -1,0 +1,21 @@
+diff --git a/omniagentos/scheduler/loop_effects.py b/omniagentos/scheduler/loop_effects.py
+index 01bcfd0c..8dc6c183 100644
+--- a/omniagentos/scheduler/loop_effects.py
++++ b/omniagentos/scheduler/loop_effects.py
+@@ -571,13 +571,12 @@ def _from_llm_transport(exc: BaseException, detail: str) -> SeamError:
+     )
+     if isinstance(cause, urllib.error.URLError):
+         reason = cause.reason
+-        if isinstance(reason, unreached) and not isinstance(reason, TimeoutError):
++        if isinstance(reason, (*unreached, TimeoutError)):
+             return SeamUnavailable("model_unreached", detail)
+         return SeamUnknown("model_ambiguous", detail)
+ 
+-    # Anything else the client wrapped (a bare socket error out of the response
+-    # read, or a transport error raised with no cause at all) is ambiguous by
+-    # construction.
++    if isinstance(cause, TimeoutError):
++        return SeamUnavailable("model_unreached", detail)
+     return SeamUnknown("model_ambiguous", detail)
+ 
+ 

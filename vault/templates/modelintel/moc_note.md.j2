@@ -1,0 +1,36 @@
+# source: Model Intelligence
+
+[[Home]] · hub for the model capability knowledge graph. Updated daily by
+`omniagentos.modelintel.daily` (launchd `com.omniagentos.modelintel`).
+Last update: **{{ updated_at }}**.
+
+## Who's best at what
+
+| Domain | 1st | 2nd | 3rd |
+|---|---|---|---|
+{% for d in domains %}| [[{{ d.key }}\|{{ d.title }}]] | {{ d.top[0] }} | {{ d.top[1] }} | {{ d.top[2] }} |
+{% endfor %}
+
+## Models
+
+{% for m in models %}- [[{{ m.key }}|{{ m.title }}]] — {{ m.lineage }}{{ ' (%s)' % (m.fusion_agents | join(', ')) if m.fusion_agents else '' }}
+{% endfor %}
+
+## Benchmarks feeding the graph
+
+{% for b in benchmarks %}- [[{{ b.key }}|{{ b.title }}]] — {{ b.status }}
+{% endfor %}
+
+## Releases & shake-ups (research sweep)
+
+{% if releases %}{% for r in releases %}- **{{ r.model_name }}** — {{ r.note }}{{ ' ([src](%s))' % r.source_url if r.source_url else '' }}
+{% endfor %}{% else %}_Nothing new from the last sweep._
+{% endif %}
+
+## Routing
+
+- Optional Grok router: `python -m omniagentos.modelintel route --task "..." --mode <superfast|ultrafast|fusionbuild|ultrabuild>`
+- Fusion digest consumed by the router: `~/.claude/fusion/model-intel.json`
+- Registry (source of truth): `var/modelintel/registry.json`
+
+## Notes (human)

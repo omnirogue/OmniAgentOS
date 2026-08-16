@@ -1,0 +1,33 @@
+# memcert deterministic retrieval-sufficiency bars (DESIGN-v2.md §4).
+# A NEW instrument alongside bars.yaml: these floors grade the CONTEXT the
+# production memory stack builds (evidence containment, zero LLM calls), so
+# they run in the DEFAULT pytest lane on every merge
+# (tests/memcert/test_sufficiency.py) and via scripts/memcert/sufficiency.py
+# --bars on the cadence. RATCHET UP ONLY, same doctrine as bars.yaml.
+#
+# Seeded 2026-08-13 (turn-grain retrieval), RATCHETED UP same day after
+# sentence-grain retrieval landed (gemini-critic round guided): measured run
+# (seeds 42+43, scale S, dev, budget 12000, system arm = hybrid assembler at
+# production defaults, sentence-grain history + date-binding check):
+#   system:        A 1.0  B 1.0  C 1.0  D 1.0  F 1.0  G 1.0  H 1.0
+#   system_legacy: A 0.69 B 0.12 C 0.38 D 1.0  F 0.94 G 0.25 H 0.31
+# Floors sit ~one measured-item step (0.0625 at n=16) below the observation so
+# a single-item fixture shift on a future rotation does not false-red, while
+# any real mechanism regression (retrieval leg dead, reserve packing broken,
+# stamps dropped) does. Ratchet-only: raises ride measurements, never hand-cuts.
+version: 2
+arms:
+  system:
+    floors:
+      A: 0.90
+      B: 0.90
+      C: 0.90   # date-BINDING required (round-2 F1); sentence hits carry stamps
+      D: 0.95   # the crown jewel — recency structure must keep surfacing the latest value
+      F: 0.90
+      G: 0.90   # lessons must stay retrievable, not merely recent
+      H: 0.90
+    stale_only_max: 0.15
+dominance:
+  # The hybrid stack must never retrieve WORSE than the v1 assembler on any
+  # axis — the no-regression half of the upgrade certification.
+  - {arm: system, over: system_legacy}

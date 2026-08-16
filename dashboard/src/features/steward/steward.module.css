@@ -1,0 +1,90 @@
+/* Steward feature content classes. Page-level layout/header come from the shared
+   <Page>/<PageHeader> (@/design) — see app/briefing, app/goals, app/comms,
+   app/suggestions, app/alerts. Only this feature's own content classes live here,
+   following features/collab/collab.module.css's convention. */
+.muted { color: var(--text-muted); font-size: var(--text-small); }
+.faint { color: var(--text-faint); font-size: var(--text-micro); }
+
+.cardGrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(19rem, 1fr)); gap: var(--space-4); }
+.stack { display: grid; gap: var(--space-4); }
+.row { display: flex; align-items: center; gap: var(--space-2); flex-wrap: wrap; }
+.rowBetween { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); flex-wrap: wrap; }
+
+/* Briefing */
+.briefingHead { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--space-3); flex-wrap: wrap; }
+.briefingMeta { display: flex; align-items: center; gap: var(--space-2); flex-wrap: wrap; color: var(--text-muted); font-size: var(--text-small); }
+.briefingSections { display: grid; gap: var(--space-4); margin-top: var(--space-4); }
+.briefingSection h3 { margin: 0 0 var(--space-2); font-size: var(--text-h3); }
+.briefingSectionBody { margin: 0; color: var(--text-muted); line-height: 1.6; white-space: pre-wrap; overflow-wrap: anywhere; }
+.audioWrap { margin-top: var(--space-3); }
+.audioWrap audio { width: 100%; }
+.deliveryList { display: grid; gap: var(--space-1); margin-top: var(--space-3); }
+.deliveryRow { display: flex; align-items: center; gap: var(--space-2); font-size: var(--text-small); color: var(--text-muted); }
+.historyList { display: grid; gap: var(--space-2); }
+.historyRow { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); padding: var(--space-3); border: 1px solid var(--border); border-radius: var(--radius-md); }
+
+/* Goals */
+.goalCard { display: grid; gap: var(--space-3); }
+.goalHead { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--space-2); }
+.goalName { margin: 0; font-size: var(--text-h3); }
+.goalDescription { margin: 0; color: var(--text-muted); font-size: var(--text-small); line-height: 1.5; }
+.goalMetricRow { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); }
+.goalMetricValue { display: flex; align-items: baseline; gap: var(--space-2); }
+.goalMetricNumber { font: 700 var(--text-h2) var(--font-mono); }
+.goalLink { text-decoration: none; color: inherit; display: block; }
+.goalLink:hover .goalCard { border-color: var(--border-strong); box-shadow: var(--shadow-sm); }
+.factList, .runList { display: grid; gap: var(--space-2); }
+.factRow { padding: var(--space-3); border: 1px solid var(--border); border-radius: var(--radius-md); color: var(--text-muted); font-size: var(--text-small); }
+
+/* Comms */
+.toolbar { display: flex; align-items: flex-end; justify-content: space-between; gap: var(--space-4); flex-wrap: wrap; }
+.filterGroup { display: flex; gap: var(--space-3); flex-wrap: wrap; align-items: flex-end; }
+.filterGroup > * { min-width: 11rem; }
+.threadGroupLabel { display: inline-flex; align-items: center; gap: var(--space-2); color: var(--text-muted); font-size: var(--text-small); cursor: pointer; user-select: none; }
+.messageList { display: grid; gap: var(--space-3); }
+.threadGroup { display: grid; gap: var(--space-2); }
+.threadHeading { margin: 0; color: var(--text-faint); font-size: var(--text-micro); text-transform: uppercase; letter-spacing: 0.06em; }
+.messageItem { display: grid; gap: var(--space-2); padding: var(--space-4); }
+.messageHead { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); flex-wrap: wrap; }
+.messageIdentity { display: flex; align-items: center; gap: var(--space-2); min-width: 0; flex-wrap: wrap; }
+.messageSubject { margin: 0; font-size: var(--text-body); font-weight: 600; }
+.messageBody { margin: 0; color: var(--text-muted); font-size: var(--text-small); line-height: 1.55; white-space: pre-wrap; overflow-wrap: anywhere; }
+
+/* Suggestions */
+.suggestionCard { display: grid; gap: var(--space-3); }
+.suggestionHead { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--space-3); }
+.suggestionTitle { margin: 0; font-size: var(--text-h3); }
+.suggestionRationale { margin: 0; color: var(--text-muted); font-size: var(--text-small); line-height: 1.55; }
+.suggestionMeta { display: flex; align-items: center; gap: var(--space-2); flex-wrap: wrap; color: var(--text-faint); font-size: var(--text-micro); }
+.suggestionActions { display: flex; gap: var(--space-2); flex-wrap: wrap; }
+.decisionForm { display: grid; gap: var(--space-3); }
+
+/* The proposed-plan block shown on the SuggestionCard AND repeated inside the
+   approve Dialog (DES-001) — same look in both places so the operator recognizes
+   it as "what will run" wherever they see it. */
+.planBlock { display: grid; gap: var(--space-2); padding: var(--space-3); border: 1px solid var(--border); border-radius: var(--radius-md); }
+.planLabel { margin: 0 0 var(--space-1); color: var(--text-faint); font-size: var(--text-micro); text-transform: uppercase; letter-spacing: 0.06em; }
+
+/* Risk-scaled approval friction (DES-002): a danger banner for elevated risk
+   classes, following the same treatment as features/capabilities's blast-radius
+   danger banner, plus the checkbox-acknowledgement row for the "checkbox" tier. */
+.dangerBanner { display: flex; align-items: center; gap: var(--space-2); padding: var(--space-3); border-radius: var(--radius-lg); border: 1px solid color-mix(in srgb, var(--danger) 50%, var(--border)); background: color-mix(in srgb, var(--danger) 14%, transparent); color: var(--danger); font-size: var(--text-small); font-weight: 600; }
+.ackRow { display: inline-flex; align-items: flex-start; gap: var(--space-2); color: var(--text-muted); font-size: var(--text-small); cursor: pointer; user-select: none; }
+
+/* Alerts */
+.alertRow { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: var(--space-3); align-items: center; padding: var(--space-4); }
+.alertText { min-width: 0; display: grid; gap: var(--space-1); }
+.alertHead { display: flex; align-items: center; gap: var(--space-2); flex-wrap: wrap; }
+.alertTitle { margin: 0; font-size: var(--text-body); font-weight: 600; }
+.alertBody { margin: 0; color: var(--text-muted); font-size: var(--text-small); line-height: 1.5; }
+.alertMeta { display: flex; align-items: center; gap: var(--space-2); flex-wrap: wrap; color: var(--text-faint); font-size: var(--text-micro); }
+
+/* Topbar alert bell (AppShell) */
+.bellButton { position: relative; }
+.bellCount { position: absolute; top: -0.35rem; right: -0.35rem; min-width: 1.1rem; height: 1.1rem; padding: 0 0.25rem; display: inline-flex; align-items: center; justify-content: center; border-radius: var(--radius-pill); background: var(--danger); color: #fff; font: 700 var(--text-micro) var(--font-mono); line-height: 1; }
+
+@media (max-width: 34rem) {
+  .filterGroup { width: 100%; }
+  .filterGroup > * { flex: 1; min-width: 8rem; }
+  .alertRow { grid-template-columns: auto minmax(0, 1fr); }
+}

@@ -1,0 +1,66 @@
+{
+  "blast_radius": "Writes the model registry and fusion digests only.",
+  "cadence_seconds": 86400,
+  "company": "omniagentos",
+  "escalation_tier": "low",
+  "exit_semantics": {
+    "DEGRADED": "degraded",
+    "DOWN": "down",
+    "OK": "ok",
+    "UNVERIFIED": "cannot_evaluate",
+    "default": "cannot_evaluate"
+  },
+  "host": "owner-mac",
+  "id": "loop-modelintel",
+  "kind": "llm-loop",
+  "last_status": "OK",
+  "last_verified": null,
+  "owner": "estate-ops",
+  "repo": "/Users/youruser/OmniAgentOS",
+  "staleness_slo_seconds": 172800,
+  "throughput": {
+    "derivation": "loops.daily_counts(ts_field='at') over var/modelintel/update.log.",
+    "floor": {
+      "floor": 0.3,
+      "fraction": 0.3,
+      "median": 1.0,
+      "min_sample_days": 7,
+      "reason": null,
+      "sample": {
+        "2024-01-01": 1,
+        "2024-01-02": 1,
+        "2024-01-03": 1,
+        "2024-01-04": 1,
+        "2024-01-05": 1,
+        "2024-01-06": 1,
+        "2024-01-07": 1
+      },
+      "sample_days": 7,
+      "sample_window": "2024-01-01..2024-01-07"
+    },
+    "max_error_rate": 0.25,
+    "metric": "runs_24h",
+    "notes": [
+      "Every run records a partial-source degradation for one optional data source when its API key is not configured; the run-count dimension alone cannot see this."
+    ],
+    "observed": {
+      "as_of": null,
+      "burn": null,
+      "error_rate": null,
+      "last_success": null,
+      "process_state": "RUNNING",
+      "volume": 1
+    },
+    "signal_exists": true,
+    "signal_path": "/Users/youruser/OmniAgentOS/var/modelintel/update.log",
+    "window": "24h"
+  },
+  "verification": {
+    "field": "runs_24h",
+    "note": "Graded on throughput, not liveness: a running loop with zero volume is DEGRADED.",
+    "source": "/Users/youruser/OmniAgentOS/var/modelintel/update.log",
+    "type": "snapshot_field"
+  },
+  "what_it_does": "Daily model-intelligence refresh; volume is completed runs recorded in update.log.",
+  "why_it_matters": "Routing tables are built from this registry; a stalled refresh silently pins the fleet to stale model rankings."
+}

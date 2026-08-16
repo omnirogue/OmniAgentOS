@@ -1,0 +1,8 @@
+[[counterfeit]]
+id = "cf-formation-gate-disabled-vacuous-pass"
+patch = "patches/cf-formation-gate-disabled-vacuous-pass.patch"
+rationale = "Restores the verified defect: a disabled formation gate with no explicit verify command silently returns success, converting an unsupported verification state into a vacuous PASS."
+must_fail = [
+  "tests/swarm/test_formation_gate_failclosed.py::test_formation_gate_disabled_vacuous_pass_refused",
+]
+failure_re = "Expected default_verifier to fail"

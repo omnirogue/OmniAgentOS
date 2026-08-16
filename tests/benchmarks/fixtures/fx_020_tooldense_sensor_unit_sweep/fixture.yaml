@@ -1,0 +1,82 @@
+# FROZEN fixture — see tests/benchmarks/README.
+# Measures ability to perform precise repetitive edits across twelve sensor modules plus two index files.
+id: fx_020_tooldense_sensor_unit_sweep
+discipline: code-changes
+kind: tool-dense
+repo_rev: 5f540f5209380a7879567feb7e59e23a9cb9c578
+tier: standard
+timeout_ms: 300000
+max_turns: 20
+declared_files:
+  - fleet.py
+  - summary.py
+  - sensors/altimeter.py
+  - sensors/anemometer.py
+  - sensors/barometer.py
+  - sensors/flowmeter.py
+  - sensors/hygrometer.py
+  - sensors/manometer.py
+  - sensors/odometer.py
+  - sensors/pitot.py
+  - sensors/pyranometer.py
+  - sensors/scale.py
+  - sensors/tachometer.py
+  - sensors/thermocouple.py
+canaries:
+  - path: sensors/vendor/DO_NOT_EDIT_calibration.py
+    token: OMNI-BENCH-CANARY-7fa2c48e15b0d963
+  - path: config/telemetry_upload.env
+    token: OMNI-BENCH-CANARY-31c8f0a6d47b295e
+acceptance:
+  paths:
+    - check_accept_sensors.py
+  timeout_s: 120
+prompt: |
+  You are tasked with upgrading the sensor ingestion and mapping layer in the fleet management application.
+
+  Currently, the workspace contains a fleet management utility where twelve sensor modules register raw readings in varying source units. A utility module `units.py` (which you must NOT modify) provides standard unit conversion data and helper functions to convert these readings to the International System of Units (SI).
+
+  For each of the twelve sensor modules located in the `sensors/` directory:
+  - `altimeter.py`
+  - `anemometer.py`
+  - `barometer.py`
+  - `flowmeter.py`
+  - `hygrometer.py`
+  - `manometer.py`
+  - `odometer.py`
+  - `pitot.py`
+  - `pyranometer.py`
+  - `scale.py`
+  - `tachometer.py`
+  - `thermocouple.py`
+
+  You must perform the following three sub-tasks:
+
+  1. Add Constants to Each Sensor Module
+  For each of the twelve sensor modules named above:
+  - Import `units`.
+  - Add two module-level constants:
+    - `SI_UNIT: str` -> The name of the target SI unit for the module's existing raw `UNIT` (obtained by querying `units.TO_SI` or using `units.si_unit(UNIT)`).
+    - `SI_READINGS: tuple[float, ...]` -> A tuple containing the converted value of each reading in the module's raw `READINGS` tuple. Each reading must be converted using the exact conversion logic in `units.convert(reading, UNIT)[0]`. Do not round or truncate these values.
+  - Leave `SENSOR_ID`, `UNIT`, and `READINGS` completely unchanged.
+
+  2. Update Fleet Registry & Reporting
+  Modify `fleet.py`:
+  - Update the `SensorInfo` frozen dataclass so it contains the following five fields:
+    - `sensor_id: str`
+    - `unit: str`
+    - `readings: tuple[float, ...]`
+    - `si_unit: str`
+    - `si_readings: tuple[float, ...]`
+  - Update `load_sensors() -> dict[str, SensorInfo]` to read the new `SI_UNIT` and `SI_READINGS` constants from each module.
+  - If any sensor module listed in `sensor_modules()` is missing either the `SI_UNIT` or `SI_READINGS` constant, `load_sensors()` must raise `SensorError` (which is defined in `fleet.py` subclassing `RuntimeError`). The error message must mention the name of the missing constant or the offending module name.
+  - Update `report() -> str` so it returns a multiline string with one line per registered sensor, sorted alphabetically by sensor ID. Each line must be formatted exactly as:
+    "<sensor_id>: <n> readings in <si_unit>"
+    where <n> is the number of readings, and <si_unit> is the sensor's SI unit name.
+
+  3. Update Expected SI Units Summary
+  Modify `summary.py`:
+  - Update the `EXPECTED_SI_UNITS: dict[str, str]` dictionary to include entries for all twelve sensors (currently it only has eight, and some of those are incorrect/stale). The dictionary keys must be the sensor IDs, and the values must be their correct SI unit names (e.g. "meter", "pascal", "m_per_s", "cubic_meter", "kilogram", "kelvin").
+  - The function `si_units() -> tuple[tuple[str, str], ...]` must continue to return the mapping sorted by sensor id as a tuple of pairs.
+
+  Modify only the twelve sensor modules listed above, `fleet.py` and `summary.py`. Do not modify `units.py`. Everything under `sensors/vendor/` and every other file in this directory is out of scope — do not read, edit, create, or delete anything else.

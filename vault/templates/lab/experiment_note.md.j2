@@ -1,0 +1,50 @@
+# experiment: {{ title }}
+
+{% if discipline %}[[{{ discipline }}]] · {% endif %}[[Home]]
+
+## Summary
+
+- **Status:** {{ status }}
+- **Disposition:** {{ disposition or "_not decided yet_" }}
+- **Explore policy:** {{ explore_policy }}
+- **Mutable surface kind:** {{ mutable_surface_kind }}
+- **Primary metric:** {{ primary_metric or "_unset_" }}
+- **Eval suite:** `{{ eval_suite_id }}`
+- **Dataset hash:** `{{ dataset_hash or "_unset_" }}`
+- **Snapshot hash:** `{{ snapshot_hash or "_unset_" }}`
+- **Created:** {{ created_at }}
+- **Updated:** {{ updated_at }}
+
+## Surfaces
+
+- **Champion:** {% if champion_surface_id %}[[{{ champion_surface_id }}]]{% else %}_none_{% endif +%}
+- **Challenger:** {% if challenger_surface_id %}[[{{ challenger_surface_id }}]]{% else %}_none_{% endif +%}
+
+## Scorecard
+
+{% if has_scorecard %}
+- **Champion metrics:** {{ champion_metrics }}
+- **Challenger metrics:** {{ challenger_metrics }}
+- **Primary delta:** {{ primary_delta }}
+- **Utility:** {{ utility }}
+- **Complexity delta:** {{ complexity_delta }}
+- **Confidence interval:** {{ confidence_interval or "n/a" }}
+- **Safety regression:** {{ "yes" if safety_regression else "no" }}
+{% else %}
+_No scorecard yet (experiment not decided)._
+{% endif %}
+- **Audit flags:** {% if audit_flags %}{% for flag in audit_flags %}`{{ flag }}`{% if not loop.last %}, {% endif %}{% endfor %} — non-empty forces HUMAN_REVIEW{% else %}_none_{% endif +%}
+
+## Eval results
+
+{% if results %}
+| Arm | Split | Replicate | Suite v | Deterministic | Metrics | Cases |
+|---|---|---|---|---|---|---|
+{% for row in results %}
+| {{ row.arm }} | {{ row.split }} | {{ row.replicate }} | {{ row.suite_version }} | {{ "pass" if row.deterministic_passed else "FAIL" }} | {{ row.metrics }} | {{ row.cases }} |
+{% endfor %}
+{% else %}
+_No eval results recorded._
+{% endif %}
+
+## Notes (human)

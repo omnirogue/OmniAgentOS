@@ -1,0 +1,12 @@
+diff --git a/tests/simharness/assertions.py b/tests/simharness/assertions.py
+--- a/tests/simharness/assertions.py
++++ b/tests/simharness/assertions.py
+@@ -65,7 +65,7 @@ def assert_stale_run_recovered(
+ 
+ 
+ def assert_terminal(status: str) -> None:
+-    assert status in TERMINAL_RUN_STATUSES, f"run ended non-terminal: status={status}"
++    assert status == "failed", f"counterfeit requires failed status: status={status}"
+ 
+ 
+ def assert_zero_work_score(score: float, attempt_count: int) -> None:

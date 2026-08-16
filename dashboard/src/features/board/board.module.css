@@ -1,0 +1,1285 @@
+/* ── Board v2 — task everything panel + drawer ───────────────
+ * CSS Modules + theme tokens only; zero inline styles.
+ */
+
+.panelRoot {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  min-height: 0;
+  flex: 1;
+}
+
+.panelHeader {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.panelTitle {
+  margin: 0;
+  font-size: var(--text-h3);
+  color: var(--text);
+}
+
+.panelBadges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.panelBody {
+  min-height: 0;
+}
+
+/* ── Drawer (board overlay) ────────────────────────────────── */
+
+.drawer {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: min(34rem, 92vw);
+  display: flex;
+  flex-direction: column;
+  border-left: 1px solid var(--border);
+  background: var(--surface);
+  z-index: 60;
+  transform: translateX(0);
+  transition: transform 160ms var(--ease-out);
+}
+
+.drawerScrim {
+  position: fixed;
+  inset: 0;
+  appearance: none;
+  background: color-mix(in srgb, var(--canvas) 60%, transparent);
+  border: none;
+  cursor: pointer;
+  z-index: 50;
+}
+
+.drawerHeader {
+  display: flex;
+  justify-content: flex-end;
+  padding: var(--space-2);
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.drawerBody {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--space-3) var(--space-4);
+  display: flex;
+  flex-direction: column;
+}
+
+.chatDock {
+  display: flex;
+  flex-direction: column;
+  min-height: 24rem;
+  height: 100%;
+}
+
+/* ── Overview tab ──────────────────────────────────────────── */
+
+.overviewGrid,
+.planGrid,
+.runsGrid {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.progressHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin-bottom: var(--space-2);
+}
+
+.progressTrack {
+  height: 6px;
+  border-radius: var(--radius-pill);
+  background: var(--border);
+  overflow: hidden;
+}
+
+.progressFill {
+  height: 100%;
+  width: var(--pct, 0%);
+  background: var(--accent);
+  border-radius: var(--radius-pill);
+  transition: width var(--motion-base) var(--ease-out);
+}
+
+.stageStepper {
+  display: flex;
+  list-style: none;
+  margin: 0 0 var(--space-2);
+  padding: 0;
+  gap: var(--space-2);
+  overflow-x: auto;
+}
+
+.stageStep {
+  font-size: var(--text-micro);
+  color: var(--text-faint);
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--border);
+  white-space: nowrap;
+}
+
+.stageStepReached {
+  color: var(--text);
+}
+
+.stageStepCurrent {
+  color: var(--accent);
+  border-color: var(--accent);
+  font-weight: 600;
+}
+
+.etaRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  font-size: var(--text-small);
+  padding-top: var(--space-1);
+}
+
+.etaValue {
+  font-weight: 600;
+}
+
+.sectionTitle {
+  margin: 0 0 var(--space-2);
+  font-size: var(--text-micro);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+
+.agentList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.agentRow {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  font-size: var(--text-small);
+}
+
+.agentLink {
+  margin-left: auto;
+  color: var(--accent);
+  font-size: var(--text-small);
+  text-decoration: none;
+}
+
+.agentLink:hover {
+  text-decoration: underline;
+}
+
+.agentDetail {
+  display: flex;
+  flex-basis: 100%;
+  gap: var(--space-2);
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+.proseBlock {
+  margin: 0;
+  white-space: pre-wrap;
+  word-break: break-word;
+  font-family: var(--font-sans);
+  font-size: var(--text-small);
+  color: var(--text);
+  line-height: 1.6;
+}
+
+.markdownWrap {
+  font-size: var(--text-small);
+  max-height: 24rem;
+  overflow-y: auto;
+}
+
+.blockerCard {
+  border-color: var(--danger);
+}
+
+.blockerList {
+  margin: 0;
+  padding-left: var(--space-4);
+  display: grid;
+  gap: var(--space-1);
+  font-size: var(--text-small);
+  color: var(--danger);
+}
+
+/* ── Runs tab ──────────────────────────────────────────────── */
+
+.attemptList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.attemptCard {
+  border-left: 3px solid var(--border);
+}
+
+.attemptHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  margin-bottom: var(--space-1);
+}
+
+.steeringList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.steeringRow {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-2);
+  font-size: var(--text-small);
+}
+
+.steeringContent {
+  flex: 1;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.childList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.childRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  text-decoration: none;
+  color: var(--text);
+  transition: border-color var(--motion-fast) var(--ease);
+}
+
+.childRow:hover {
+  border-color: var(--border-strong);
+}
+
+.childTitle {
+  font-size: var(--text-small);
+}
+
+/* ── Files tab ─────────────────────────────────────────────── */
+
+.filesPanel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.fileList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.fileRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  font-size: var(--text-small);
+}
+
+.fileName {
+  color: var(--accent);
+  text-decoration: none;
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.fileName:hover {
+  text-decoration: underline;
+}
+
+.uploadRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+
+.successNotice {
+  margin: 0;
+  color: var(--ok);
+  font-size: var(--text-small);
+}
+
+.uploadError {
+  margin: 0;
+  color: var(--danger);
+  font-size: var(--text-small);
+}
+
+/* ── Approvals tab ─────────────────────────────────────────── */
+
+.approvalCard {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.approvalHead {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+
+.approvalCommand {
+  display: block;
+  background: var(--canvas);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: var(--space-2) var(--space-3);
+  font-size: var(--text-small);
+  overflow-x: auto;
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
+.approvalActions {
+  display: flex;
+  gap: var(--space-2);
+}
+
+/* ── Ledger tab ────────────────────────────────────────────── */
+
+.ledgerList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.ledgerRow {
+  font-size: var(--text-small);
+  line-height: 1.5;
+}
+
+.ledgerMeta {
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.ledgerSep {
+  color: var(--text-faint);
+}
+
+.ledgerSummary {
+  color: var(--text);
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.ledgerCorrections {
+  margin-top: var(--space-1);
+  margin-left: var(--space-4);
+  padding-left: var(--space-2);
+  border-left: 2px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.ledgerCorrection {
+  font-size: var(--text-small);
+}
+
+/* ── Shared ────────────────────────────────────────────────── */
+
+.muted {
+  color: var(--text-muted);
+  font-size: var(--text-micro);
+}
+
+/* Back link on the /activity/[taskId] full-page mount (app/activity imports
+   this module so the link styling stays token-based, never inline). */
+.backLink {
+  color: var(--text-muted);
+  text-decoration: none;
+}
+
+.backLink:hover {
+  text-decoration: underline;
+}
+
+/* ── Board page chrome ─────────────────────────────────────── */
+
+/* Keep the page flex item bounded while the kanban below owns the horizontal
+   scroll. This is a backstop; it must not replace the inner scroller. */
+.page {
+  max-width: 100%;
+  min-width: 0;
+  overflow-x: hidden;
+}
+
+/* Open-claims strip (session-ledger integration, board header) — one chip
+   per open claim, wraps under the page header above the toolbar. */
+.claimsStrip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-top: var(--space-2);
+}
+
+.boardToolbar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+  margin-top: var(--space-4);
+}
+
+.boardToolbar > * {
+  flex: 0 0 auto;
+}
+
+.searchField {
+  display: grid;
+  flex: 0 1 14rem;
+  min-width: 9rem;
+}
+
+.searchField input {
+  box-sizing: border-box;
+  width: 100%;
+  height: 2.125rem;
+  padding: 0 var(--space-3);
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  font: inherit;
+  font-size: var(--text-small);
+}
+
+.searchField input:focus-visible {
+  outline: 2px solid var(--accent-ring);
+  outline-offset: 1px;
+}
+
+/* Team Work OS filter chips (P5) — the owner group (All | the operator | Alice |
+   Bob | Agents) and the company group (multi-company Work OS) share
+   these classes so the two chip rows read identically. */
+.ownerChips {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  flex-wrap: wrap;
+}
+
+.ownerChip {
+  all: unset;
+  box-sizing: border-box;
+  padding: var(--space-1) var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-pill);
+  color: var(--text-muted);
+  font-size: var(--text-micro);
+  font-weight: 600;
+  cursor: pointer;
+  transition: background var(--motion-fast) var(--ease), color var(--motion-fast) var(--ease), border-color var(--motion-fast) var(--ease);
+}
+
+.ownerChip:hover {
+  background: var(--hover);
+  color: var(--text);
+}
+
+.ownerChip:focus-visible {
+  outline: 2px solid var(--accent-ring);
+  outline-offset: 1px;
+}
+
+.ownerChip[aria-pressed="true"] {
+  border-color: var(--accent-ring);
+  background: color-mix(in srgb, var(--accent-ring) 20%, transparent);
+  color: var(--text);
+}
+
+/* Counts + staleness + bulk controls sit on their own line under the filters,
+   exactly as the prototype's board-meta-row does. */
+.metaRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+  margin: var(--space-3) 0 var(--space-4);
+  color: var(--text-muted);
+  font-size: var(--text-small);
+}
+
+.metaSpacer {
+  flex: 1 1 auto;
+}
+
+.metaCount {
+  font-variant-numeric: tabular-nums;
+}
+
+.selectionToolbar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+  margin-bottom: var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--accent-border);
+  border-radius: var(--radius-md);
+  background: var(--accent-soft);
+  color: var(--text-muted);
+  font-size: var(--text-small);
+}
+
+.archiveNotice {
+  margin: 0 0 var(--space-3);
+  color: var(--text-muted);
+  font-size: var(--text-small);
+}
+
+.reconnectingBanner {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-bottom: var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--warn-border);
+  border-radius: var(--radius-md);
+  background: var(--warn-soft);
+  color: var(--text-muted);
+  font-size: var(--text-micro);
+}
+
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* ── Progress strip (BoardProgress) ────────────────────────── */
+
+.progressCard {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  margin-top: var(--space-4);
+  padding: var(--space-4);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+}
+
+.bpTop {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+}
+
+.bpHeadline {
+  font-size: var(--text-body);
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+}
+
+.bpPct {
+  color: var(--accent);
+  font-weight: 700;
+  font-size: var(--text-small);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ONE track, four segments — done | running | queued | blocked. A single bar
+   is the whole point: four separate bars made the operator do the arithmetic
+   that tells them whether the board is moving. */
+.segTrack {
+  display: flex;
+  height: 7px;
+  border-radius: var(--radius-pill);
+  background: var(--canvas-sunken);
+  overflow: hidden;
+}
+
+.seg {
+  height: 100%;
+  width: var(--seg-width, 0%);
+  transition: width var(--motion-base) var(--ease-out);
+}
+
+.segDone { background: var(--accent); }
+.segRunning { background: var(--running); }
+.segNeeds { background: var(--awaiting); }
+.segQueued { background: var(--validating); }
+.segBlocked { background: var(--danger); }
+
+.bpFoot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+}
+
+.legend {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  flex-wrap: wrap;
+  font-size: var(--text-small);
+  color: var(--text-muted);
+}
+
+.legendItem {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-variant-numeric: tabular-nums;
+}
+
+.legendItem b {
+  color: var(--text);
+  font-weight: 650;
+}
+
+.legendDot {
+  width: 7px;
+  height: 7px;
+  border-radius: var(--radius-pill);
+  background: var(--text-faint);
+  flex-shrink: 0;
+}
+
+.legendItem[data-tone="done"] .legendDot { background: var(--accent); }
+.legendItem[data-tone="running"] .legendDot { background: var(--running); }
+.legendItem[data-tone="awaiting"] .legendDot { background: var(--awaiting); }
+.legendItem[data-tone="queued"] .legendDot { background: var(--validating); }
+.legendItem[data-tone="blocked"] .legendDot { background: var(--danger); }
+
+.swarmNote {
+  color: var(--text-faint);
+  font-size: var(--text-micro);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── The kanban ────────────────────────────────────────────── */
+
+/* Fixed-width columns in a horizontal scroller. The old board stretched ten
+   columns across the viewport with `repeat(10, 1fr)`, so every card was too
+   narrow to read a title in and the whole board still did not fit. */
+.kanban {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  padding-bottom: var(--space-5);
+  scrollbar-gutter: stable;
+}
+
+.kcol {
+  display: flex;
+  flex-direction: column;
+  flex: 0 0 300px;
+  width: 300px;
+  min-block-size: 11rem;
+  max-block-size: clamp(16rem, calc(100dvh - 28rem), 46rem);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: color-mix(in srgb, var(--surface) 45%, var(--canvas));
+}
+
+.kcolHead {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-shrink: 0;
+  padding: var(--space-3) var(--space-3) var(--space-2);
+  border-bottom: 1px solid var(--border);
+}
+
+.kdot {
+  width: 8px;
+  height: 8px;
+  flex-shrink: 0;
+  border-radius: var(--radius-pill);
+  background: var(--column-tone, var(--text-faint));
+}
+
+.kname {
+  margin: 0;
+  font-size: var(--text-small);
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.kcount {
+  margin-left: auto;
+  padding: 1px var(--space-2);
+  border-radius: var(--radius-pill);
+  background: var(--canvas-sunken);
+  color: var(--text-muted);
+  font-size: var(--text-micro);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.kcountToday {
+  padding: 1px var(--space-2);
+  border-radius: var(--radius-pill);
+  background: var(--ok-soft);
+  color: var(--ok);
+  font-size: var(--text-micro);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.kcolBody {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-2);
+  overflow-y: auto;
+  overscroll-behavior-y: contain;
+}
+
+.kcolEmpty {
+  margin: 0;
+  padding: var(--space-5) var(--space-3);
+  border: 1.5px dashed var(--border-strong);
+  border-radius: var(--radius-md);
+  color: var(--text-faint);
+  font-size: var(--text-small);
+  text-align: center;
+}
+
+/* Per-column render cap. A column holding 600 blocked cards used to mount 600
+   card subtrees nobody scrolled to; this reveals them a page at a time. */
+.kmore {
+  all: unset;
+  box-sizing: border-box;
+  padding: var(--space-2);
+  border-radius: var(--radius-sm);
+  color: var(--text-muted);
+  font-size: var(--text-micro);
+  font-weight: 600;
+  text-align: center;
+  cursor: pointer;
+}
+
+.kmore:hover {
+  background: var(--hover);
+  color: var(--text);
+}
+
+.kmore:focus-visible {
+  outline: 2px solid var(--accent-ring);
+  outline-offset: -2px;
+}
+
+/* ── Card face ─────────────────────────────────────────────── */
+
+.kcardLink {
+  /* Stretched-link overlay: fills the card as a SIBLING of its interactive
+     children (interactive content must not nest inside an <a>). Children
+     that take clicks are raised above it below. */
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  color: inherit;
+  text-decoration: none;
+  border-radius: var(--radius-md);
+}
+
+.kcardLink:focus-visible {
+  outline: 2px solid var(--accent-ring);
+  outline-offset: 2px;
+}
+
+/* Interactive children of a card sit above the stretched link. */
+.kcard .kcardSelect,
+.kcard .clickableBadge,
+.kcard .kact,
+.kcard .kcardActions {
+  position: relative;
+  z-index: 2;
+}
+
+.kcard {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  padding: var(--space-3);
+  border: 1px solid var(--border);
+  /* The status accent: the column's own tone, so a card read out of context
+     still says which state it is in. */
+  border-left: 3px solid var(--card-tone, var(--border-strong));
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  box-shadow: var(--shadow-sm);
+  transition:
+    box-shadow var(--motion-fast) var(--ease),
+    transform var(--motion-fast) var(--ease),
+    border-color var(--motion-fast) var(--ease);
+}
+
+.kcard:hover {
+  box-shadow: var(--shadow-md);
+  transform: translateY(-1px);
+  border-color: var(--border-strong);
+  border-left-color: var(--card-tone, var(--border-strong));
+}
+
+.kcardTags {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  flex-wrap: wrap;
+  margin-bottom: var(--space-2);
+}
+
+.kcardStatus {
+  margin-left: auto;
+}
+
+.kcardTitle {
+  margin: 0;
+  font-size: var(--text-small);
+  font-weight: 650;
+  line-height: 1.35;
+  letter-spacing: -0.005em;
+  overflow-wrap: anywhere;
+}
+
+/* Three lines, hard clamp. Descriptions on this board run to whole briefs;
+   unclamped, one card owned a column. */
+.kcardDesc {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  margin: var(--space-1) 0 0;
+  color: var(--text-muted);
+  font-size: var(--text-micro);
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+
+/* Why a blocked card stopped — one line, full text in the drawer. */
+.kcardBlocked {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-1);
+  margin: var(--space-2) 0 0;
+  color: var(--danger);
+  font-size: var(--text-micro);
+  line-height: 1.4;
+}
+
+.kcardBlockedText {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.kcardApproval {
+  display: grid;
+  gap: 2px;
+  margin-top: var(--space-2);
+  padding: var(--space-2);
+  border: 1px solid color-mix(in srgb, var(--awaiting) 45%, transparent);
+  border-radius: var(--radius-sm);
+  background: color-mix(in srgb, var(--awaiting) 10%, transparent);
+}
+
+.kcardApprovalLabel {
+  color: var(--awaiting);
+  font-size: var(--text-micro);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+/* Clamped to two lines: a heredoc command can be hundreds of lines and must
+   not turn one card into the whole column. Full text is in the title. */
+.kcardApprovalCommand {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  color: var(--text);
+  font-family: var(--font-mono);
+  font-size: var(--text-micro);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+/* The compact meta row: whatever this card can actually say about itself,
+   on one line — progress, current step, staleness, cost. */
+.kcardMeta {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+  margin-top: var(--space-2);
+  color: var(--text-faint);
+  font-size: var(--text-micro);
+  font-variant-numeric: tabular-nums;
+}
+
+.kcardStep {
+  min-width: 0;
+  flex: 1 1 100%;
+  overflow: hidden;
+  color: var(--text-muted);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.kcardStale {
+  color: var(--warn);
+}
+
+.kcardFoot {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-top: var(--space-3);
+  padding-top: var(--space-2);
+  border-top: 1px solid var(--border);
+}
+
+.kcardAgent {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 0;
+  color: var(--text-muted);
+  font-size: var(--text-micro);
+  font-weight: 600;
+}
+
+.kcardAgent > span:last-child {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.kcardLive {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  color: var(--running);
+  font-size: var(--text-micro);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.kcardSpinner {
+  width: 0.55rem;
+  height: 0.55rem;
+  border: 1px solid color-mix(in srgb, var(--running) 30%, transparent);
+  border-top-color: var(--running);
+  border-radius: 50%;
+  animation: board-spin 0.9s linear infinite;
+}
+
+/* Three chips, revealed on hover — replacing an always-on row of six full
+   buttons that was taller than the card content it belonged to. Anything past
+   the third lives behind the "More" chip, so no action was lost. */
+.kcardActions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  margin-left: auto;
+  opacity: 0;
+  transition: opacity var(--motion-fast) var(--ease);
+}
+
+.kcard:hover .kcardActions,
+.kcard:focus-within .kcardActions {
+  opacity: 1;
+}
+
+.kact {
+  all: unset;
+  box-sizing: border-box;
+  padding: 2px var(--space-2);
+  border-radius: var(--radius-sm);
+  color: var(--text-muted);
+  font-size: var(--text-micro);
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.kact:hover {
+  background: var(--hover);
+  color: var(--text);
+}
+
+.kact:focus-visible {
+  outline: 2px solid var(--accent-ring);
+  outline-offset: 1px;
+}
+
+.kact[disabled] {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.kactPrimary {
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.kactMenuWrap {
+  position: relative;
+  display: inline-flex;
+}
+
+.kactMenu {
+  position: absolute;
+  right: 0;
+  bottom: calc(100% + var(--space-1));
+  z-index: var(--z-dropdown);
+  display: flex;
+  flex-direction: column;
+  min-width: 9rem;
+  padding: var(--space-1);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--overlay);
+  box-shadow: var(--shadow-lg);
+}
+
+.kactMenu .kact {
+  padding: var(--space-2);
+  text-align: left;
+}
+
+.kcardSelect {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  width: fit-content;
+  margin-bottom: var(--space-2);
+  color: var(--text-muted);
+  font-size: var(--text-micro);
+  cursor: pointer;
+}
+
+.kcardSelect input {
+  accent-color: var(--accent);
+}
+
+/* Per-category accent piped in through --cat-color (the colour comes from the
+   backend category record, so it cannot be a static class). */
+.categoryPill {
+  color: var(--cat-color);
+  border-color: var(--cat-color);
+}
+
+.clickableBadge {
+  cursor: pointer;
+}
+
+/* Swarm run card — one card for a whole run: the same face, a run-level body. */
+.runCard {
+  cursor: pointer;
+}
+
+.kcardActive {
+  border-color: color-mix(in srgb, var(--running) 40%, var(--border));
+}
+
+.runDetailState {
+  position: fixed;
+  left: 50%;
+  bottom: calc(5vh + var(--space-4));
+  z-index: 51;
+  transform: translateX(-50%);
+  margin: 0;
+  padding: var(--space-2) var(--space-3);
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-lg);
+  font-size: var(--text-small);
+}
+
+.runInsightLine {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  min-width: 0;
+  color: var(--text-muted);
+  font-size: var(--text-small);
+}
+
+.agentPills {
+  display: inline-flex;
+  flex: 1 1 100%;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+  min-width: 0;
+}
+
+.agentPill {
+  min-width: 0;
+  max-width: 100%;
+  padding: var(--space-1) var(--space-2);
+  font-family: var(--font-mono);
+  font-size: var(--text-micro);
+}
+
+.runCost {
+  margin-left: auto;
+  font-variant-numeric: tabular-nums;
+}
+
+.runProgress {
+  flex: 1;
+  min-width: 0;
+  height: var(--space-1);
+  overflow: hidden;
+  appearance: none;
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: var(--border);
+}
+
+.runProgress::-webkit-progress-bar {
+  background: var(--border);
+}
+
+.runProgress::-webkit-progress-value {
+  background: var(--running);
+  border-radius: var(--radius-pill);
+}
+
+.runProgress::-moz-progress-bar {
+  background: var(--running);
+  border-radius: var(--radius-pill);
+}
+
+@keyframes board-spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ── Phone (390px) ─────────────────────────────────────────── */
+
+/* The kanban keeps its shape and becomes a snap-scroller: one column fills the
+   screen, a swipe moves to the next. A stacked single column with a switcher
+   would hide nine of the ten states behind a menu — on the board, the columns
+   ARE the information. */
+@media (max-width: 40rem) {
+  .kanban {
+    scroll-snap-type: x mandatory;
+    gap: var(--space-2);
+    padding-bottom: var(--space-4);
+  }
+
+  .kcol {
+    flex: 0 0 86vw;
+    width: 86vw;
+    max-block-size: calc(100dvh - 20rem);
+    scroll-snap-align: center;
+  }
+
+  /* Full-screen detail on a phone: a 92vw drawer over a 390px viewport left a
+     useless 30px of board behind it. */
+  .drawer {
+    inset: 0;
+    width: 100%;
+    border-left: 0;
+  }
+
+  .metaRow {
+    margin-bottom: var(--space-3);
+  }
+
+  .searchField {
+    flex: 1 1 100%;
+  }
+}
+
+/* Hover-revealed actions are unreachable without a pointer. */
+@media (hover: none) {
+  .kcardActions {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .drawer,
+  .progressFill,
+  .seg {
+    transition: none;
+  }
+
+  .kcard {
+    transition: none;
+  }
+
+  .kcard:hover {
+    transform: none;
+  }
+
+  .kcardSpinner {
+    animation: none;
+  }
+}

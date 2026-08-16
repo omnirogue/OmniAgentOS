@@ -1,0 +1,17 @@
+version: 1
+fixture_id: CONTENT-EDITORIAL-01
+domain: content
+workstream: editorial
+seed: 40701
+scenario_id: northstar-content-editorial-v1
+required_context: [editorial_brief, style_guide, source_notes, disclosure_rules]
+required_grants: [content_read, draft_write]
+expected_events: [brief.accepted, outline.created, draft.reviewed, disclosure.checked]
+expected_outcome: publishable_draft
+expected_actions: [read_sources, draft_article, run_editorial_checks]
+tolerances:
+  required_sections_missing: 0
+  unsupported_claims: 0
+  disclosure_misses: 0
+  readability_delta_percent: 10
+fault_ids: [F-20, F-26]

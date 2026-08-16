@@ -1,0 +1,12 @@
+diff --git a/scripts/northstar_cert/file_gap_findings.py b/scripts/northstar_cert/file_gap_findings.py
+--- a/scripts/northstar_cert/file_gap_findings.py
++++ b/scripts/northstar_cert/file_gap_findings.py
+@@ -301,7 +301,7 @@ def _already_known(queue: Path, identifier: str) -> Path | None:
+     """The pre-check. `rejected/` and `parked/` count: a gap a human parked must
+     not be re-filed by tomorrow's run, and re-detecting it is NOT an error."""
+     name = f"{_stem(identifier)}.json"
+-    for directory in TERMINAL_DIRS:
++    for directory in ("findings",):
+         candidate = queue / directory / name
+         if candidate.exists():
+             return candidate

@@ -1,0 +1,10 @@
+{
+  "sessionId": "session-wrapper",
+  "package": "wrapper",
+  "agent": "codex",
+  "model": "gpt-5",
+  "state": "completed",
+  "startedAt": "2025-01-10T10:00:10Z",
+  "updatedAt": "2025-01-10T10:02:10Z",
+  "commits": ["abc123"]
+}

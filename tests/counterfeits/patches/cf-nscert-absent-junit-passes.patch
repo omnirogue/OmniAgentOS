@@ -1,0 +1,21 @@
+diff --git a/scripts/northstar_cert/record_results.py b/scripts/northstar_cert/record_results.py
+index 114cc41..60ba38d 100644
+--- a/scripts/northstar_cert/record_results.py
++++ b/scripts/northstar_cert/record_results.py
+@@ -370,15 +370,7 @@ def evaluate_checks(
+             continue
+         matched = [outcome for outcome in outcomes if _matches(check.target, outcome.nodeid)]
+         if not matched:
+-            # Mask satisfied, carrier expected to run, nothing in the JUnit for it:
+-            # the run simply never executed it.  Never a PASS, never silence.
+-            results.append(
+-                CheckResult(
+-                    check,
+-                    CheckVerdict.NOT_EVALUABLE,
+-                    f"{NOT_EXECUTED_REASON}:{check.target}",
+-                )
+-            )
++            results.append(CheckResult(check, CheckVerdict.PASS))
+             continue
+         error = next((outcome for outcome in matched if outcome.status == "error"), None)
+         skipped = next((outcome for outcome in matched if outcome.status == "skipped"), None)

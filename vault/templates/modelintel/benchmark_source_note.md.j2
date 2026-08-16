@@ -1,0 +1,23 @@
+# benchmark: {{ title }}
+
+[[model-intelligence]] · external benchmark · [{{ url }}]({{ url }})
+
+{{ description }} Metric: `{{ metric }}`.
+
+## Tracked-model standings
+
+{% if standings %}| Model | Score | As of | Via |
+|---|---|---|---|
+{% for s in standings %}| [[{{ s.key }}\|{{ s.title }}]] | {{ s.score }} | {{ s.as_of[:10] }} | {{ s.source }} |
+{% endfor %}{% else %}_No current rows for tracked models on this board._
+{% endif %}
+
+## Watchlist (untracked models seen on this board)
+
+{% if watchlist %}{% for w in watchlist %}- {{ w.model_name }} — {{ w.score }}{{ ' (%s)' % w.note if w.note else '' }}
+{% endfor %}{% else %}_Nothing notable outside the tracked roster._
+{% endif %}
+
+{% if feeds_domains %}Feeds domain scores: {% for d in feeds_domains %}[[{{ d.key }}|{{ d.title }}]]{% if not loop.last %} · {% endif %}{% endfor %}.{% endif %}
+
+## Notes (human)

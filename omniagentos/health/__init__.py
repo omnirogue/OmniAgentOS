@@ -1,0 +1,1 @@
+"""Deterministic health-sentinel consumers."""

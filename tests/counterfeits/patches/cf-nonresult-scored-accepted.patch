@@ -1,0 +1,13 @@
+diff --git a/omniagentos/scheduler/loop_jobs.py b/omniagentos/scheduler/loop_jobs.py
+index 17e40ce6..26085118 100644
+--- a/omniagentos/scheduler/loop_jobs.py
++++ b/omniagentos/scheduler/loop_jobs.py
+@@ -64,7 +64,7 @@ MAX_TIMEOUT_S = 3600
+ #: could therefore never trip the auto-pause floor — a dead loop and a working
+ #: loop were indistinguishable (live proof: rtn_1e5567b9f3314a2c9d76,
+ #: total_runs=2 accepted_runs=2 acceptance_rate=1.0, two parks, zero heals).
+-FAVOURABLE_STATUSES = frozenset({"completed"})
++FAVOURABLE_STATUSES = frozenset({"completed", "parked", "idle"})
+ 
+ #: Loop statuses that mean the tick BEHAVED but produced no judgeable result.
+ #: Excluded from the acceptance denominator ENTIRELY — neither success nor

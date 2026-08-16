@@ -1,0 +1,157 @@
+.stack { display: grid; gap: var(--space-3); }
+.toolbar { display: grid; gap: var(--space-3); grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); align-items: end; }
+.cardHead { display: flex; align-items: center; justify-content: space-between; gap: var(--space-2); margin-bottom: var(--space-3); flex-wrap: wrap; }
+.title { margin: 0; font-size: var(--text-md); overflow-wrap: anywhere; }
+.meta { color: var(--color-text-muted); font-size: var(--text-sm); }
+.subhead { margin: 0; font-size: var(--text-sm); }
+.list { list-style: none; padding: 0; margin: 0; display: grid; gap: var(--space-2); }
+.row { display: grid; gap: var(--space-2); grid-template-columns: minmax(80px, .6fr) minmax(150px, 2fr); align-items: start; padding: var(--space-3); border-bottom: 1px solid var(--color-border); max-width: 100%; }
+.row:last-child { border-bottom: 0; }
+.mono { font-family: var(--font-mono); font-size: var(--text-xs); }
+.banner { border: 1px solid var(--color-warning); border-radius: var(--radius-md); padding: var(--space-3); color: var(--color-warning); }
+.engineUnavailable { display: grid; gap: var(--space-1); }
+
+/* Loop cards: every engine run is a visible card, not only a select option. */
+.loopCardList { list-style: none; padding: 0; margin: 0; display: grid; gap: var(--space-2); }
+.loopCard {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface, transparent);
+  max-width: 100%;
+}
+.loopCardSelected {
+  border-color: var(--color-accent, var(--color-border));
+  box-shadow: 0 0 0 1px var(--color-accent, var(--color-border));
+}
+.loopCardButton {
+  display: grid;
+  gap: var(--space-1);
+  width: 100%;
+  margin: 0;
+  padding: var(--space-3);
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.loopCardButton:focus-visible {
+  outline: 2px solid var(--color-accent, currentColor);
+  outline-offset: 2px;
+}
+
+/* Dedicated verification band — role=status lives here, not on test rows. */
+.verificationBand { display: grid; gap: var(--space-1); }
+.verificationBand[data-state="passed"] { color: var(--color-success, inherit); }
+.verificationBand[data-state="failed"] { color: var(--color-danger, var(--color-warning)); }
+.verificationBand[data-state="unknown"] { color: var(--color-text-muted); }
+
+/* Repository context and payload pairs: label above value, never side-by-side
+   at a width where the value would be squeezed into a scrolling column. */
+.contextRow { display: grid; gap: var(--space-3); grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); margin: 0; max-width: 100%; }
+.contextRow dt { margin: 0; }
+.contextRow dd { margin: 0; }
+.pairs { display: grid; gap: var(--space-2); margin: 0; max-width: 100%; }
+.pairs dt { margin: 0; }
+.pairs dd { margin: 0; }
+
+/**
+ * THE overflow control for operator-supplied values: commit messages, file
+ * paths, SHAs and raw payload strings are arbitrarily long and contain no
+ * break opportunities, so they must be allowed to break mid-token or they
+ * push the page wider than a phone viewport.
+ */
+.wrapValue { overflow-wrap: anywhere; word-break: break-word; min-width: 0; max-width: 100%; }
+
+/* Readable agent activity timeline — concise fields first, raw payload last. */
+.timeline {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  gap: 0;
+}
+.timelineItem {
+  display: grid;
+  gap: var(--space-2);
+  padding: var(--space-3) 0;
+  border-bottom: 1px solid var(--color-border);
+  max-width: 100%;
+}
+.timelineItem:last-child { border-bottom: 0; }
+.timelineMeta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+.timelineBody { display: grid; gap: var(--space-2); min-width: 0; }
+.timelinePrimary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--space-2) var(--space-3);
+}
+.role {
+  font-weight: 600;
+  font-size: var(--text-sm);
+}
+.timelineSummary {
+  margin: 0;
+  font-size: var(--text-sm);
+  color: var(--color-text);
+}
+.timelineFacts {
+  display: grid;
+  gap: var(--space-2);
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  margin: 0;
+  max-width: 100%;
+}
+.timelineFacts dt { margin: 0; }
+.timelineFacts dd { margin: 0; }
+.evidenceLinks {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+.evidenceLinks a {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+}
+.rawPayload {
+  margin: 0;
+  max-width: 100%;
+  display: grid;
+  gap: var(--space-2);
+}
+.rawPayloadSummary {
+  appearance: none;
+  background: none;
+  border: 0;
+  padding: 0;
+  margin: 0;
+  cursor: pointer;
+  color: var(--color-text-muted);
+  font: inherit;
+  font-size: var(--text-sm);
+  text-align: left;
+  user-select: none;
+}
+.rawPayloadSummary:hover,
+.rawPayloadSummary:focus-visible {
+  color: var(--color-text);
+  text-decoration: underline;
+  outline: none;
+}
+
+@media (max-width: 680px) {
+  .row { grid-template-columns: 1fr; }
+  .contextRow { grid-template-columns: 1fr; }
+  .cardHead { align-items: flex-start; }
+  .timelineFacts { grid-template-columns: 1fr; }
+}

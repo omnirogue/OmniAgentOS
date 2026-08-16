@@ -1,0 +1,22 @@
+diff --git a/scripts/memcert/core.py b/scripts/memcert/core.py
+index 953c98e8d..e0a8863d6 100644
+--- a/scripts/memcert/core.py
++++ b/scripts/memcert/core.py
+@@ -331,7 +331,7 @@ def grade_item(spec: AnswerSpec, raw_answer: str) -> tuple[str, float]:
+         if exp_hit:
+             return ("correct", 1.0)
+         if stale_hit:
+-            return ("stale", -1.0)
++            return ("stale", 0.0)
+         if abstained:
+             return ("abstain_miss", 0.0)
+         return ("wrong", -0.5)
+@@ -341,7 +341,7 @@ def grade_item(spec: AnswerSpec, raw_answer: str) -> tuple[str, float]:
+ 
+     for stale in spec.stale_values:
+         if ans == normalize_answer(str(stale)):
+-            return ("stale", -1.0)
++            return ("stale", 0.0)
+ 
+     if spec.kind in ("set", "ordered"):
+         expected_list = [normalize_answer(str(v)) for v in spec.value]

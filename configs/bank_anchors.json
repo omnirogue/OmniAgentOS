@@ -1,0 +1,44 @@
+{
+  "_doc": "Anchored bank-balance tracking. current_estimate = real_anchor + (qbo_book_now - qbo_book_at_anchor). Re-anchor by updating real_anchor + qbo_book_at_anchor + anchor_date together (the operator gives the real balance; the estimator captures QBO's book balance at the same moment). Sidesteps QuickBooks' unreconciled book totals by tracking only movement since the anchor. Accounts not present in this QBO company carry a manual anchor with no QBO delta tracking and stay static until re-anchored. ALL VALUES BELOW ARE FICTIONAL EXAMPLES — replace with your own accounts.",
+  "qbo_book_source": {
+    "_note": "estimate_balances.py reads live QBO book balances (qbo_book_now) from this Google Sheet via the google_sheets.read connector (headless-capable Google OAuth). A scheduled automation refreshes the sheet daily. Columns: qbo_account_id | account_name | qbo_book_balance | updated_at.",
+    "spreadsheet_id": "REPLACE-WITH-YOUR-SHEET-ID",
+    "range": "Sheet1!A2:D50"
+  },
+  "last_reanchored": "2026-07-23",
+  "accounts": [
+    {
+      "label": "First Example Bank — Acme University LLC",
+      "last_four": "0001",
+      "qbo_account_id": "136",
+      "qbo_account_name": "BUS CHECKING (0001) - 1",
+      "real_anchor": 10000.0,
+      "qbo_book_at_anchor": 12500.0,
+      "anchor_date": "2026-07-23",
+      "source": "example bank online banking available balance, provided by the operator"
+    },
+    {
+      "label": "Second Example Bank — 0002",
+      "last_four": "0002",
+      "qbo_account_id": "137",
+      "qbo_account_name": "Business Fundamentals - 0002 - 2",
+      "real_anchor": 2500.0,
+      "qbo_book_at_anchor": 3000.0,
+      "anchor_date": "2026-07-23",
+      "source": "example bank online banking, provided by the operator"
+    },
+    {
+      "label": "First Example Bank — Globex Consulting LLC",
+      "last_four": "0003",
+      "qbo_account_id": null,
+      "qbo_account_name": null,
+      "real_anchor": 100.0,
+      "qbo_book_at_anchor": null,
+      "anchor_date": "2026-07-23",
+      "source": "example bank online banking, provided by the operator. NOTE: not in this QBO company, so no QBO delta tracking — static until re-anchored."
+    }
+  ],
+  "direct_api_accounts": [
+    {"label": "Slash — business banking", "connector": "slash_bank.read", "note": "live real balance via direct API, no anchor needed"}
+  ]
+}

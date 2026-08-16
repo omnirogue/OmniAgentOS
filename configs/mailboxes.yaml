@@ -1,0 +1,109 @@
+# the operator's mailboxes — registry for the email triage + reply system.
+#
+# This is the single source of truth the triage/reply layer reads to enumerate the
+# accounts it manages, and what mechanism reaches each (read side + reply side).
+#
+# CREDENTIALS ARE NEVER STORED HERE. This file names the *env-var keys* that hold the
+# secrets; the values live only in ~/.config/omni/connections.env (mode 600). Verify
+# access with:  python3 scripts/email/verify_mailboxes.py
+#
+# Two access mechanisms, matching the estate's existing architecture:
+#   * Google accounts  -> read + reply through the capability broker (OAuth + Gmail REST).
+#                         Adding one = a gmail_<acct> connector in connectors.yaml + a
+#                         GOOGLE_OAUTH_REFRESH_TOKEN_<SUFFIX> minted with read+send scope.
+#   * Titan (globex) -> read through the stdlib IMAP poller (a comms_sources row);
+#                            reply through a stdlib SMTP sender. The verifier proves the
+#                            SMTP send capability (login only); the sender module itself
+#                            lands with the triage/reply layer that calls it.
+#
+# POLICY: every reply is draft-then-approve. This foundation makes replying *possible and
+# approval-gated*; it never auto-sends. gmail.send is `consequential` in the broker, and
+# the Titan send path will be human-approval-gated the same way.
+version: 1
+
+policy:
+  send: approval-gated   # foundation never auto-sends; a human signs off on every reply
+
+mailboxes:
+  - id: initech
+    address: owner@initech.example
+    provider: google              # Google Workspace
+    read:
+      via: broker                 # Gmail REST via the capability broker
+      connector: gmail_initech
+    send:
+      via: broker
+      capability: gmail_initech.send
+    credentials:
+      refresh_token_env: GOOGLE_OAUTH_REFRESH_TOKEN_INITECH
+      client_id_env: GOOGLE_OAUTH_CLIENT_ID
+      client_secret_env: GOOGLE_OAUTH_CLIENT_SECRET
+    scopes_required: [gmail.readonly, gmail.send]
+    notes: "Token exists but was minted readonly — re-mint with gmail.send before reply works."
+
+  - id: ownera
+    address: example-org@example.com
+    provider: google              # personal Gmail
+    read:
+      via: broker
+      connector: gmail_ownera
+    send:
+      via: broker
+      capability: gmail_ownera.send
+    credentials:
+      refresh_token_env: GOOGLE_OAUTH_REFRESH_TOKEN_OWNERA
+      client_id_env: GOOGLE_OAUTH_CLIENT_ID
+      client_secret_env: GOOGLE_OAUTH_CLIENT_SECRET
+    scopes_required: [gmail.readonly, gmail.send]
+    notes: "Token exists but was minted readonly — re-mint with gmail.send before reply works."
+
+  - id: acmeuni
+    address: owner@acmeuni.example
+    provider: google              # Google Workspace
+    read:
+      via: broker
+      connector: gmail_acmeuni
+    send:
+      via: broker
+      capability: gmail_acmeuni.send
+    credentials:
+      refresh_token_env: GOOGLE_OAUTH_REFRESH_TOKEN_ACMEUNI
+      client_id_env: GOOGLE_OAUTH_CLIENT_ID
+      client_secret_env: GOOGLE_OAUTH_CLIENT_SECRET
+    scopes_required: [gmail.readonly, gmail.send]
+    notes: "New dedicated token — mint with read+send scope (OAUTH_KEY_SUFFIX=AcmeUni)."
+
+  - id: globex
+    address: owner@globex.example
+    provider: titan               # Titan Mail — IMAP/SMTP, not Gmail
+    read:
+      via: imap                   # existing stdlib IMAP poller; comms source name = globex
+      source: globex
+    send:
+      via: smtp                   # stdlib SMTP sender (smtp.titan.email:465), lands with the triage layer
+      host_env: SMTP_HOST_GLOBEX
+      port_env: SMTP_PORT_GLOBEX
+      user_env: SMTP_USER_GLOBEX
+      password_env: SMTP_PASSWORD_GLOBEX
+    credentials:
+      imap_host_env: IMAP_HOST_GLOBEX
+      imap_user_env: IMAP_USER_GLOBEX
+      imap_password_env: IMAP_PASSWORD_GLOBEX
+    scopes_required: []           # provider auth is username+password, no OAuth scopes
+    notes: "Read via IMAP poller; SMTP send capability verified (login). Sender module follows with the triage layer."
+
+  - id: hooli
+    address: owner@hooli.example
+    provider: google              # its own Google account (domain inbound is Cloudflare-routed)
+    read:
+      via: broker
+      connector: gmail_hooli
+    send:
+      via: broker
+      capability: gmail_hooli.send
+    credentials:
+      refresh_token_env: GOOGLE_OAUTH_REFRESH_TOKEN_HOOLI
+      client_id_env: GOOGLE_OAUTH_CLIENT_ID
+      client_secret_env: GOOGLE_OAUTH_CLIENT_SECRET
+    scopes_required: [gmail.readonly, gmail.send]
+    notes: "Its own Gmail account. Note: hooli.example inbound MX is Cloudflare, so the Gmail inbox may not receive the domain's forwarded mail — confirm delivery separately."

@@ -1,0 +1,1344 @@
+/* ── Chat shell — rebuilt to the ratified prototype (~/Desktop/omniagentos-redesign.html
+ *    §"Chat": .chat-shell / .chat-list / .chat-main / .composer-zone).
+ *
+ * Replaces the old chats.module.css layout (Page + PageHeader chrome and the
+ * `calc(100vh - 13.5rem)` guess). The shell is FLUSH: it cancels .ds-content's
+ * padding with negative margins and takes the rest of the viewport from its own
+ * measured top edge (--chat-shell-top, set by the page from a real
+ * getBoundingClientRect) — no hard-coded chrome height anywhere.
+ *
+ * Prototype token map (its names → this app's theme.css names, same values):
+ *   --bg → --canvas · --bg-2 → --canvas-sunken · --surface-2 → --surface-raised
+ *   --text-2 → --text-muted · --text-3 → --text-faint · --r-* → --radius-*
+ */
+
+/* ── Shell ─────────────────────────────────────────────────── */
+
+.shell {
+  display: flex;
+  position: relative;
+  min-width: 0;
+  overflow: hidden;
+  background: var(--canvas);
+  border-top: 1px solid var(--border);
+  /* Cancel .ds-content's padding so the two panes run edge to edge. */
+  margin: calc(-1 * var(--space-5)) calc(-1 * var(--space-6)) calc(-1 * var(--space-8));
+  /* --chat-shell-top is the measured distance from the viewport top to this
+     element's top edge (topbar + breadcrumb). Fallback keeps SSR sane. */
+  height: calc(100dvh - var(--chat-shell-top, 5.5rem));
+}
+
+/* ── Sidebar (prototype .chat-list, 300px) ─────────────────── */
+
+.list {
+  width: 300px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  border-right: 1px solid var(--border);
+  background: var(--canvas);
+  min-width: 0;
+  transition: width var(--motion-base) var(--ease);
+}
+
+.listCollapsed {
+  width: 0;
+  overflow: hidden;
+  border-right: none;
+}
+
+.listHead {
+  padding: var(--space-4) var(--space-4) var(--space-2);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  flex-shrink: 0;
+}
+
+.listHeadRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+.listTitle {
+  font-size: 0.9375rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: var(--text);
+  margin: 0;
+}
+
+.listHeadActions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.searchField {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 0 var(--space-2);
+  height: 2rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--text-faint);
+}
+
+.searchField:focus-within {
+  border-color: var(--accent-border);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+
+.searchInput {
+  flex: 1;
+  min-width: 0;
+  appearance: none;
+  border: none;
+  outline: none;
+  background: transparent;
+  color: var(--text);
+  font-family: var(--font-sans);
+  font-size: var(--text-small);
+}
+
+.searchInput::placeholder {
+  color: var(--text-faint);
+}
+
+.searchKbd {
+  font-size: var(--text-micro);
+  color: var(--text-faint);
+  background: var(--canvas-sunken);
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  padding: 1px 4px;
+}
+
+.scroll {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--space-1) var(--space-2) var(--space-5);
+}
+
+/* Folder / project group (prototype .chat-folder) */
+
+.folder {
+  margin-bottom: 2px;
+}
+
+.folderHead {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  width: 100%;
+  padding: 6px var(--space-2);
+  border-radius: var(--radius-sm);
+  font-size: var(--text-small);
+  font-weight: 650;
+  color: var(--text-muted);
+  background: none;
+  border: none;
+  border-left: 3px solid var(--folder-color, transparent);
+  text-align: left;
+  cursor: pointer;
+  transition: background var(--motion-fast) var(--ease);
+}
+
+.folderHead:hover {
+  background: var(--hover);
+}
+
+.folderCaret {
+  display: inline-flex;
+  align-items: center;
+  color: var(--text-faint);
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+}
+
+.folderDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--folder-color, var(--text-faint));
+  flex-shrink: 0;
+}
+
+.folderName {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.folderCount {
+  margin-left: auto;
+  font-size: var(--text-micro);
+  color: var(--text-faint);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.folderMenuBtn {
+  display: inline-flex;
+  align-items: center;
+  background: none;
+  border: none;
+  color: var(--text-faint);
+  cursor: pointer;
+  padding: 2px;
+  border-radius: var(--radius-sm);
+}
+
+.folderMenuBtn:hover {
+  color: var(--text);
+  background: var(--hover);
+}
+
+.folderDropTarget {
+  border: 1px dashed var(--accent);
+  border-left: 3px solid var(--folder-color, var(--accent));
+  background: color-mix(in srgb, var(--accent) 6%, transparent);
+}
+
+.folderBody {
+  padding-left: 14px;
+}
+
+.folderEmpty {
+  font-size: var(--text-small);
+  color: var(--text-faint);
+  padding: 3px var(--space-2) 7px;
+  font-style: italic;
+  margin: 0;
+}
+
+/* Folder color tokens (088 registry) — one color class per element. */
+
+.folderColorGray { --folder-color: var(--ds-folder-gray); }
+.folderColorRed { --folder-color: var(--ds-folder-red); }
+.folderColorOrange { --folder-color: var(--ds-folder-orange); }
+.folderColorYellow { --folder-color: var(--ds-folder-yellow); }
+.folderColorGreen { --folder-color: var(--ds-folder-green); }
+.folderColorTeal { --folder-color: var(--ds-folder-teal); }
+.folderColorBlue { --folder-color: var(--ds-folder-blue); }
+.folderColorViolet { --folder-color: var(--ds-folder-violet); }
+
+.swatchRow {
+  display: flex;
+  gap: var(--space-2);
+  padding: var(--space-1) var(--space-2);
+}
+
+.swatch {
+  appearance: none;
+  width: 1rem;
+  height: 1rem;
+  padding: 0;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-pill);
+  background: var(--folder-color, var(--ds-folder-gray));
+  cursor: pointer;
+  transition: transform var(--motion-fast) var(--ease);
+}
+
+.swatch:hover {
+  transform: scale(1.15);
+}
+
+.swatchActive {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.folderMenu {
+  margin: var(--space-1) 0 var(--space-2) 14px;
+  padding: var(--space-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--overlay);
+  box-shadow: var(--shadow-md);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.folderMenuItem {
+  text-align: left;
+  background: none;
+  border: none;
+  color: var(--text);
+  font-size: var(--text-small);
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+}
+
+.folderMenuItem:hover {
+  background: var(--hover);
+}
+
+.folderMenuDanger {
+  color: var(--danger);
+}
+
+.folderRenameInput {
+  flex: 1;
+  min-width: 0;
+  font-family: var(--font-sans);
+  font-size: var(--text-small);
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--accent-border);
+  border-radius: var(--radius-sm);
+  padding: 2px var(--space-1);
+}
+
+/* Chat row (prototype .chat-item) */
+
+.item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  width: 100%;
+  padding: 7px var(--space-2);
+  border-radius: var(--radius-sm);
+  text-align: left;
+  cursor: pointer;
+  transition: background var(--motion-fast) var(--ease);
+}
+
+.item:hover {
+  background: var(--hover);
+}
+
+.itemActive {
+  background: var(--accent-soft);
+}
+
+.itemFocused {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+
+.itemDragging {
+  opacity: 0.5;
+}
+
+.itemText {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.itemTitle {
+  font-size: var(--text-body);
+  font-weight: 550;
+  color: var(--text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.itemActive .itemTitle {
+  color: var(--accent);
+}
+
+.itemMeta {
+  font-size: var(--text-micro);
+  color: var(--text-faint);
+}
+
+.itemMove {
+  appearance: none;
+  max-width: 5.5rem;
+  font-size: var(--text-micro);
+  color: var(--text-faint);
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 1px 2px;
+}
+
+.dayLabel {
+  display: block;
+  padding: var(--space-2) var(--space-2) var(--space-1);
+  font-size: var(--text-micro);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+
+.newFolderBtn,
+.newChatBtn {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  width: 100%;
+  padding: 6px var(--space-2);
+  margin-top: var(--space-1);
+  border: none;
+  border-radius: var(--radius-sm);
+  background: none;
+  font-size: var(--text-small);
+  color: var(--text-faint);
+  font-weight: 550;
+  cursor: pointer;
+}
+
+.newFolderBtn:hover,
+.newChatBtn:hover {
+  background: var(--hover);
+  color: var(--text-muted);
+}
+
+.recents {
+  margin-top: var(--space-4);
+}
+
+.undoBanner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  margin: 0 var(--space-3) var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  font-size: var(--text-small);
+  color: var(--text-muted);
+}
+
+.sidebarSkeletons {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-2);
+}
+
+.sidebarSkeletonRow {
+  height: 2.25rem;
+  border-radius: var(--radius-sm);
+}
+
+/* ── Main pane (prototype .chat-main) ──────────────────────── */
+
+.main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  background: var(--canvas);
+}
+
+.mainToolbar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  flex-shrink: 0;
+}
+
+.surface {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-5);
+  border-bottom: 1px solid var(--border);
+  background: var(--canvas);
+  flex-shrink: 0;
+}
+
+.headerPanel {
+  padding: var(--space-2) var(--space-3);
+}
+
+.headerTitleWrap {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.headerTitle {
+  font-size: var(--text-h3);
+  font-weight: 650;
+  letter-spacing: -0.01em;
+  color: var(--text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.headerSubline {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--text-micro);
+  color: var(--text-faint);
+}
+
+.headerActions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  flex-shrink: 0;
+}
+
+.headerMenuWrap {
+  position: relative;
+}
+
+.headerMenu {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 4px);
+  z-index: var(--z-dropdown, 40);
+  min-width: 12rem;
+  padding: var(--space-1);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--overlay);
+  box-shadow: var(--shadow-md);
+  display: flex;
+  flex-direction: column;
+}
+
+.headerMenuItem {
+  text-align: left;
+  background: none;
+  border: none;
+  color: var(--text);
+  font-size: var(--text-small);
+  padding: var(--space-2);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+}
+
+.headerMenuItem:hover:not(:disabled) {
+  background: var(--hover);
+}
+
+.headerMenuItem:disabled {
+  color: var(--text-faint);
+  cursor: not-allowed;
+}
+
+.projectChip {
+  color: var(--accent);
+  text-decoration: none;
+  font-weight: 600;
+}
+
+/* ── Thread ────────────────────────────────────────────────── */
+
+.thread {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: var(--space-5) var(--space-5) var(--space-3);
+}
+
+.threadInner {
+  width: 100%;
+  max-width: 53.75rem;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.surfacePanel .threadInner {
+  max-width: 40rem;
+}
+
+.msg {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  max-width: 85%;
+}
+
+.msgUser {
+  align-self: flex-end;
+}
+
+.msgAgent {
+  align-self: stretch;
+  max-width: 100%;
+}
+
+.msgSystem {
+  align-self: center;
+  max-width: 95%;
+}
+
+.msgHead {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--text-micro);
+  color: var(--text-faint);
+  padding: 0 var(--space-1);
+}
+
+.msgRole {
+  font-weight: 650;
+  color: var(--text-muted);
+}
+
+.msgTime {
+  margin-left: auto;
+  color: var(--text-faint);
+}
+
+.msgBubble {
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  color: var(--text);
+  font-size: var(--text-body);
+  line-height: 1.6;
+}
+
+.msgUser .msgBubble {
+  background: var(--surface-raised);
+}
+
+.msgAgent .msgBubble {
+  background: transparent;
+  border-color: transparent;
+  padding-left: var(--space-3);
+}
+
+.msgSystem .msgBubble {
+  border-style: dashed;
+  background: transparent;
+  font-size: var(--text-small);
+}
+
+.msgStreaming {
+  /* The 2px accent rule exists ONLY while the turn streams. */
+  border-left: 2px solid var(--accent);
+  border-radius: 0 var(--radius-lg) var(--radius-lg) 0;
+}
+
+/* User turns are plain text: their content is typed, not authored markdown. */
+.msgPlain {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.msgMarkdown {
+  overflow-wrap: anywhere;
+}
+
+.msgMarkdown > :last-child {
+  margin-bottom: 0;
+}
+
+.streamCursor {
+  display: inline-block;
+  width: 0.5rem;
+  height: 1em;
+  margin-left: 2px;
+  vertical-align: text-bottom;
+  background: var(--accent);
+  animation: chatCaret 1s steps(2, start) infinite;
+}
+
+@keyframes chatCaret {
+  50% {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .streamCursor {
+    animation: none;
+  }
+}
+
+.attachmentRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+  padding: 0 var(--space-1);
+}
+
+.attachmentPill {
+  font-size: var(--text-micro);
+  color: var(--text-muted);
+  background: var(--canvas-sunken);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-pill);
+  padding: 1px var(--space-2);
+}
+
+/* Activity strip — replaces the bare "working" caret (elapsed · last SSE
+   event · stalled), so a silent turn is legible instead of mysterious. */
+
+.activityStrip {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+  margin-top: var(--space-2);
+  font-size: var(--text-micro);
+  color: var(--text-faint);
+  font-variant-numeric: tabular-nums;
+}
+
+.activityDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--running);
+  flex-shrink: 0;
+}
+
+.activityStalled .activityDot {
+  background: var(--warn);
+}
+
+.activitySep {
+  color: var(--border-strong);
+}
+
+.activityStalledNote {
+  color: var(--warn);
+  font-weight: 600;
+}
+
+.turnNotice {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  font-size: var(--text-small);
+}
+
+.turnError {
+  color: var(--danger);
+}
+
+.threadSkeletons {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.skeletonBubble {
+  height: 3.5rem;
+  max-width: 65%;
+  align-self: flex-end;
+  border-radius: var(--radius-lg);
+}
+
+.skeletonBubbleAgent {
+  align-self: flex-start;
+  max-width: 90%;
+}
+
+/* ── Empty state (prototype .chat-empty) ───────────────────── */
+
+.empty {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  padding: var(--space-8) var(--space-5);
+  text-align: center;
+}
+
+.emptyIcon {
+  width: 56px;
+  height: 56px;
+  border-radius: var(--radius-xl);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--accent);
+  margin-bottom: var(--space-2);
+}
+
+.emptyTitle {
+  font-size: 1.3125rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--text);
+  margin: 0;
+}
+
+.emptyText {
+  color: var(--text-muted);
+  font-size: var(--text-body);
+  max-width: 44ch;
+  margin: 0;
+}
+
+.suggest {
+  display: flex;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+  justify-content: center;
+  margin-top: var(--space-3);
+}
+
+.chip {
+  padding: 6px 13px;
+  font-size: var(--text-small);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-pill);
+  background: var(--surface);
+  color: var(--text-muted);
+  cursor: pointer;
+  transition:
+    border-color var(--motion-fast) var(--ease),
+    background var(--motion-fast) var(--ease),
+    color var(--motion-fast) var(--ease);
+}
+
+.chip:hover {
+  border-color: var(--accent-border);
+  color: var(--accent);
+  background: var(--accent-soft);
+}
+
+/* ── Composer zone (prototype .composer-zone / .ctx-row) ───── */
+
+.composerZone {
+  padding: 0 var(--space-5) var(--space-5);
+  max-width: 53.75rem;
+  width: 100%;
+  margin: 0 auto;
+  flex-shrink: 0;
+}
+
+.surfacePanel .composerZone {
+  padding: 0 var(--space-3) var(--space-3);
+  max-width: 40rem;
+}
+
+.ctxRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  justify-content: flex-end;
+  padding: 0 var(--space-1) var(--space-2);
+  flex-wrap: wrap;
+}
+
+.ctxLabel {
+  font-size: var(--text-small);
+  color: var(--text-faint);
+  font-weight: 550;
+}
+
+.ctxStatus {
+  font-size: var(--text-micro);
+  color: var(--text-faint);
+}
+
+.ctxRetry {
+  background: none;
+  border: none;
+  color: var(--accent);
+  font-size: var(--text-micro);
+  cursor: pointer;
+  text-decoration: underline;
+  padding: 0;
+}
+
+.composer {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-md);
+  transition:
+    border-color var(--motion-fast) var(--ease),
+    box-shadow var(--motion-fast) var(--ease);
+}
+
+.composer:focus-within {
+  border-color: var(--accent-border);
+  box-shadow: 0 0 0 3px var(--accent-soft), var(--shadow-md);
+}
+
+.composerInputWrap {
+  position: relative;
+  width: 100%;
+}
+
+.composerInput {
+  width: 100%;
+  border: none;
+  outline: none;
+  resize: none;
+  background: transparent;
+  padding: 15px 18px 6px;
+  font-family: var(--font-sans);
+  font-size: 0.90625rem;
+  line-height: 1.5;
+  color: var(--text);
+  min-height: 54px;
+  max-height: 220px;
+}
+
+.composerInput::placeholder {
+  color: var(--text-faint);
+}
+
+.composerInput:disabled {
+  opacity: 0.6;
+}
+
+.composerFoot {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) 10px 10px var(--space-3);
+  flex-wrap: wrap;
+}
+
+.seg {
+  display: inline-flex;
+  background: var(--canvas-sunken);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-pill);
+  padding: 2px;
+}
+
+.segBtn {
+  padding: 3.5px 11px;
+  border: none;
+  background: none;
+  border-radius: var(--radius-pill);
+  font-size: var(--text-small);
+  font-weight: 600;
+  color: var(--text-faint);
+  cursor: pointer;
+  transition:
+    background var(--motion-fast) var(--ease),
+    color var(--motion-fast) var(--ease);
+}
+
+.segBtnOn {
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: var(--shadow-sm);
+}
+
+.segBtn:hover:not(.segBtnOn) {
+  color: var(--text-muted);
+}
+
+.stepper {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-pill);
+  padding: 2px var(--space-2);
+  font-size: var(--text-small);
+  color: var(--text-muted);
+}
+
+.stepperButton {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 0 var(--space-1);
+  font-size: var(--text-body);
+}
+
+.stepperValue {
+  font-variant-numeric: tabular-nums;
+  min-width: 1ch;
+  text-align: center;
+}
+
+.composerHint {
+  margin-left: auto;
+  font-size: var(--text-micro);
+  color: var(--text-faint);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.sendBtn {
+  width: 34px;
+  height: 34px;
+  border: none;
+  border-radius: var(--radius-pill);
+  background: var(--accent);
+  color: var(--accent-text);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--text-body);
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: var(--shadow-sm);
+  transition:
+    opacity var(--motion-fast) var(--ease),
+    transform 60ms var(--ease);
+}
+
+.sendBtn:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.sendBtn:active:not(:disabled) {
+  transform: scale(0.94);
+}
+
+.composerAttachments {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+  padding: var(--space-2) var(--space-4) 0;
+}
+
+.composerAttachmentChip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  font-size: var(--text-micro);
+  color: var(--text-muted);
+  background: var(--canvas-sunken);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-pill);
+  padding: 2px var(--space-2);
+}
+
+.chipDismiss {
+  background: none;
+  border: none;
+  color: var(--text-faint);
+  cursor: pointer;
+  padding: 0;
+  line-height: 1;
+}
+
+.composerError {
+  display: block;
+  padding: 0 var(--space-4) var(--space-2);
+  font-size: var(--text-micro);
+  color: var(--danger);
+}
+
+.steerHint {
+  margin: 0;
+  padding: var(--space-2) var(--space-4) 0;
+  font-size: var(--text-micro);
+  color: var(--text-faint);
+}
+
+.mentionPopover {
+  position: absolute;
+  bottom: calc(100% + 4px);
+  left: var(--space-3);
+  right: var(--space-3);
+  z-index: var(--z-dropdown, 40);
+  max-height: 14rem;
+  overflow-y: auto;
+  padding: var(--space-1);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--overlay);
+  box-shadow: var(--shadow-md);
+  display: flex;
+  flex-direction: column;
+}
+
+.mentionItem {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  text-align: left;
+  background: none;
+  border: none;
+  color: var(--text);
+  font-size: var(--text-small);
+  padding: var(--space-2);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+}
+
+.mentionItemActive,
+.mentionItem:hover {
+  background: var(--hover);
+}
+
+.mentionItemName {
+  font-weight: 600;
+}
+
+.mentionItemDesc {
+  font-size: var(--text-micro);
+  color: var(--text-faint);
+}
+
+.hiddenInput {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* ── Workspace drawer (overlay, never a flex sibling) ──────── */
+
+.drawerScrim {
+  position: absolute;
+  inset: 0;
+  z-index: calc(var(--z-sticky, 100) - 3);
+  border: none;
+  background: color-mix(in srgb, #000 38%, transparent);
+  cursor: pointer;
+}
+
+.drawerOverlay {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 24rem;
+  max-width: 92vw;
+  z-index: calc(var(--z-sticky, 100) - 2);
+  display: flex;
+  flex-direction: column;
+  border-left: 1px solid var(--border);
+  background: var(--surface);
+  box-shadow: var(--shadow-lg);
+}
+
+.drawerHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4);
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.drawerTitle {
+  margin: 0;
+  font-size: var(--text-small);
+  font-weight: 650;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.drawerContent {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: var(--space-3);
+  display: flex;
+  flex-direction: column;
+}
+
+/* The activity feed is height:100% of its slot and scrolls internally, so the
+   slot has to be a real flex item — otherwise it collapses to zero. */
+.sessionSlot {
+  flex: 1 1 auto;
+  min-height: 14rem;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Live terminal is a section inside the drawer, not a co-equal tab. */
+
+.terminalSection {
+  margin-top: var(--space-4);
+  border-top: 1px solid var(--border);
+  padding-top: var(--space-3);
+}
+
+.terminalToggle {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  width: 100%;
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-size: var(--text-small);
+  font-weight: 650;
+  cursor: pointer;
+  padding: var(--space-1) 0;
+}
+
+.terminalToggle:hover {
+  color: var(--text);
+}
+
+.terminalHint {
+  margin: var(--space-1) 0 0;
+  font-size: var(--text-micro);
+  color: var(--text-faint);
+}
+
+.terminalLink {
+  color: var(--accent);
+  text-decoration: none;
+}
+
+.terminalBody {
+  margin-top: var(--space-2);
+}
+
+/* ── Dialog fields (promote / rename / folder dialogs) ─────── */
+
+.dialogField {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  margin-bottom: var(--space-3);
+}
+
+.dialogLabel {
+  font-size: var(--text-small);
+  font-weight: 500;
+  color: var(--text-muted);
+}
+
+.dialogInput {
+  appearance: none;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--canvas);
+  color: var(--text);
+  font-family: var(--font-sans);
+  font-size: var(--text-body);
+  padding: var(--space-2) var(--space-3);
+  outline: none;
+  transition: border-color var(--motion-fast) var(--ease);
+}
+
+.dialogInput:focus {
+  border-color: var(--accent);
+}
+
+.dialogHelp {
+  font-size: var(--text-micro);
+  color: var(--text-faint);
+  line-height: 1.4;
+}
+
+/* ── Phone reveal + responsive ─────────────────────────────── */
+
+.revealPhone {
+  display: none;
+}
+
+@media (max-width: 36rem) {
+  .shell {
+    /* Cancel the phone content padding (which reserves the bottom nav) so the
+       composer sits directly above the bar instead of below the fold. */
+    margin: calc(-1 * var(--space-4)) calc(-1 * var(--space-4))
+      calc(-1 * (var(--bottom-nav-height, 0px) + env(safe-area-inset-bottom, 0px) + var(--space-5)));
+    height: calc(
+      100dvh - var(--chat-shell-top, 5.5rem) - var(--bottom-nav-height, 0px) -
+        env(safe-area-inset-bottom, 0px)
+    );
+  }
+
+  /* The sidebar becomes a slide-over reachable from the reveal button —
+     deliberately independent of the ⌘\ collapse state. */
+  .list,
+  .listCollapsed {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    z-index: calc(var(--z-sticky, 100) - 2);
+    width: min(20rem, 86vw);
+    overflow: hidden;
+    border-right: 1px solid var(--border);
+    box-shadow: var(--shadow-lg);
+    transform: translateX(-100%);
+    transition: transform var(--motion-base) var(--ease);
+  }
+
+  .list[data-mobile-open="true"] {
+    transform: none;
+  }
+
+  .revealPhone {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-1);
+  }
+
+  .thread,
+  .composerZone {
+    padding-inline: var(--space-3);
+  }
+
+  .composerInput {
+    /* ≥16px keeps iOS from zooming the whole shell on focus. */
+    font-size: 1rem;
+    padding: 12px 14px 4px;
+  }
+
+  .composerFoot {
+    gap: var(--space-1);
+    padding: var(--space-2) var(--space-2) var(--space-2) var(--space-3);
+  }
+
+  .composerHint {
+    display: none;
+  }
+
+  .sendBtn {
+    /* Thumb target at 390px. */
+    width: 44px;
+    height: 44px;
+    margin-left: auto;
+  }
+
+  .segBtn {
+    padding: 6px 10px;
+  }
+}

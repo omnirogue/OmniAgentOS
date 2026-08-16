@@ -1,0 +1,68 @@
+# configs/protected-paths.yaml — versioned protected-path authority (Tier P).
+#
+# Single checked-in registry of Tier P / Tier S files, directories, LaunchAgent
+# rules, and protected module-shadowing stems. Parsed only by
+# omniagentos.policy.protected_paths (strict, fail-closed).
+#
+# Immutable safety floors live in code: this file cannot delete or demote the
+# current critical coverage. It may only preserve or strengthen it.
+
+version: 1
+
+tier_p:
+  files:
+    - omniagentos/reliability/governance.py
+    - configs/governance.yaml
+    - configs/reliability.yaml
+    - configs/policy.yaml
+    - configs/protected-paths.yaml
+    - omniagentos/contracts.py
+    - omniagentos/reliability/judges.py
+    - omniagentos/api/routes/autonomy.py
+    # test-tampering anti-sabotage gate (sha256:309db4693b3a16f645d90d87904c1d0d73bd414a08aed68710cdd45e4a985a6d):
+    # this is the gate module itself. A plan cannot own it, so a worker
+    # cannot weaken/disable gate_existing_suite_unmodified or settle_gate
+    # to green its own tampered attempt.
+    - scripts/benchmarks/configtest_gates.py
+  directories:
+    - omniagentos/policy
+    - contracts
+    - omniagentos/notifications
+    - scripts/reliability
+    - omniagentos/db/migrations
+    # test-tampering anti-sabotage gate: the existing suite and its spec
+    # files, so a plannable owned_paths list can never include the tests
+    # gate_existing_suite_unmodified defends (sha256:309db4693b3a16f).
+    - tests
+    - dashboard/e2e
+  modules:
+    - governance
+    - judges
+    - contracts
+    - autonomy
+  launchagents:
+    path_contains: Library/LaunchAgents/com.omniagentos.
+    basename_contains: com.omniagentos.
+    require_launchagents_dir: true
+
+tier_s:
+  files:
+    - omniagentos/api/routes/reliability.py
+    - omniagentos/api/routes/improvements.py
+    - omniagentos/api/routes/org.py
+    - omniagentos/steward/alerts/monitor.py
+    - omniagentos/steward/alerts/rules.py
+    - ARCHI.md
+  directories:
+    - omniagentos/reliability
+    - omniagentos/orgdims
+    - omniagentos/archdocs
+    - docs/architecture
+  modules:
+    - pipeline
+    - detector
+    - analyzer
+    - sandbox
+    - recovery
+    - scorecards
+    - memory

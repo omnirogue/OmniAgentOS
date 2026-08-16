@@ -1,0 +1,3 @@
+id: "task_005"
+prompt: "Write a Python function find_max_in_list(lst: list[int]) -> int that returns the maximum value. Raise ValueError on empty list. Provide a test case."
+discipline: "code-changes"

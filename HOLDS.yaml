@@ -1,0 +1,108 @@
+# HOLDS.yaml — Active architectural holds and deferred decisions
+#
+# This file encodes all active project holds, deferred decisions, and constraints
+# that limit implementation scope. Holds are ratified in DECISIONS.md and signed by
+# the operator, and this file provides the machine-readable registry for automation to enforce.
+#
+# Status values:
+#   ACTIVE: Hold is currently in effect and must be enforced
+#   DEFERRED: Decision is pending (decision recorded but action blocked until undeferred)
+#   SUPERSEDED: A new decision replaced this hold; automation should not enforce
+#
+# Never edit this file directly without a corresponding the operator signature in DECISIONS.md.
+# A hold becomes machine-readable only after its decision is SIGNED_MERGED in DECISIONS.md.
+
+holds:
+  - id: D3-g3-security-timing-parked
+    title: "G3 Security Timing — broader broker work remains parked"
+    description: |
+      D3: Proceed independently with fail-closed, store-backed toolplane grant-proof
+      hardening while broader G3 broker work remains parked.
+    status: ACTIVE
+    scope:
+      - omniagentos/policy/
+      - omniagentos/grants/
+    decision_ref: "DECISIONS.md:123-124 / docs/adr/2026-08-02-d03-g3-security-timing.md"
+    signed_by: "the operator (S1 2026-08-03)"
+    signed_merged: "21a11cef2c8e538c0c89e60f22f97b1dfa116dde"
+
+  - id: D4-self-improvement-authority-candidate-only
+    title: "Self-Improvement Authority — candidate/test operation only"
+    description: |
+      D4: Limit any resulting authority to candidate/test operation; do not grant
+      autonomous merge or publication authority.
+    status: ACTIVE
+    scope:
+      - omniagentos/reliability/
+      - omniagentos/improvements/
+    decision_ref: "DECISIONS.md:125-126 / docs/adr/2026-08-02-d04-self-improvement-authority.md"
+    signed_by: "the operator (S1 2026-08-03)"
+    signed_merged: "21a11cef2c8e538c0c89e60f22f97b1dfa116dde"
+
+  - id: D5-engine-authority-distributed
+    title: "Engine Authority — Option G is deferred"
+    description: |
+      D5: Option G is deferred. Retain distributed authority and localized execution
+      state across lanes; keep ExecutionRef as a correlation envelope rather than
+      creating central-store convergence; reject implicit barrier exemptions.
+    status: DEFERRED
+    deferred_option: "G"
+    scope:
+      - omniagentos/execution/
+    decision_ref: "DECISIONS.md:127-129 / docs/adr/2026-08-02-d05-engine-authority.md"
+    signed_by: "the operator (S1 2026-08-03)"
+    signed_merged: "21a11cef2c8e538c0c89e60f22f97b1dfa116dde"
+
+  - id: D6-loops-dark-by-default
+    title: "Loop Activation — dark by default until Phase D"
+    description: |
+      D6: Keep loops dark by default until Phase D; weak oracles may produce drafts
+      only. Retain a $1 per-tick ceiling and use an initial $10 daily cap.
+    status: ACTIVE
+    scope:
+      - omniagentos/loops/
+      - omniagentos/instances/
+    decision_ref: "DECISIONS.md:130-132 / docs/adr/2026-08-02-d06-loop-activation-and-paid-bar.md"
+    signed_by: "the operator (S1 2026-08-03)"
+    signed_merged: "21a11cef2c8e538c0c89e60f22f97b1dfa116dde"
+    constraints:
+      - key: "max_spend_per_tick_usd"
+        value: 1
+      - key: "initial_daily_cap_usd"
+        value: 10
+      - key: "production_enabled"
+        value: false
+
+  - id: D13-experiments-offline-24h-budget
+    title: "Experiment Owner Stop Rule — offline/shadow-only, 24h max, $0 budget"
+    description: |
+      D13: the operator is the accountable owner. Experiments are offline/shadow-only, have a
+      $0 autonomous spend budget and a 24-hour maximum duration, and hard-stop when
+      any bound or evidence requirement is violated.
+    status: ACTIVE
+    scope:
+      - omniagentos/experiments/
+      - omniagentos/research/
+    decision_ref: "DECISIONS.md:151-153 / docs/adr/2026-08-02-d13-experiment-owner-stop-rule.md"
+    signed_by: "the operator (S1 2026-08-03)"
+    signed_merged: "21a11cef2c8e538c0c89e60f22f97b1dfa116dde"
+    constraints:
+      - key: "mode"
+        value: "offline_shadow_only"
+      - key: "max_duration_hours"
+        value: 24
+      - key: "autonomous_spend_budget_usd"
+        value: 0
+      - key: "hard_stop_on_violation"
+        value: true
+
+deferred_decisions:
+  - id: D5-option-g
+    title: "Engine Authority — Option G"
+    description: |
+      D5 Option G (central-store convergence for ExecutionRef) is deferred pending
+      further architectural work on distributed execution state.
+    defer_date: "2026-08-03"
+    deferred_until: "unscheduled"  # TBD by the operator
+    signed_by: "the operator (S1 2026-08-03)"
+    decision_ref: "DECISIONS.md:127-129"

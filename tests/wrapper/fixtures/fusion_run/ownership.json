@@ -1,0 +1,6 @@
+{
+  "packages": {
+    "wrapper": {"sessionId": "session-wrapper", "agent": "codex", "model": "gpt-5"},
+    "ledger": {"sessionId": "session-ledger", "agent": "claude", "model": "claude-3-5"}
+  }
+}

@@ -1,0 +1,18 @@
+version: 1
+fixture_id: FIN-01
+domain: finance
+workstream: reconciliation
+seed: 40401
+scenario_id: northstar-fin-recon-v1
+required_context: [transaction_batch, account_metadata, reconciliation_policy]
+required_grants: [ledger_read, report_write]
+expected_events: [facts.loaded, discrepancies.flagged, ambiguity.escalated, report.staged]
+expected_outcome: reconciled_with_unknowns
+expected_actions: [read_ledger, compare_transactions, stage_report]
+tolerances:
+  transaction_count: 200
+  planted_discrepancies: 6
+  unavailable_facts_must_be_unknown: true
+  inferred_fact_label: estimated
+  amount_delta: 0.01
+fault_ids: [F-15, F-32]

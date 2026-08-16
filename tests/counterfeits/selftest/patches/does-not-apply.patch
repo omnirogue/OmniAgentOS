@@ -1,0 +1,7 @@
+--- a/omniagentos/this/path/does/not/exist.py
++++ b/omniagentos/this/path/does/not/exist.py
+@@ -1,3 +1,5 @@
++"""This file does not exist in the tree; applying this patch must hard-error."""
+ def never_ship_this():
+-    return 1
++    return 2

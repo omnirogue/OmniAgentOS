@@ -1,0 +1,114 @@
+# benchmarks.yaml — GOLDEN-SUITE SENTINEL fixed benchmark briefs.
+#
+# The automated north-star metric (plan doc section A0.0,
+# devtasks/SWARM-BASELINE-2026-07-23.md "North-star golden suite (PENDING)"):
+# nightly p50/p90 wall-clock-to-GREEN on THREE FIXED briefs, so every phase of
+# work is judged apples-to-apples against the same trivial/medium/swarm asks.
+# Do not edit `goal`/`brief` text casually -- changing a brief resets its
+# history's comparability (a note in the commit message is the bare minimum).
+#
+# `run_golden.py` resolves each benchmark like this:
+#   1. Make a fresh scratch git repo under var/golden/runs/<UTCdate>/<name>/
+#      (git init -b main + one initial commit).
+#   2. Substitute the literal token `{workdir}` anywhere it appears in this
+#      entry's `dispatch.body` (recursively, any string value) with that
+#      scratch repo's absolute path, then POST `dispatch.body` as JSON to
+#      `dispatch.path` (contracts/swarm-api.md has the full request/response
+#      shapes for both `/api/intake/quick` and `/api/swarm`).
+#   3. Poll to a terminal state (board_task `status` for `intake_quick`;
+#      swarm run `status` for `swarm` -- see contracts/swarm-api.md), then run
+#      every `acceptance` command with CWD = the scratch repo, in order,
+#      first non-zero exit = DNF. `timeout_minutes` bounds steps 2+3 together;
+#      exceeding it is also a DNF (reason "timeout"). Wall-clock-to-GREEN is
+#      measured from the dispatch POST to the last passing acceptance check.
+#
+# `dispatch.mode` is one of:
+#   intake_quick -> POST /api/intake/quick  (fast lane or the planned/
+#                   orchestrate lane, depending on `lane` + how the goal text
+#                   classifies -- see omniagentos/intake/fastlane.py)
+#   swarm        -> POST /api/swarm          (always Swarm Mode; `working_dir`
+#                   is validated against the board-files approved-root floor,
+#                   which is why every scratch repo lives under this repo's
+#                   own var/ dir)
+#
+# Acceptance commands are plain `sh -c` checks (test -s + grep only, per the
+# brief) -- no networking, no interpreters beyond /bin/sh.
+
+benchmarks:
+  - name: trivial
+    description: >-
+      Single bounded file-creation ask -- the fast lane's proven shape
+      (omniagentos/intake/fastlane.py classify_task_speed), no planning pass.
+    dispatch:
+      mode: intake_quick
+      path: /api/intake/quick
+      body:
+        goal: >-
+          In the directory {workdir}, create a file named hello.txt
+          containing exactly this line: golden-suite trivial ok
+        lane: fast
+        priority: balanced
+    acceptance:
+      - test -s hello.txt
+      - grep -qF 'golden-suite trivial ok' hello.txt
+    timeout_minutes: 5
+
+  - name: medium
+    description: >-
+      3-task orchestrate-shaped brief: one Fable planning pass fans a single
+      goal into three sequential steps, executed by one agent (the planned
+      lane, NOT swarm -- `lane: auto` with wording classify_task_speed reads
+      as multi-clause/multi-deliverable so it falls through the fast-lane
+      heuristic; see fastlane.py).
+    dispatch:
+      mode: intake_quick
+      path: /api/intake/quick
+      body:
+        goal: >-
+          In the directory {workdir}, do this as three separate steps.
+          Step one: create step1.txt containing the line golden-suite medium
+          step one. Step two: create step2.txt containing the line
+          golden-suite medium step two. Step three: create step3.txt
+          containing the line golden-suite medium step three, and note
+          inside it that it followed step1.txt and step2.txt.
+        lane: auto
+        priority: balanced
+    acceptance:
+      - test -s step1.txt
+      - grep -qF 'golden-suite medium step one' step1.txt
+      - test -s step2.txt
+      - grep -qF 'golden-suite medium step two' step2.txt
+      - test -s step3.txt
+      - grep -qF 'golden-suite medium step three' step3.txt
+    timeout_minutes: 20
+
+  - name: swarm
+    description: >-
+      3 disjoint single-file mini-pages -- the proven live-drill shape
+      (devtasks/SWARM-EXECUTION-TODO.md's "10x run" / fleet load drills):
+      three independent single-file deliverables with zero shared
+      dependencies, dispatched straight to Swarm Mode so the DAG planner
+      fans them out to parallel slot workers instead of one sequential agent.
+    dispatch:
+      mode: swarm
+      path: /api/swarm
+      body:
+        brief: >-
+          Build three completely independent static single-file HTML
+          mini-pages with no shared dependencies and no cross-references:
+          page-a.html (title "Golden Suite A", body text containing
+          golden-suite swarm page a), page-b.html (title "Golden Suite B",
+          body text containing golden-suite swarm page b), and page-c.html
+          (title "Golden Suite C", body text containing golden-suite swarm
+          page c). Each page is a single self-contained file; no page may
+          read, import, or link to another.
+        working_dir: "{workdir}"
+        budget_usd_max: 5.0
+    acceptance:
+      - test -s page-a.html
+      - grep -qF 'golden-suite swarm page a' page-a.html
+      - test -s page-b.html
+      - grep -qF 'golden-suite swarm page b' page-b.html
+      - test -s page-c.html
+      - grep -qF 'golden-suite swarm page c' page-c.html
+    timeout_minutes: 20

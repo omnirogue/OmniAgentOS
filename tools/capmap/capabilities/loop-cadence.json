@@ -1,0 +1,18 @@
+{
+  "id": "loop-cadence",
+  "company": "estate",
+  "kind": "llm-loop",
+  "host": "owner-mac",
+  "repo": "/Users/youruser/Work/Ops",
+  "what_it_does": "Fixture standing in for loop-cadence; it exits 1 to represent its genuine RuntimeError/ledger append crash.",
+  "why_it_matters": "Unlike a deliberate non-zero outcome, this exit means the loop actually failed and must be surfaced as DOWN.",
+  "blast_radius": "Capmap exit-semantics demonstration only; this is not a live watchdog check.",
+  "verification": {"type": "command", "argv": ["/bin/sh", "-c", "exit 1"], "fixture": true, "note": "Deterministic fixture proving a genuine exit 1 maps to DOWN."},
+  "exit_semantics": {"1": "down"},
+  "cadence_seconds": 900,
+  "staleness_slo_seconds": 2700,
+  "escalation_tier": "high",
+  "owner": "estate-ops",
+  "last_verified": null,
+  "last_status": "UNVERIFIED"
+}

@@ -1,0 +1,130 @@
+# Daily paid-provider hard caps. Reloaded at every adapter preflight.
+#
+# ``kimi-k3`` is the operator-facing route alias. The rates below are deliberate
+# upper bounds derived from published Kimi-family prices, never inferred from the
+# separate live-fetched var/modelintel registry:
+#   * Fireworks Priority Kimi K2.6: $1.50/M input, $6.00/M output
+#     https://docs.fireworks.ai/serverless/pricing (checked 2026-08-05)
+#   * Moonshot standard Kimi-family ceiling: $0.95/M input, $4.00/M output;
+#     Fireworks' K2.7 launch states these match Moonshot's public rates
+#     https://fireworks.ai/blog/kimi-k2p7-code (checked 2026-08-05)
+# The guard applies the additional 1.25 factor below to every proposed call.
+version: "2026-08-05.1"
+safety_factor: "1.25"
+soft_threshold: "0.95"
+
+providers:
+  # Canonical Moonshot billing identity is "moonshot" (Blocker 1, 2026-08-06
+  # review): it must match MoonshotKimiK3Adapter.name, the provider-sentinel
+  # PAID_SNAPSHOT_PROVIDERS roster, and the live estate kimi-shim co-writer's
+  # billing_provider string exactly, or the guard and the shim independently
+  # enforce two separate $100/day allowances against one real Moonshot cap.
+  moonshot:
+    enabled: true
+    daily_cap_usd: "100.00"
+    models:
+      kimi-k3:
+        input_usd_per_million_tokens: "0.95"
+        output_usd_per_million_tokens: "4.00"
+        max_output_tokens: 262144
+        default_output_tokens: 8192
+
+  fireworks:
+    enabled: true
+    daily_cap_usd: "200.00"
+    models:
+      kimi-k3:
+        input_usd_per_million_tokens: "1.50"
+        output_usd_per_million_tokens: "6.00"
+        max_output_tokens: 262144
+        default_output_tokens: 8192
+
+  # SI-loop revival (operator approval 2026-08-12: "$50/day cap, use very cheap
+  # AND free models from OpenRouter"). This is the HARD daily backstop for the
+  # revived self-improvement loop's model spend: even if the free primary
+  # (google/gemma-4-31b-it:free) is rate-limited and the proposer falls to a
+  # cheap PAID OpenRouter model, total OpenRouter spend is bounded at $50/UTC-day.
+  #
+  # Enforced by OpenRouterAdapter.spend_guard_provider() -> "openrouter", which
+  # routes every OpenRouter call through spend_guard.preflight() BEFORE the HTTP
+  # request and settles the exact billed cost afterward. The guard REFUSES any
+  # model with no pricing row here, so this list MUST stay in lockstep with
+  # configs/swarm.yaml api_fallback.openrouter_models (the candidate set of the
+  # planner's last-resort rung); tests/reliability/test_si_loop_openrouter_cap.py
+  # enumerates that list and fails if a listed model lacks a row.
+  #
+  # Rates are deliberate UPPER bounds from the live OpenRouter model list
+  # (probed 2026-08-12), per million tokens. The 1.25 safety_factor above
+  # applies on top. Keys are the exact lower-cased OpenRouter ids.
+  openrouter:
+    enabled: true
+    daily_cap_usd: "50.00"
+    models:
+      # FREE tier (live-probed cost=$0.00). The guard requires a strictly
+      # positive rate, so this is a nominal 1c/M upper bound only — the exact
+      # billed cost settled after the call is $0, so a free tick never draws
+      # down the $50 cap. If OpenRouter ever starts billing this id, the cap
+      # still binds and the real rate settles.
+      google/gemma-4-31b-it:free:
+        input_usd_per_million_tokens: "0.01"
+        output_usd_per_million_tokens: "0.01"
+        max_output_tokens: 32768
+        default_output_tokens: 8192
+      deepseek/deepseek-v4-pro:
+        input_usd_per_million_tokens: "1.20"
+        output_usd_per_million_tokens: "2.40"
+        max_output_tokens: 262144
+        default_output_tokens: 8192
+      qwen/qwen3.7-max:
+        input_usd_per_million_tokens: "1.48"
+        output_usd_per_million_tokens: "4.43"
+        max_output_tokens: 131072
+        default_output_tokens: 8192
+      qwen/qwen3-coder-flash:
+        input_usd_per_million_tokens: "0.20"
+        output_usd_per_million_tokens: "0.98"
+        max_output_tokens: 65536
+        default_output_tokens: 8192
+      x-ai/grok-4.5:
+        input_usd_per_million_tokens: "2.00"
+        output_usd_per_million_tokens: "6.00"
+        max_output_tokens: 262144
+        default_output_tokens: 8192
+      z-ai/glm-5.2:
+        input_usd_per_million_tokens: "0.50"
+        output_usd_per_million_tokens: "3.15"
+        max_output_tokens: 131072
+        default_output_tokens: 8192
+      moonshotai/kimi-k2.6:
+        input_usd_per_million_tokens: "0.95"
+        output_usd_per_million_tokens: "4.00"
+        max_output_tokens: 262144
+        default_output_tokens: 8192
+      google/gemini-3.5-flash-lite:
+        input_usd_per_million_tokens: "0.30"
+        output_usd_per_million_tokens: "2.50"
+        max_output_tokens: 65536
+        default_output_tokens: 8192
+      # SI-loop revival — "cheapest reliable models" directive (2026-08-12).
+      # Ultra-cheap paid draft models; live-probed rates (per million tokens).
+      # qwen/qwen3.7-flash is the reflection proposer PRIMARY.
+      qwen/qwen3.7-flash:
+        input_usd_per_million_tokens: "0.03"
+        output_usd_per_million_tokens: "0.13"
+        max_output_tokens: 65536
+        default_output_tokens: 8192
+      deepseek/deepseek-v4-flash-0731:
+        input_usd_per_million_tokens: "0.08"
+        output_usd_per_million_tokens: "0.18"
+        max_output_tokens: 384000
+        default_output_tokens: 8192
+      inclusionai/ling-3.0-flash:
+        input_usd_per_million_tokens: "0.021"
+        output_usd_per_million_tokens: "0.063"
+        max_output_tokens: 32768
+        default_output_tokens: 8192
+      inclusionai/ling-2.6-flash:
+        input_usd_per_million_tokens: "0.010"
+        output_usd_per_million_tokens: "0.030"
+        max_output_tokens: 32768
+        default_output_tokens: 8192

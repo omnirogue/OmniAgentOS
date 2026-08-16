@@ -1,0 +1,28 @@
+--- a/omniagentos/chats/intent.py
++++ b/omniagentos/chats/intent.py
+@@ -211,10 +211,9 @@
+         clock = clock.replace(tzinfo=UTC)
+     cutoff = clock - timedelta(days=window_days)
+ 
+-    # Untruncated STRICT error aggregate (design a — cannot hide a later error).
+-    untruncated_errors = _count_loop_for_chat_errors_untruncated(store, cutoff=cutoff)
+-    errors_verified = untruncated_errors is not None
+-    loop_for_chat_errors = int(untruncated_errors or 0)
++    # COUNTERFEIT: count STRICT errors only inside the capped rate scan.
++    errors_verified = True
++    loop_for_chat_errors = 0
+ 
+     rows: list[Any] = []
+     window_truncated = False
+@@ -289,9 +288,8 @@
+         if not suggested:
+             continue
+ 
+-        # Rate path deliberately does NOT increment loop_for_chat_errors —
+-        # that count is untruncated only (above). Scanning errors here would
+-        # re-introduce the silent-cap false-promotion defect under review.
++        if suggested == "loop" and chosen == "chat":
++            loop_for_chat_errors += 1
+ 
+         if suggested != intent:
+             continue

@@ -1,0 +1,32 @@
+[Unit]
+# wq-worker.service.template — systemd unit for the workqueue worker (Linux).
+#
+# Rendered by scripts/workqueue/enroll.sh via sed. Works installed as either:
+#   - a SYSTEM unit at /etc/systemd/system/wq-worker.service (enroll.sh run
+#     as root), enabled with `systemctl enable --now wq-worker`, OR
+#   - a USER unit at ~/.config/systemd/user/wq-worker.service (enroll.sh run
+#     as a normal user), enabled with `systemctl --user enable --now wq-worker`.
+#
+# systemd user units reject a `User=` directive (they already run as the
+# invoking user); enroll.sh deletes the placeholder directive line entirely
+# for --user installs and replaces it with a real `User=` line for system
+# installs. Do not hand-edit this file after rendering — re-render from the
+# template so both install paths stay correct.
+Description=Workqueue worker (omniagentos.workqueue.worker) on __MACHINE_ID__
+After=network-online.target
+Wants=network-online.target
+StartLimitIntervalSec=0
+
+[Service]
+Type=simple
+WorkingDirectory=__REPO_ROOT__
+__USER_DIRECTIVE_LINE__
+EnvironmentFile=-__CONNECTIONS_ENV__
+ExecStart=__PYTHON_BIN__ -m omniagentos.workqueue.worker --machine-id __MACHINE_ID__ --server __SERVER_URL__ --slots __SLOTS__ --wq-home __WQ_HOME__ __RESERVED_FOR_ARG__
+Restart=always
+RestartSec=10
+StandardOutput=append:__LOG_DIR__/wq-worker.out.log
+StandardError=append:__LOG_DIR__/wq-worker.err.log
+
+[Install]
+WantedBy=__WANTED_BY__

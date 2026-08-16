@@ -1,0 +1,46 @@
+/* Accounts feature content classes. Page-level layout/header come from the
+   shared <Page>/<PageHeader>/<Section> (@/design) — following
+   features/routines/routines.module.css's conventions. */
+.muted { color: var(--text-muted); font-size: var(--text-small); }
+.faint { color: var(--text-faint); font-size: var(--text-micro); }
+.mono { font-family: var(--font-mono); }
+.row { display: flex; align-items: center; gap: var(--space-2); flex-wrap: wrap; }
+.actionsRow { display: flex; align-items: center; gap: var(--space-2); flex-wrap: wrap; }
+
+.identityCell { display: grid; gap: 2px; }
+.identityName { display: flex; align-items: center; gap: var(--space-2); flex-wrap: wrap; font-weight: 600; }
+
+.formGrid { display: grid; gap: var(--space-3); }
+.formRow { display: grid; grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr)); gap: var(--space-3); align-items: start; }
+
+/* Usage meters — one stacked row per rate-limit window. Deliberately compact:
+   this column sits inside a table cell, so it has to read at a glance without
+   pushing the row height around. */
+.meters { display: grid; gap: 6px; min-width: 13rem; }
+.meter { display: grid; gap: 2px; }
+.meterHead {
+  display: flex; align-items: baseline; justify-content: space-between;
+  gap: var(--space-2); font-size: var(--text-micro); color: var(--text-muted);
+}
+.meterValue { font-variant-numeric: tabular-nums; font-weight: 600; color: var(--text-body); }
+.meterTrack {
+  height: 5px; border-radius: 999px; background: var(--surface-raised);
+  border: 1px solid var(--border); overflow: hidden;
+}
+.meterFill { height: 100%; border-radius: 999px; transition: width 160ms ease; }
+.meterFill[data-severity="normal"] { background: var(--ok); }
+.meterFill[data-severity="warning"] { background: var(--warn); }
+.meterFill[data-severity="critical"] { background: var(--danger); }
+
+/* A stale snapshot must never read as live: dim the whole group and label it. */
+.meterStale { opacity: 0.55; }
+
+.providerUsageGrid {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
+  gap: var(--space-3);
+}
+.providerCard { display: grid; gap: var(--space-2); }
+.providerName { font-weight: 600; text-transform: capitalize; }
+
+.pauseForm { display: flex; align-items: flex-end; gap: var(--space-2); flex-wrap: wrap; }
+.pauseMinutes { width: 6rem; }

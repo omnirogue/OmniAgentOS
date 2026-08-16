@@ -1,0 +1,17 @@
+version: 1
+fixture_id: RES-01
+domain: research
+workstream: evidence_brief
+seed: 40501
+scenario_id: northstar-research-brief-v1
+required_context: [source_pack, claim_schema, citation_rules]
+required_grants: [source_read, brief_write]
+expected_events: [sources.loaded, claims.extracted, citations.checked, brief.staged]
+expected_outcome: cited_brief
+expected_actions: [read_sources, extract_claims, verify_citations]
+tolerances:
+  source_count: 12
+  unresolved_citations: 0
+  unsupported_claims: 0
+  premium_anchor_score_min: 3
+fault_ids: [F-16, F-21]

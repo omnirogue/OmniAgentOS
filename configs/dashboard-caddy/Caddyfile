@@ -1,0 +1,84 @@
+# The dashboard's trusted hop (LS-003 / D-1).
+#
+# WHAT THIS IS. `dashboard/src/middleware.ts` and
+# `dashboard/src/lib/serverProxy.ts::requireTrustedHop` both refuse any
+# `/api/**` request that does not carry `X-Omni-Trusted-Hop` equal to
+# `OMNIAGENTOS_TRUSTED_HOP_SECRET`. Those guards are correct and fail closed by
+# design. Nothing injected that header, so every public read and every
+# authorized call 403'd and the dashboard was dark. THIS FILE is the missing
+# injector — the deployment half of the fix. The guards are not weakened.
+#
+# OPERATORS AND LIVESIM BROWSE THIS PORT, NEVER :3003 DIRECTLY. A request that
+# reaches Next.js without passing through here has no hop header and is refused,
+# which is the entire point: "it came from loopback" is an argument for more
+# scrutiny, not less (see the middleware.ts comment on why loopback is not
+# trusted).
+#
+# BOTH header_up LINES BELOW ARE SECURITY CONTROLS. Each is a `Set`, and Go's
+# http.Header.Set REPLACES every inbound value for that field name, in any
+# casing, however many copies the client sent. That is what strips a forged
+# header: a client that sends `X-Omni-Trusted-Hop: forged` (or a forged
+# `Tailscale-User-Login`) has that value discarded here and replaced with this
+# proxy's own. Verified by execution against caddy v2.11.4.
+#
+#   *** DO NOT ADD `header_up -X-Omni-Trusted-Hop` ABOVE THE Set. ***
+#
+# It reads like defence in depth and it is the opposite. Caddy applies Delete
+# AFTER Set within one handler, so a `-Field` line DELETES the value this proxy
+# just injected, the dashboard receives no header, and every request 403s —
+# reintroducing exactly the outage this file exists to fix. Measured, not
+# assumed. The Set alone is the strip.
+#
+# WHAT MUST NOT BE ADDED HERE: `Origin` and `Sec-Fetch-Site` must arrive from
+# the browser untouched. The S-B1 CSRF layer reads them precisely because a
+# hostile page's script cannot forge them; rewriting either here would forge
+# them on that page's behalf and defeat the check the hop guard cannot make.
+#
+# Config: `OMNIAGENTOS_CADDY_PORT` (default 3013), `OMNIAGENTOS_DASH_PORT` (default 3003) are
+# substituted when this file is parsed; `OMNIAGENTOS_TRUSTED_HOP_SECRET` and
+# `OMNIAGENTOS_DASHBOARD_PRINCIPAL` are read at REQUEST time, so the secret is
+# never baked into the parsed config and never appears in `caddy adapt` output.
+# `scripts/launch-omniagentos.sh caddy` supplies all four.
+{
+	admin off
+	auto_https off
+	# Caddy's own diagnosability half: log the request, never the secret.
+	log {
+		format console
+		level INFO
+	}
+}
+
+# LOOPBACK ONLY — and `bind` is the ONLY thing that makes it so.
+#
+# A site address of `127.0.0.1:3013` does NOT restrict the listener: in Caddy
+# the host part of a site address is a Host-header MATCHER, and the server still
+# binds every interface. Measured with lsof: without the `bind` line below caddy
+# listens on `*:3013` and publishes this whole control plane — the session-token
+# proxy included — to the LAN. The address here is therefore bare (match any
+# Host, so `localhost:3013` and `127.0.0.1:3013` both work) and `bind` does the
+# actual confinement. `::1` is listed too because a browser resolving
+# "localhost" commonly prefers IPv6.
+:{$OMNIAGENTOS_CADDY_PORT:3013} {
+	bind 127.0.0.1 ::1
+
+	reverse_proxy 127.0.0.1:{$OMNIAGENTOS_DASH_PORT:3003} {
+		# The trusted-hop assertion. Strips any inbound copy (Set replaces) and
+		# injects this proxy's secret. If the variable is unset, this injects an
+		# EMPTY value: the dashboard then logs `reason=hop_header_empty` and
+		# refuses, which is fail-closed and names the misconfiguration. The
+		# launcher refuses to start caddy without the secret so that branch
+		# should be unreachable in a supervised start.
+		header_up X-Omni-Trusted-Hop {env.OMNIAGENTOS_TRUSTED_HOP_SECRET}
+
+		# The principal. `app/api/auth/login/route.ts` MINTS a signed 8-hour
+		# browser credential out of this header, so it is a signing oracle for
+		# whoever controls the value. Before this file existed nothing had a
+		# valid hop header, so it could not be reached; now that this proxy
+		# vouches for the hop, an un-stripped `Tailscale-User-Login` would let
+		# any caller name themselves an arbitrary principal. Set — never pass
+		# through. Unset variable => empty => login route 403s (reads still
+		# work), which is the correct fail-closed default.
+		header_up Tailscale-User-Login {env.OMNIAGENTOS_DASHBOARD_PRINCIPAL}
+	}
+}

@@ -1,0 +1,21 @@
+# corpus.d/loop-gate-interpreter.toml — counterfeits owned by lane
+# `loop-gate-interpreter` (the gate executes a loops/ gate on the loops venv).
+
+[[counterfeit]]
+id = "cf-gate-ignores-the-loops-interpreter"
+patch = "patches/cf-gate-ignores-the-loops-interpreter.patch"
+rationale = """The realistic tidy-up: the runner already holds an interpreter on \
+`self`, so the selection stays (it still computes the class, still refuses a \
+mixed gate, still records a per-run `interpreter` in the receipt) but argv[0] \
+goes back to `self.python_executable`. Every fast test stays green and the \
+receipt keeps SAYING the loops venv ran. It is the exact live defect: a loop \
+routine whose gate names its own tests under `loops/` executes them on the \
+production venv, which has no LangGraph, so the suite dies on \
+ModuleNotFoundError, the gate settles gate_passed=0 against a favourable \
+self-report, the run is scored ADVERSE, and the routine auto-pauses after three \
+ticks — a false adverse for every loop on the box, produced by a gate that \
+reports the interpreter it did not use."""
+must_fail = [
+  "tests/scheduler/test_gate_interpreter.py::test_the_runner_executes_a_loops_target_with_the_loops_interpreter",
+]
+failure_re = "FileNotFoundError|no-such-prod-venv|no inventory artifact"

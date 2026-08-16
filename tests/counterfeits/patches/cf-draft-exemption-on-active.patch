@@ -1,0 +1,17 @@
+diff --git a/omniagentos/scheduler/routines.py b/omniagentos/scheduler/routines.py
+index 3e2d3106..742be0ee 100644
+--- a/omniagentos/scheduler/routines.py
++++ b/omniagentos/scheduler/routines.py
+@@ -629,8 +629,10 @@ def validate_routine(payload: dict[str, Any]) -> None:
+         )
+     )
+ 
+-    # Status-keyed draft exemption: only exact 'disabled' may omit engine fields.
+-    if payload.get("status") == "disabled":
++    # COUNTERFEIT: key exemption on sparse payload rather than status alone.
++    if payload.get("status") == "disabled" or (
++        payload.get("gate_type") is None and payload.get("hard_cap_type") is None
++    ):
+         if errors:
+             raise RoutineValidationError(errors)
+         return

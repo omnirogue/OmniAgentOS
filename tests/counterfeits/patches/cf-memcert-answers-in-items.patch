@@ -1,0 +1,15 @@
+--- a/scripts/memcert/gen.py
++++ b/scripts/memcert/gen.py
+@@ -221,7 +221,11 @@
+             path = sess_dir / f"{session.session_id}.jsonl"
+             path.write_text(canary + "\n" + session.to_jsonl(), encoding="utf-8")
+         item_lines = [canary] + [
+-            json.dumps(item.public_json(), separators=(",", ":")) for item in self._items
++            json.dumps(
++                {**item.public_json(), "answer_spec": item.answer_spec.to_json()},
++                separators=(",", ":"),
++            )
++            for item in self._items
+         ]
+         (out_dir / "items.jsonl").write_text("\n".join(item_lines) + "\n", encoding="utf-8")
+         per_axis: dict[str, int] = {}

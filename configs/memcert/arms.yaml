@@ -1,0 +1,44 @@
+# memcert arm definitions (DESIGN §5). An arm is a context-construction policy
+# applied to the same fixture world; scripts/memcert/arms.py implements these.
+# The answer protocol is appended by the runner and is IDENTICAL across arms —
+# only context_block differs (prompt-asymmetry trap, DESIGN §2 research anchors).
+version: 2
+default_budget_tokens: 24000
+# A/B runs default to >=4 worlds (seeds 42,43,44,45): the 2026-08-12 baseline's
+# G-axis CI was degenerate at 2 clusters (RESULTS-2026-08-12.md suite note).
+default_ab_seeds: [42, 43, 44, 45]
+arms:
+  none:
+    desc: Question only. The floor — any memory arm must beat it.
+  fullhistory:
+    desc: All session transcripts concatenated, oldest dropped first over budget.
+      The full-context control; a memory arm that loses to it adds no value.
+  transcript:
+    desc: K most recent raw session transcripts under budget ("transcript reading
+      thing" — what a resuming agent reads via sessions/transcript.py or
+      task-resume-index).
+  lessons:
+    desc: Distilled one-line dated lessons (MEMORY.md ritual shape). For MEM-G
+      items uses the item's real lesson routing; other axes fall back to
+      transcript (lessons for them are not derivable without answer leakage).
+  lessons_placebo:
+    desc: Token-matched irrelevant lessons (±10% chars). Controls prompt-mass;
+      a "gain" that survives placebo is not memory.
+    g_axis_only: true
+  lessons_shuffled:
+    desc: Real lessons routed to the wrong task types. Isolates routing gain.
+    g_axis_only: true
+  rag:
+    desc: Naive BM25 over 12-line transcript chunks (stride 6), top chunks under
+      budget. The must-beat retrieval baseline (MemoryBench/Letta findings).
+  system:
+    desc: OmniAgentOS composed stack — memory.assemble at production defaults
+      (budget 1200, max 12 turns) + recent-transcript remainder; knowledge leg
+      off (launch-path default). Since memcert v2 this measures the LAUNCH-PATH
+      shape with OMNIAGENTOS_MEMORY_HYBRID=1 (history retrieval leg + temporal
+      stamps + abstention guard + reserved packing). Implemented in
+      scripts/memcert/system_arm.py.
+  system_legacy:
+    desc: The v1 assembler shape — identical to `system` with the hybrid flag
+      forced OFF. The paired A/B baseline for every hybrid-upgrade claim; a
+      hybrid gain that does not show against this arm is not a gain.

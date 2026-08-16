@@ -1,0 +1,13 @@
+diff --git a/omniagentos/api/routes/intake.py b/omniagentos/api/routes/intake.py
+index c498b695..d59395d0 100644
+--- a/omniagentos/api/routes/intake.py
++++ b/omniagentos/api/routes/intake.py
+@@ -1579,7 +1579,7 @@ def _record_plan_approval(
+             "status": "approved",
+             "decided_by": decided_by,
+             "decided_at": now,
+-            "execution_metadata": json.dumps(execution),
++            # COUNTERFEIT: the approval is recorded without what it approved.
+         }
+         if sole_card and not row.get("board_task_id"):
+             patch["board_task_id"] = sole_card

@@ -1,0 +1,17 @@
+diff --git a/omniagentos/intake/service.py b/omniagentos/intake/service.py
+index 970d4451..724aa42e 100644
+--- a/omniagentos/intake/service.py
++++ b/omniagentos/intake/service.py
+@@ -4135,6 +4135,12 @@ def reconcile_board(
+     if limit is not None:
+         select_kwargs["limit"] = limit
+     tasks = collab_store.list_board_tasks(archived=archived, **select_kwargs)
++    # COUNTERFEIT: enrichment breaks if it unconditionally overwrites the stored
++    # migration-087 project_id with the run-chain projection, which is None for
++    # every card that has no linked run.
++    project_map = collab_store.board_task_project_map(str(task["id"]) for task in tasks)
++    for task in tasks:
++        task["project_id"] = project_map.get(str(task["id"]))
+     # ONE batched query for every linked session, not N per-card round-trips.
+     session_refs = [
+         str(task.get("result_ref")) for task in tasks if _is_session_ref(task.get("result_ref"))

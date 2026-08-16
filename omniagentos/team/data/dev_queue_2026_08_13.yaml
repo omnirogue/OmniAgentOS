@@ -1,0 +1,417 @@
+# Curated dev queue — Bob's self-serve work queue (2026-08-13).
+#
+# Built from a set of verified engineering inventories across OmniAgentOS and Initech (Tiers
+# 0-2), plus the standing Tier-3 backlog. This file mints ONLY items that do not already have
+# board cards — it does not duplicate S1-S8, SP-1..4, U1-U8, UP-1..4, GH-*, or BASE-*, and it
+# deliberately skips PR-shepherding of existing GH-* cards and the `make openapi` fix (a separate
+# work package covers that).
+#
+# Consumed by scripts/import-reset-queue.py via --yaml (same schema as
+# production_reset_2026_08_10.yaml — see that file's header for the full field contract).
+#
+# Pool cards (no `owner`) are unowned on purpose — a Team Work OS worker claims them off the
+# board. Every pool card carries both `goal_ref` and a non-empty `acceptance_criteria` so it is
+# pool-eligible (tests/team_import/test_yaml_valid.py enforces this).
+
+source: dev-queue-2026-08-13
+generated_at: "2026-08-13"
+week: "Wed 2026-08-13 -> Fri 2026-08-14"
+
+companies:
+  - slug: omniagentos
+    name: OmniAgentOS
+  - slug: initech
+    name: Initech
+
+# ---------------------------------------------------------------------------
+# Goals — one long_term parent per company plus the "General engineering —"
+# short_term goals WP-A's company-slug lookup consumes (title prefix is a hard
+# contract — do not reword), plus the Initech money-path goal for the four
+# revenue-critical cards.
+# ---------------------------------------------------------------------------
+
+goals:
+  - ref: geng-parent-grok
+    title: "OmniAgentOS platform health"
+    horizon: long_term
+    company: omniagentos
+    owner: emp_owner
+    description: >
+      The long-term destination the OmniAgentOS general-engineering short_term goal ladders
+      toward: green CI, a healthy queue, and no unreviewed backlog.
+
+  - ref: geng-grok
+    title: "General engineering — OmniAgentOS"
+    horizon: short_term
+    parent: geng-parent-grok
+    company: omniagentos
+    owner: emp_owner
+    description: >
+      This week's OmniAgentOS engineering-hygiene work: red CI, PR review, orphan branches,
+      and documentation debt that is not scoped to any of Bob's existing S-refs.
+
+  - ref: geng-parent-initech
+    title: "Initech product & ops"
+    horizon: long_term
+    company: initech
+    owner: emp_owner
+    description: >
+      The long-term destination the Initech general-engineering short_term goal ladders toward:
+      product PRs land promptly, support tooling works, and the CS/CX backlog is reconciled.
+
+  - ref: geng-initech
+    title: "General engineering — Initech"
+    horizon: short_term
+    parent: geng-parent-initech
+    company: initech
+    owner: emp_owner
+    description: >
+      This week's Initech product/ops work that is not money-path-critical: PR review, CS
+      tooling, and the standing Tier-3 backlog (product-kit, support-desk QA, CX reconciliation).
+
+  - ref: money-initech
+    title: "Initech money-path correctness"
+    horizon: short_term
+    parent: geng-parent-initech
+    company: initech
+    owner: emp_owner
+    description: >
+      Revenue-critical fixes: credit-grant double-counting, the AcmeUni course-pricing PR, the
+      plan-tier label inversion, and the two live auto-reply template defects.
+
+# ---------------------------------------------------------------------------
+# Tasks — Q1..Q13 owned by emp_bob (Tiers 0-2), Q14..Q21 ownerless pool cards
+# (Tier 3 standing backlog).
+# ---------------------------------------------------------------------------
+
+tasks:
+  # --- Tier 0: today ---
+
+  - ref: Q1
+    title: "Whitelabel tenant support-email routing (SUP-100)"
+    owner: emp_bob
+    size: S
+    priority: urgent
+    status: open
+    goal_ref: geng-initech
+    due_date: "2026-08-14"
+    depends_on: []
+    source: bob-work-queue-2026-08-13
+    acceptance_criteria: >
+      Support ticket SUP-100 confirmed still open; the documented email-routing remedy (manual,
+      2-3h) executed for the whitelabel tenant; the customer replied to; the recent
+      welcome-email fix verified to have fired for that tenant.
+    description: >
+      Paying whitelabel customer waiting since earlier in the month — the one never-done support
+      ticket. Tracked in the CS handoff notes.
+
+  - ref: Q2
+    title: "Fix credit-grant double-counting (money)"
+    owner: emp_bob
+    size: M
+    priority: urgent
+    status: open
+    goal_ref: money-initech
+    due_date: "2026-08-14"
+    depends_on: []
+    source: bob-work-queue-2026-08-13
+    acceptance_criteria: >
+      The read-only audit queries from the credit-grant audit runbook run against the Initech
+      production DB; a guard against double-counting usage PR'd into the internal-credits route
+      and the admin grant route on the production Initech environment; the fix ported to
+      main/whitelabel.
+    description: >
+      Granting N credits to a user with usage >= N inflates balance by 2N. Runbook addressed to
+      Bob + Alice.
+
+  - ref: Q3
+    title: "Initech PR review request + stale PR disposition"
+    owner: emp_bob
+    size: S
+    priority: normal
+    status: open
+    goal_ref: geng-initech
+    due_date: "2026-08-14"
+    depends_on: []
+    source: bob-work-queue-2026-08-13
+    acceptance_criteria: >
+      Alice's review requested on the open provisioner-fix PR (zero reviews so far); close-or-rebase
+      disposition recorded on a handful of stale design PRs.
+    description: "Bob's own open PRs, blocking on nothing but the ask."
+
+  # --- Tier 1: this week, Initech product & money ---
+
+  - ref: Q4
+    title: "Human preview of two agent-built PRs"
+    owner: emp_bob
+    size: M
+    priority: high
+    status: open
+    goal_ref: geng-initech
+    depends_on: []
+    source: bob-work-queue-2026-08-13
+    acceptance_criteria: >
+      Both PRs (open several days, zero reviews, both titled "for human preview") checked out, the
+      app run, the preview done, and a real approve/request-changes review left on each.
+    description: "Agent-built PRs waiting on the human review step they were built for."
+
+  - ref: Q5
+    title: "Review + land the AcmeUni course-builder pricing PR"
+    owner: emp_bob
+    size: S
+    priority: high
+    status: open
+    goal_ref: money-initech
+    depends_on: []
+    source: bob-work-queue-2026-08-13
+    acceptance_criteria: >
+      The pending pricing PR reviewed and landed; AcmeUni's course-builder page prices verified
+      correct after the auto-deploy — it currently drops billable rows.
+    description: "Stops the pricing PR from silently dropping billable rows."
+
+  - ref: Q6
+    title: "Fix plan-tier label inversion (checkout flow)"
+    owner: emp_bob
+    size: S
+    priority: urgent
+    status: open
+    goal_ref: money-initech
+    depends_on: []
+    source: bob-work-queue-2026-08-13
+    acceptance_criteria: >
+      The checkout flow's plan-tier label mapping cross-checked against the live billing
+      products; the swapped labels fixed in both brand variants; any customers billed under the
+      wrong plan name flagged.
+    description: >
+      Today the two top subscription tiers show each other's marketing copy — inverted.
+
+  - ref: Q7
+    title: "Fix two critical live-prod auto-reply template defects"
+    owner: emp_bob
+    size: M
+    priority: urgent
+    status: open
+    goal_ref: money-initech
+    depends_on: []
+    source: bob-work-queue-2026-08-13
+    acceptance_criteria: >
+      The two flagged template rows verified via the tracked issue list; both one-statement fixes
+      applied to drop the stale source override; work continues down the remaining open-item
+      list.
+    description: >
+      Live brand-leak, confirmed still open in the latest eval pass — the fixed file is being
+      overridden.
+
+  - ref: Q8
+    title: "Deploy the auto-reply pipeline (2 commits behind) + real-world test"
+    owner: emp_bob
+    size: M
+    priority: high
+    status: open
+    goal_ref: geng-initech
+    depends_on: []
+    source: bob-work-queue-2026-08-13
+    acceptance_criteria: >
+      A fast-forward merge brings the serving checkout current with main (one whitelabel
+      direct-reply fix, one bulk-reply fix); deployed; prod E2E run; one whitelabel direct reply
+      plus one small bulk batch hand-tested; receipts filed to er2-test-receipts/.
+    description: "Last prod receipt was over a week ago — serving checkout has drifted behind main."
+
+  - ref: Q9
+    title: "Wire ad-platform purchase conversion + webinar tracking"
+    owner: emp_bob
+    size: M
+    priority: high
+    status: open
+    goal_ref: geng-initech
+    depends_on: []
+    source: bob-work-queue-2026-08-13
+    acceptance_criteria: >
+      The purchase-conversion label confirmed in the ad platform's label mapping; purchase
+      tracking implemented on paid order-success; the documented verification steps run and
+      passing.
+    description: >
+      Per the webinar developer handoff: the purchase label is wired nowhere in the app repo, and
+      the live confirmation page fires a different registration label than the handoff.
+
+  # --- Tier 2: this week, OmniAgentOS board cards ---
+
+  - ref: Q10
+    title: "Fix red CI mypy `type` job on main"
+    owner: emp_bob
+    size: S
+    priority: urgent
+    status: open
+    goal_ref: geng-grok
+    owned_paths:
+      - "omniagentos/toolplane/scrub.py"
+      - "omniagentos/piedpiper/pipeline_report.py"
+    depends_on: []
+    source: bob-work-queue-2026-08-13
+    acceptance_criteria: >
+      A handful of mypy errors fixed in omniagentos/toolplane/scrub.py and
+      omniagentos/piedpiper/pipeline_report.py; `make type` green locally; TESTING.md ladder
+      ascended; PR opened.
+    description: "The mypy type job fails on every push, blocking every open PR."
+
+  - ref: Q11
+    title: "Review the CI cancel-headroom fix PR"
+    owner: emp_bob
+    size: S
+    priority: high
+    status: open
+    goal_ref: geng-grok
+    depends_on: []
+    source: bob-work-queue-2026-08-13
+    acceptance_criteria: >
+      The cancel-headroom PR reviewed in coordination with Alice (the requested reviewer); its
+      one failing check is diagnosed.
+    description: "Fixes the CI bug that has been cancelling Bob's own checks."
+
+  - ref: Q12
+    title: "Disposition an orphan branch with unpublished commits"
+    owner: emp_bob
+    size: S
+    priority: normal
+    status: open
+    goal_ref: geng-grok
+    depends_on: []
+    source: bob-work-queue-2026-08-13
+    acceptance_criteria: >
+      A few pushed commits with no PR ever opened either get a draft PR published, or the branch
+      is deleted.
+    description: "Live work sitting unpublished on origin with no tracking PR."
+
+  - ref: Q13
+    title: "Write dashboard/README.md"
+    owner: emp_bob
+    size: S
+    priority: normal
+    status: open
+    goal_ref: geng-grok
+    depends_on: []
+    source: bob-work-queue-2026-08-13
+    acceptance_criteria: >
+      dashboard/README.md documents the 8 npm scripts, the undocumented .env.local setup, and the
+      fixture flags; booting the subproject from the doc alone hits no gaps.
+    description: "No README exists for a full Next.js subproject."
+
+  # --- Tier 3: standing backlog, ownerless pool cards ---
+
+  - ref: Q14
+    title: "Product-kit — product gap register"
+    owner: null
+    size: L
+    priority: normal
+    status: open
+    goal_ref: geng-initech
+    depends_on: []
+    source: bob-work-queue-2026-08-13
+    acceptance_criteria: >
+      Skills installed per INSTALL.md; the product-evolution scan run naming Initech plus a
+      couple of competitors; committed docs/product-gaps-*.md gap register plus an improvement
+      plan submitted for approval.
+    description: "Prepared earlier in the month, never opened — no docs/product-gaps-*.md exists anywhere."
+
+  - ref: Q15
+    title: "Support-desk QA — repair the vacuous gate then execute the remaining phases"
+    owner: null
+    size: L
+    priority: normal
+    status: open
+    goal_ref: geng-initech
+    depends_on: []
+    source: bob-work-queue-2026-08-13
+    acceptance_criteria: >
+      Vacuous gate repaired (the assertion-free verdicts fixed, the QA gate file loads, the
+      remaining fixture failures resolved); the remaining spec phases executed per the QA
+      upgrade spec.
+    description: >
+      Working copy: a support-desk QA simulation prototype.
+
+  - ref: Q16
+    title: "Build the email-auto-reply-verification harness"
+    owner: null
+    size: L
+    priority: normal
+    status: open
+    goal_ref: geng-initech
+    depends_on: []
+    source: bob-work-queue-2026-08-13
+    acceptance_criteria: >
+      self-test/discover/plan/preflight of the written 6-command CLI implemented per
+      Development/email-auto-reply-verification/TASK.md's owned paths; the live canary held for
+      the operator's approval artifact.
+    description: "Written developer contract with owned paths — never built in the target repo."
+
+  - ref: Q17
+    title: "Load-balancer enrollment doc + own-machine enrollment"
+    owner: null
+    size: M
+    priority: normal
+    status: open
+    goal_ref: geng-grok
+    depends_on: []
+    source: bob-work-queue-2026-08-13
+    acceptance_criteria: >
+      The "Compute-load balancer enrollment" section of Team-Dev-Setup-Instructions-2026-08-11.md
+      (currently an empty placeholder) is written after reading
+      omniagentos/team/session_collector.py; own machine enrolled per the written steps.
+    description: ""
+
+  - ref: Q18
+    title: "Install Automation-Prompt-Pack and run the first approved loop"
+    owner: null
+    size: M
+    priority: normal
+    status: open
+    goal_ref: geng-grok
+    depends_on: []
+    source: bob-work-queue-2026-08-13
+    acceptance_criteria: >
+      The 4 skills from skill-for-bob/INSTALL.md installed; Alice pinged to flip the Week-1
+      loops to Approved in the tracker sheet; the first approved loop run.
+    description: ""
+
+  - ref: Q19
+    title: "Fix support-desk connector auth failure + provision QA sender access"
+    owner: null
+    size: S
+    priority: normal
+    status: open
+    goal_ref: geng-initech
+    depends_on: []
+    source: bob-work-queue-2026-08-13
+    acceptance_criteria: >
+      API key regenerated/verified for the support-desk connector; the QA sender provisioned;
+      the operator flagged for the canary go-ahead.
+    description: ""
+
+  - ref: Q20
+    title: "Reconcile CX Approval Console — a handful of items approved earlier"
+    owner: null
+    size: M
+    priority: normal
+    status: open
+    goal_ref: geng-initech
+    depends_on: []
+    source: bob-work-queue-2026-08-13
+    acceptance_criteria: >
+      The previously approved items checked against the auto-reply pipeline's main branch; items
+      already landed via other lanes marked done; the remaining open ones implemented, starting
+      with scoped-admin-token.
+    description: ""
+
+  - ref: Q21
+    title: "Verify-and-prune the swarm execution TODO doc"
+    owner: null
+    size: M
+    priority: normal
+    status: open
+    goal_ref: geng-grok
+    depends_on: []
+    source: bob-work-queue-2026-08-13
+    acceptance_criteria: >
+      Every unchecked row checked against whether it already landed (one row sat as TODO after
+      merging); rows flipped with audit notes; real survivors surfaced as queue candidates.
+    description: ""

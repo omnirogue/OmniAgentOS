@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  MCP orphan reaper, REPORT-ONLY schedule.
+
+  Deliberately installed WITHOUT the force flag. This job records what it WOULD
+  reap so a week of evidence exists before anything is ever signalled, which is
+  the same shadow-first posture the estate uses for OMNIAGENTOS_TOOL_CATALOG and
+  OMNIAGENTOS_MCP_BRIDGE_MODE. Arming it is a separate, operator-made decision:
+  add a force string (two hyphens) to ProgramArguments and reload.
+
+  Absolute paths only: launchd runs with a stripped environment in which neither
+  `wis` nor `ledger` nor a bare `python3` reliably resolves.
+-->
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>com.omniagentos.mcp-reaper</string>
+
+  <key>ProgramArguments</key>
+  <array>
+    <string>/Users/youruser/OmniAgentOS/.venv/bin/python</string>
+    <string>/Users/youruser/OmniAgentOS/scripts/mcp-reaper.py</string>
+    <string>--json</string>
+  </array>
+
+  <key>StartInterval</key>
+  <integer>1800</integer>
+
+  <key>RunAtLoad</key>
+  <false/>
+
+  <key>StandardOutPath</key>
+  <string>/Users/youruser/OmniAgentOS/var/logs/mcp-reaper.log</string>
+  <key>StandardErrorPath</key>
+  <string>/Users/youruser/OmniAgentOS/var/logs/mcp-reaper.err</string>
+
+  <key>WorkingDirectory</key>
+  <string>/Users/youruser/OmniAgentOS</string>
+</dict>
+</plist>

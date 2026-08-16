@@ -1,0 +1,162 @@
+/* /tests observatory — terminal-dense operator surface. Tokens only. */
+
+.mono {
+  font-family: var(--font-mono);
+  font-size: var(--text-small);
+}
+
+.muted {
+  color: var(--text-muted);
+  font-size: var(--text-small);
+}
+
+.faint {
+  color: var(--text-faint);
+  font-size: var(--text-micro);
+}
+
+.dangerBanner {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-md);
+  border: 1px solid color-mix(in srgb, var(--danger) 50%, var(--border));
+  background: color-mix(in srgb, var(--danger) 14%, transparent);
+  color: var(--danger);
+  font-size: var(--text-small);
+  font-weight: 600;
+}
+
+.unavailable {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-md);
+  border: 1px solid color-mix(in srgb, var(--warn) 40%, var(--border));
+  background: color-mix(in srgb, var(--warn) 10%, var(--surface));
+  color: var(--text);
+  font-size: var(--text-small);
+}
+
+.chipRow {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  flex-wrap: wrap;
+}
+
+.modeUnknown {
+  opacity: 0.72;
+  font-style: italic;
+}
+
+.classUnclassified {
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.refusal {
+  max-width: 28rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--text-muted);
+  font-size: var(--text-micro);
+  font-family: var(--font-mono);
+}
+
+.errorFile {
+  font-family: var(--font-mono);
+  font-size: var(--text-micro);
+  color: var(--text);
+}
+
+.errorMsg {
+  color: var(--text-muted);
+  font-size: var(--text-micro);
+}
+
+.strip {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  flex-wrap: nowrap;
+}
+
+.stripCell {
+  display: inline-flex;
+}
+
+.degradedRow {
+  opacity: 0.85;
+}
+
+.landings {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--space-5);
+  flex-wrap: wrap;
+}
+
+.bars {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--space-2);
+  min-height: 6.5rem;
+  flex: 1 1 18rem;
+}
+
+.barCol {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--space-1);
+  min-width: 0;
+}
+
+.barTrack {
+  width: 100%;
+  max-width: 1.75rem;
+  height: 5.5rem;
+  display: flex;
+  align-items: flex-end;
+}
+
+.bar {
+  width: 100%;
+  height: var(--bar-h, 6%);
+  min-height: 4px;
+  border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+  background: color-mix(in srgb, var(--accent) 65%, var(--surface));
+}
+
+.barToday {
+  background: var(--accent);
+}
+
+.barZero {
+  background: var(--border);
+}
+
+.barLabel {
+  font-family: var(--font-mono);
+  font-size: var(--text-micro);
+  color: var(--text-muted);
+  text-align: center;
+  line-height: 1.25;
+}
+
+.todayCallout {
+  flex: 0 0 auto;
+  min-width: 8rem;
+}
+
+.meta {
+  font-family: var(--font-mono);
+  font-size: var(--text-micro);
+  color: var(--text-faint);
+}

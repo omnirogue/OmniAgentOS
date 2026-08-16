@@ -1,0 +1,177 @@
+name: main-health
+
+# A HEALTH CHECK FOR EVERY NEW MAIN SHA.
+#
+# The audit's killer defect: the full merge-gate runs on pull_request but is
+# SKIPPED on push, so a red base can land on main and every later PR pays
+# 15-20 min to rediscover the same breakage. This job closes that gap: it runs
+# on push to main and proves the base-integrity signals the gate depends on —
+# the counterfeit corpus (the only trusted "the tests actually detect defects"
+# signal) and the specific base-red canaries the audit named. It is cheap
+# relative to the full gate (no trial merge, no full ladder) and is deliberately
+# a SEPARATE job so it can be made a required post-merge signal without
+# entangling the PR merge-gate.
+#
+# It does NOT block a push (push already happened); its RED is the signal a
+# circuit breaker consumes — the daemon should not start expensive candidate
+# gates while the newest main SHA's health is red. That breaker is a follow-up
+# on the daemon side (pipeline/bridge/gate_loop.py, its own reviewed lane); this
+# workflow produces the signal it will read.
+
+on:
+  push:
+    branches: [main]
+
+# Key the group on the exact SHA, NOT the branch ref. The purpose is a health
+# verdict for EVERY new main SHA; a branch-wide group with cancel-in-progress
+# would let a rapid second push cancel the first SHA's run, leaving that commit
+# with no counterfeit/canary verdict and no JUnit — a favourable-absence gap the
+# circuit breaker could read as healthy. Per-SHA groups never cancel a different
+# commit; cancel-in-progress then only dedupes a re-run of the identical SHA.
+# (The daemon-side breaker must still treat absent/queued/cancelled as NON-healthy.)
+concurrency:
+  group: main-health-${{ github.sha }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  main-health:
+    name: main-health
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: astral-sh/setup-uv@v6
+        with:
+          # PINNED (2026-08-11): unpinned, this action resolves "latest" through a live
+          # GitHub API call per job; that call failed on main's tip and redded the
+          # required `type` check with nothing wrong in the tree.
+          version: "0.10.4"
+          enable-cache: true
+          cache-dependency-glob: "uv.lock"
+      - name: Install Python dependencies
+        run: uv sync --locked
+      - name: Counterfeit corpus — the tests still detect defects
+        # counterfeit-gate is the trusted signal: a green normal suite is not
+        # evidence, a caught counterfeit corpus is. It runs the selftest + the
+        # harness CLI (tests.counterfeits.harness), which is NOT pytest and emits
+        # no JUnit — this step is a pass/fail signal only, so no JUNIT_DIR is set
+        # here (setting it would promise evidence the tool never produces).
+        run: make counterfeit-gate
+      - name: Base-red canaries the audit named
+        # always(): the canaries must report independently even when the
+        # counterfeit step failed, or the refusal path would carry LESS evidence
+        # than the success path — the favourable-absence trap.
+        if: always()
+        env:
+          JUNIT_DIR: ${{ runner.temp }}/main-health-junit
+        run: |
+          mkdir -p "$JUNIT_DIR"
+          uv run pytest -q -p no:randomly --timeout=300 \
+            --junitxml="$JUNIT_DIR/base-canaries.xml" \
+            tests/simprobe/test_ratio2_counterfeit.py \
+            tests/metacog/test_artifact_identity_integrity.py \
+            tests/csi/test_observe_post_merge.py
+      - name: Upload health JUnit
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: main-health-${{ github.sha }}
+          path: ${{ runner.temp }}/main-health-junit
+          if-no-files-found: warn
+          retention-days: 14
+      - name: Summarize main-health
+        if: always()
+        run: |
+          {
+            echo "## main-health for ${{ github.sha }}"
+            echo
+            echo "- Counterfeit corpus: proves the tests still DETECT defects (a green normal suite is not evidence)."
+            echo "- Base-red canaries: the exact tests the 2026-08-09 audit found red on GitHub runners."
+            echo "- A RED here means the newest main SHA's base is unhealthy — later PR gates would rediscover it. This is the signal a daemon-side circuit breaker consumes to pause expensive candidate gates."
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  # 88 of the last 100 commits on main are single-parent commits pushed
+  # directly by the gate-loop daemon; only ~10-19 arrive via a GitHub PR
+  # merge. The PR-only `type` job in ci.yml grades a candidate BEFORE it
+  # merges, but it never grades the daemon's direct write — main can carry
+  # type errors indefinitely with nothing observing it (measured: main was
+  # type-red at HEAD 000000000, 11 errors in
+  # omniagentos/intake/deliverable_checks.py, for 49 consecutive commits).
+  #
+  # This job is OBSERVATION ONLY. `continue-on-error: true` on the type-check
+  # step means its outcome can never fail this job or this workflow, and the
+  # job name (`type-health`) is deliberately distinct from the four contexts
+  # GitHub branch protection can require (merge-gate, lint, type, dashboard)
+  # so it is never eligible to gate a landing. It reports through the job
+  # summary; a future daemon-side circuit breaker (not this lane) can read
+  # that verdict without this job ever blocking a push.
+  type-health:
+    name: type-health
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: astral-sh/setup-uv@v6
+        with:
+          # PINNED (2026-08-11): unpinned, this action resolves "latest" through a live
+          # GitHub API call per job; that call failed on main's tip and redded the
+          # required `type` check with nothing wrong in the tree.
+          version: "0.10.4"
+          enable-cache: true
+          cache-dependency-glob: "uv.lock"
+      - name: Install Python dependencies
+        run: uv sync --locked
+      - name: Check Python types (non-blocking observation)
+        id: type_check
+        # This is the load-bearing non-blocking guarantee: whatever mypy
+        # reports, this step's outcome is never "failure" as far as the job
+        # is concerned, so it can never fail this job or halt the workflow.
+        continue-on-error: true
+        run: uv run mypy omniagentos
+      - name: Summarize type-health
+        id: type_health_summary
+        if: always()
+        # This job is observation-only: no step in it, including this one,
+        # may ever be able to fail the job or the workflow.
+        continue-on-error: true
+        run: |
+          {
+            echo "## type-health for ${{ github.sha }}"
+            echo
+            if [ "${{ steps.type_check.outcome }}" = "success" ]; then
+              echo "- Type check: GREEN — main is type-clean at this SHA."
+            elif [ "${{ steps.type_check.outcome }}" = "failure" ]; then
+              echo "- Type check: RED — main carries type errors at this SHA. See the \`Check Python types\` step log above for the mypy output."
+            else
+              echo "- Type check: UNKNOWN / INSTRUMENT-RED (step outcome: \`${{ steps.type_check.outcome }}\`) — the type-check step did not run to completion (e.g. skipped because checkout/setup/\`uv sync\` failed upstream, or cancelled), so this SHA's type health was NOT observed. This is an instrument gap, not a type-red verdict."
+            fi
+            echo "- This job is OBSERVATION ONLY: \`continue-on-error: true\` keeps a RED result from failing this job or the workflow, and \`type-health\` is not one of the four contexts GitHub branch protection can require (merge-gate, lint, type, dashboard) — it cannot gate, halt, or delay any landing path."
+          } >> "$GITHUB_STEP_SUMMARY"
+      - name: Report if the type-health summary itself failed
+        # continue-on-error: true on the summary step above hides a genuine
+        # script failure there (bad substitution, a write failure): its
+        # outcome is "failure" but its conclusion is "success", the job
+        # reports green, and NOTHING is written to GITHUB_STEP_SUMMARY. This
+        # step makes that instrument failure VISIBLE — an ::error annotation
+        # plus a minimal fallback verdict — without ever being able to fail
+        # the run itself.
+        if: always()
+        continue-on-error: true
+        run: |
+          if [ "${{ steps.type_health_summary.outcome }}" = "failure" ]; then
+            echo "::error::type-health summary step failed for ${{ github.sha }} — its script errored before writing a verdict to the job summary. This is an INSTRUMENT failure; it is not evidence of main's type health either way."
+            {
+              echo "## type-health for ${{ github.sha }}"
+              echo
+              echo "- Type check: UNKNOWN / INSTRUMENT-RED — the summary step itself failed and produced no verdict for this SHA. See the \`Summarize type-health\` step log for the error."
+            } >> "$GITHUB_STEP_SUMMARY"
+          fi

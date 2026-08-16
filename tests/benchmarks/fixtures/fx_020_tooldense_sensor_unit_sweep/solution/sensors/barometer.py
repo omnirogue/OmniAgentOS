@@ -1,0 +1,12 @@
+"""Barometer sensor."""
+
+from __future__ import annotations
+
+import units
+
+SENSOR_ID = "barometer"
+UNIT = "psi"
+READINGS: tuple[float, ...] = (14.7, 15.2, 13.9)
+
+SI_UNIT: str = units.si_unit(UNIT)
+SI_READINGS: tuple[float, ...] = tuple(units.convert(v, UNIT)[0] for v in READINGS)

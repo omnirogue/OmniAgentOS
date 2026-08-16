@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.omniagentos.team-session-tracker</string>
+    <key>ProgramArguments</key>
+    <array>
+        <string>/Users/youruser/OmniAgentOS/.venv/bin/python</string>
+        <string>-m</string>
+        <string>omniagentos.team.session_tracker</string>
+        <string>--collect-local</string>
+        <string>emp_owner</string>
+    </array>
+    <key>WorkingDirectory</key>
+    <string>/Users/youruser/OmniAgentOS</string>
+    <key>EnvironmentVariables</key>
+    <dict>
+        <key>PATH</key>
+        <string>/usr/local/bin:/usr/bin:/bin</string>
+        <key>OMNIAGENTOS_DB</key>
+        <string>/Users/youruser/OmniAgentOS/var/runtime/state.sqlite3</string>
+    </dict>
+    <!-- Hourly at :05, 08:00-18:00 — five minutes after the :00 team pulse so
+         the two messages read as a pair, not a race. -->
+    <key>StartCalendarInterval</key>
+    <array>
+        <dict><key>Hour</key><integer>8</integer><key>Minute</key><integer>5</integer></dict>
+        <dict><key>Hour</key><integer>9</integer><key>Minute</key><integer>5</integer></dict>
+        <dict><key>Hour</key><integer>10</integer><key>Minute</key><integer>5</integer></dict>
+        <dict><key>Hour</key><integer>11</integer><key>Minute</key><integer>5</integer></dict>
+        <dict><key>Hour</key><integer>12</integer><key>Minute</key><integer>5</integer></dict>
+        <dict><key>Hour</key><integer>13</integer><key>Minute</key><integer>5</integer></dict>
+        <dict><key>Hour</key><integer>14</integer><key>Minute</key><integer>5</integer></dict>
+        <dict><key>Hour</key><integer>15</integer><key>Minute</key><integer>5</integer></dict>
+        <dict><key>Hour</key><integer>16</integer><key>Minute</key><integer>5</integer></dict>
+        <dict><key>Hour</key><integer>17</integer><key>Minute</key><integer>5</integer></dict>
+        <dict><key>Hour</key><integer>18</integer><key>Minute</key><integer>5</integer></dict>
+    </array>
+    <key>RunAtLoad</key>
+    <false/>
+    <key>KeepAlive</key>
+    <false/>
+    <key>StandardOutPath</key>
+    <string>/Users/youruser/OmniAgentOS/var/log/team-session-tracker.log</string>
+    <key>StandardErrorPath</key>
+    <string>/Users/youruser/OmniAgentOS/var/log/team-session-tracker.log</string>
+</dict>
+</plist>

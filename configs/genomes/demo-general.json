@@ -1,0 +1,30 @@
+{
+  "archetype": "solo",
+  "budget": {
+    "tokens": 1000
+  },
+  "flow": [
+    {
+      "kind": "generate",
+      "role": "worker",
+      "stage": "answer"
+    }
+  ],
+  "id": "srf_demo_general_genome",
+  "judge": {
+    "blind": true,
+    "dimensions": [
+      "accuracy"
+    ]
+  },
+  "review": {
+    "adversarial": false
+  },
+  "roles": [
+    {
+      "agent": "mock",
+      "model": "mock-v1",
+      "name": "worker"
+    }
+  ]
+}

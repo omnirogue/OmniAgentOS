@@ -1,0 +1,51 @@
+-- Migration 104: the SELF-REPORT becomes a column of its own, beside the verdict.
+--
+-- Until now a loop's `routine_runs` row carried exactly one account of the tick,
+-- and it was the loop's own: `routines_tick._fire` wrote gate_passed/accepted
+-- straight from the worker's status string and stamped `finished_at` in the same
+-- INSERT, so the run was born settled and `settle_pending` — the ONLY path that
+-- executes `gate_config.command` — structurally never saw it (it requires
+-- `run_id IS NOT NULL`, and a built-in tick recorded none). Live proof at the
+-- moment this migration was written: routine `rtn_1e5567b9f3314a2c9d76`
+-- (w3-health-monitor), 10 runs, run_id NULL on all 10, gate_passed=1 on all 10,
+-- acceptance_rate 1.0 — every one of them a PARK that healed nothing, and its
+-- declared gate (`pytest loops/tests/instances/test_health_monitor.py`) never
+-- executed once.
+--
+-- routine_runs.self_reported_status — what the executor CLAIMED about its own
+--     tick, verbatim ("completed", "parked", "idle", "blocked", "no_input", …).
+--     It is deliberately NOT a verdict:
+--
+--       * `gate_passed` now only ever holds the verdict of an EXECUTED gate
+--         (NULL when no gate evidence exists — absence, never failure);
+--       * `self_reported_status` holds the claim;
+--       * `outcome_class` (migration 103) holds the composition of the two.
+--
+--     Keeping them in three columns is what makes the disagreement queryable,
+--     which is the whole point:
+--
+--       SELECT * FROM routine_runs
+--        WHERE self_reported_status = 'completed' AND gate_passed = 0;
+--
+--     — "the loop said it worked and the gate said otherwise" — a question the
+--     schema could not previously express, because the claim and the verdict
+--     were the same column.
+--
+-- Its PRESENCE is also load-bearing: a routine_runs row with a non-NULL
+-- self_reported_status is one this process executed itself and for which no
+-- `runs` row exists, which is how `settle_pending` now recognises a built-in
+-- tick as settleable without a JOIN partner.
+--
+-- Deliberately NOT backfilled, for the same reason 103 was not: history wrote a
+-- park as gate_passed=1/accepted=1, indistinguishable in the data from a real
+-- completion judged by a real gate. Any backfill would be a guess, and a guess
+-- written into an audit trail is worse than a gap. Rows predating this migration
+-- keep NULL and stay outside every self-report query.
+--
+-- No CHECK constraint and no new index: the value is an open vocabulary owned by
+-- the executors (loop statuses, memlife cycle statuses, future built-ins), the
+-- write path in omniagentos/scheduler/store.py is the single enforcement point,
+-- and the settlement scan is already bounded by `finished_at IS NULL` on a table
+-- with hundreds of rows.
+
+ALTER TABLE routine_runs ADD COLUMN self_reported_status TEXT;

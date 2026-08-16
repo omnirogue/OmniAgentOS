@@ -1,0 +1,13 @@
+diff --git a/omniagentos/api/routes/intake.py b/omniagentos/api/routes/intake.py
+index c498b695..6b238577 100644
+--- a/omniagentos/api/routes/intake.py
++++ b/omniagentos/api/routes/intake.py
+@@ -501,6 +501,4 @@ def _sync_plan_to_database(job_id: str, plans: PlansStore | None = None) -> bool
+     try:
+-        if plans.get_plan(job_id) is None:
+-            plans.create_plan(plan_id=job_id, version=1, status="ready", **payload)
+-        else:
+-            plans.update_plan(job_id, prepare)
++        # COUNTERFEIT: the durable write is skipped and the caller is told it landed.
++        pass
+     except Exception:

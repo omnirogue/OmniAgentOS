@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  The ONE daily production report, 07:00 local.
+
+  Supersedes com.omni.daily-dev-scoreboard (07:45) — see
+  docs/operations/team-report-runbook.md for the retirement step; two daily
+  scoreboards disagreeing about the same week is worse than either alone.
+
+  launchd hands a job a STRIPPED environment: no shell profile, no PATH from
+  .zshrc, no cwd. So every path here is absolute and the interpreter is the
+  repo's own .venv python invoked directly — never `python3`, never a PATH
+  lookup. PATH is still set because the report's Slack post reads
+  ~/.config/omni/connections.env and nothing else shells out.
+-->
+<plist version="1.0">
+<dict>
+	<key>Label</key>
+	<string>com.omniagentos.team-report</string>
+	<key>EnvironmentVariables</key>
+	<dict>
+		<key>PATH</key>
+		<string>/usr/local/bin:/opt/homebrew/bin:/usr/bin:/bin:/usr/sbin:/sbin</string>
+		<key>OMNIAGENTOS_DB</key>
+		<string>/Users/youruser/OmniAgentOS/var/runtime/state.sqlite3</string>
+		<key>OMNI_TEAM_FLEET_LEDGER</key>
+		<string>/Users/youruser/OmniAgentOS/var/loopqueue/ledger.jsonl</string>
+	</dict>
+	<key>ProgramArguments</key>
+	<array>
+		<string>/bin/bash</string>
+		<string>/Users/youruser/OmniAgentOS/scripts/team-report-post.sh</string>
+	</array>
+	<key>WorkingDirectory</key>
+	<string>/Users/youruser/OmniAgentOS</string>
+	<key>StartCalendarInterval</key>
+	<dict>
+		<key>Hour</key>
+		<integer>7</integer>
+		<key>Minute</key>
+		<integer>0</integer>
+	</dict>
+	<key>RunAtLoad</key>
+	<false/>
+	<key>KeepAlive</key>
+	<false/>
+	<key>StandardOutPath</key>
+	<string>/Users/youruser/OmniAgentOS/var/log/team-report.log</string>
+	<key>StandardErrorPath</key>
+	<string>/Users/youruser/OmniAgentOS/var/log/team-report.log</string>
+</dict>
+</plist>

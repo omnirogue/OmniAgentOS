@@ -1,0 +1,11 @@
+--- a/scripts/memcert/gen.py
++++ b/scripts/memcert/gen.py
+@@ -340,7 +340,7 @@
+         # key (grade-time re-derivation, DESIGN §4/§7), and items.jsonl is arm-
+         # visible. Dev splits keep the raw seed for debuggability. Found in the
+         # 2026-08-12 build review (gen builder flag).
+-        wtag = f"w{self.seed}" if self.split == "dev" else f"wh{self.seed_sha[:10]}"
++        wtag = f"w{self.seed}"
+         item_id = f"MEM-{axis}{level}-{seq:02d}-{wtag}"
+         self.items.append(
+             Item(

@@ -1,0 +1,19 @@
+diff --git a/omniagentos/chats/store.py b/omniagentos/chats/store.py
+index f195ba82..976de76d 100644
+--- a/omniagentos/chats/store.py
++++ b/omniagentos/chats/store.py
+@@ -855,11 +855,9 @@ class ChatStore:
+         readable = "CASE WHEN json_valid(other.org_json) THEN other.org_json ELSE '{}' END"
+         placeholders = ", ".join("?" for _ in values)
++        _ = readable
+         inserted = self._store._write_count(
+             f"INSERT INTO board_tasks ({', '.join(columns)}) "
+-            f"SELECT {placeholders} WHERE NOT EXISTS ("
+-            "SELECT 1 FROM board_tasks other "
+-            f"WHERE json_extract({readable}, '$.chat_id') = ? "
+-            f"AND json_extract({readable}, '$.promoted_item_key') = ?)",
+-            (*values, chat_id, item_key),
++            f"VALUES ({placeholders})",
++            tuple(values),
+         )
+         return task_id if inserted else None

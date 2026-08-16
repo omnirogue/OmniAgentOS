@@ -1,0 +1,76 @@
+# corpus.d/memcert.toml — counterfeits owned by lane `feat/memcert-suite-0812`.
+#
+# memcert is the memory-certification instrument (devtasks/memcert/DESIGN.md).
+# Every entry here weakens one product invariant the suite's decisive tests
+# exist to pin: the scoring algebra that keeps "100%" meaningful (§6), the
+# answer-secrecy properties that keep the benchmark uncheatable (§4/§7), and
+# the runner's leak guard. Each one is silent-in-production: scores still
+# come out, fixtures still generate, runs still finish — they are just no
+# longer measuring what the certification claims.
+
+[[counterfeit]]
+id = "cf-memcert-wrong-scores-as-abstain"
+patch = "patches/cf-memcert-wrong-scores-as-abstain.patch"
+rationale = "Changes grade_item's exact-kind wrong-answer score from -0.5 to 0.0, collapsing wrong onto abstention. DESIGN §6 (OpenAI t=1/3 penalty) requires wrong < IDK < correct — without the penalty a model that guesses on every unknown outscores one that honestly abstains, MEM-E/abstention certification becomes gameable, and every arm-vs-floor delta inflates. Nothing errors: verdicts still read 'wrong', only the algebra is neutered."
+must_fail = [
+  "tests/memcert/test_core.py::test_confident_wrong_answer_still_scores_negative",
+  "tests/memcert/test_grade.py::test_grade_rows_every_verdict_path",
+]
+failure_re = "\\('wrong', 0\\.0\\) == \\('wrong', -0\\.5\\)"
+
+[[counterfeit]]
+id = "cf-memcert-leak-guard-dropped"
+patch = "patches/cf-memcert-leak-guard-dropped.patch"
+rationale = "Turns run_bench.assert_no_answer_leak into a no-op (unconditional early return). The leak guard is the runner's only line between an arm bug and a benchmark that hands the graded answer to the model inside the SYSTEM prompt — with it gone, a buggy arm silently scores near-perfect and the certification reports a memory capability that is actually a prompt echo. No exception, no log: runs complete and look better than ever."
+must_fail = [
+  "tests/memcert/test_runner_offline.py::test_leak_guard_raises_on_direct_system_prompt_leak",
+  "tests/memcert/test_runner_offline.py::test_leak_guard_fires_when_the_answer_reaches_the_system_prompt",
+]
+failure_re = "DID NOT RAISE .*LeakGuardError"
+
+[[counterfeit]]
+id = "cf-memcert-cert-ids-carry-seed"
+patch = "patches/cf-memcert-cert-ids-carry-seed.patch"
+rationale = "Reverts the cert-split id leak fix: item ids/cluster ids go back to the raw-seed wtag (w<seed>) instead of the seed-hash tag (wh<sha10>). The seed IS the answer key (DESIGN §4/§7: the grader re-derives every expected answer from it), and items.jsonl is arm-visible — so any arm reading the fixture dir can regenerate the world and answer every cert probe perfectly. The holdout split's entire secrecy property dies while every file still writes and every run still passes."
+must_fail = [
+  "tests/memcert/test_gen.py::test_cert_split_ids_never_carry_the_raw_seed",
+]
+failure_re = "str\\(SEED\\) not in item\\.item_id"
+
+[[counterfeit]]
+id = "cf-memcert-answers-in-items"
+patch = "patches/cf-memcert-answers-in-items.patch"
+rationale = "Makes World.write_fixtures serialize each item's answer_spec into items.jsonl instead of the answer-free Item.public_json(). DESIGN §4's core invariant is that answers never touch the fixture tree — the transcripts are the only thing the system under test may read. With specs on disk, every arm (and the 'system' arm's real memory stack) has the answer key sitting next to the questions; scores saturate and the suite certifies nothing. Generation succeeds, files look richer, nobody errors."
+must_fail = [
+  "tests/memcert/test_gen.py::test_items_jsonl_leaks_no_answers",
+]
+failure_re = "FORBIDDEN_KEYS\\.isdisjoint\\(keys\\)"
+
+[[counterfeit]]
+id = "cf-memhybrid-flag-dark"
+patch = "patches/cf-memhybrid-flag-dark.patch"
+rationale = "Hard-wires memory.config.hybrid_enabled() to False, ignoring OMNIAGENTOS_MEMORY_HYBRID entirely. This is the estate's most-measured defect class — built, certified, silently dark: launch-env still exports the flag, the docstring still promises the hybrid stack, and every production brief quietly reverts to the v1 recency-only assembler (multi-session sufficiency 0.94 -> 0.12 measured). Nothing errors; agents just start forgetting joins again. NOTE (codex-critic CR-007): the memcert system arm pins hybrid=True EXPLICITLY (thread-safe param), so the sufficiency dominance tests deliberately survive this counterfeit — the env-driven ASSEMBLE tests are the ones that must catch the dead master switch, because they exercise the exact wiring production briefs take."
+must_fail = [
+  "tests/memory/test_assemble_hybrid.py::test_hybrid_retrieves_join_facts_with_stamps",
+  "tests/memory/test_assemble_hybrid.py::test_reserved_packing_keeps_lessons_under_conversation_pressure",
+]
+failure_re = "## RELEVANT HISTORY|## LEARNED LESSONS"
+
+[[counterfeit]]
+id = "cf-memcert-sufficiency-always-present"
+patch = "patches/cf-memcert-sufficiency-always-present.patch"
+rationale = "Neutered evidence containment: evaluate_item reports evidence_present whenever the item HAS evidence, without checking the context. The sufficiency instrument then certifies every arm at 1.0 forever — the dominance gate ties instead of discriminating, floors can never breach, and a dead retrieval leg ships as certified. Summaries still print, JSON still writes, bars still 'pass'; the instrument measures nothing."
+must_fail = [
+  "tests/memcert/test_sufficiency.py::test_evaluate_item_evidence_and_answer_paths",
+  "tests/memcert/test_sufficiency.py::test_system_strictly_improves_the_measured_gap_axes",
+]
+failure_re = "evidence_present|did not improve"
+
+[[counterfeit]]
+id = "cf-memcert-stale-not-penalized"
+patch = "patches/cf-memcert-stale-not-penalized.patch"
+rationale = "Changes grade_item's stale verdict score from -1.0 to 0.0. MEM-D/MEM-F exist to certify that memory surfaces track updates and retractions; the -1.0 penalty (FAMA-style) is what makes acting on an invalidated fact worse than abstaining. Zeroed, a memory that never processes retractions scores the same as one that honestly says UNKNOWN — forgetting hygiene becomes uncertifiable while the verdict string still says 'stale' in every results row."
+must_fail = [
+  "tests/memcert/test_grade.py::test_grade_rows_every_verdict_path",
+]
+failure_re = "\\('stale', 0\\.0\\) == \\('stale', -1\\.0\\)"

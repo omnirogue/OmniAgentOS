@@ -1,0 +1,57 @@
+# Formation Engine config — HANDOFF/formation Phase 5 foundation.
+# Does not replace CBM/assess/routing; selector picks a team structure only.
+
+default_formation: coding
+
+formations:
+  coding:
+    use_for: [feature, bug, refactor, architecture, integration, infrastructure, code]
+    # Provider name, not model name: gpt-5.6-sol routes via the codex CLI
+    implementers: [codex]
+    # Cross-lineage review: opus (anthropic) ≠ codex (openai).
+    # High-stakes code review warrants Claude-lineage deep reasoning.
+    reviewer: opus
+    planner: fable
+    mechanical_gate: true
+    review_classes: [R1, R2, R3, R4]
+  creative:
+    use_for: [design, branding, ad_copy, email, webinar, script, image, video, audio]
+    implementers: [grok, gemini]   # volume bucket: xai, google
+    # Cross-lineage review: kimi (moonshot) ≠ grok/gemini (xai/google).
+    # Deep multi-pass review for creative coherence (kimi's standing role).
+    reviewer: kimi
+    planner: fable
+    mechanical_gate: false
+  research:
+    use_for: [research, competitive, evidence, investigation]
+    implementers: [gemini, grok]   # volume bucket: google, xai
+    # Cross-lineage review: kimi (moonshot) ≠ gemini/grok (google/xai).
+    reviewer: kimi
+    planner: fable
+    mechanical_gate: false
+  marketing:
+    use_for: [campaign, funnel, landing, ad, offer, marketing]
+    implementers: [grok, gemini]   # volume bucket: xai, google
+    # Cross-lineage review: opus (anthropic) ≠ grok/gemini (xai/google).
+    # Brand-voice alignment and messaging rigor warrant Anthropic-lineage review.
+    reviewer: opus
+    planner: fable
+    mechanical_gate: false
+  operations:
+    use_for: [automation, integration, support, finance, admin, ops, workflow]
+    implementers: [gemini]         # volume bucket: google
+    # Cross-lineage review: kimi (moonshot) ≠ gemini (google).
+    reviewer: kimi
+    planner: fable
+    mechanical_gate: true
+    review_classes: [R2, R3, R4]
+  # B7 — Prediction Systems (sixth formation). Topology: specialist_panel.
+  prediction:
+    use_for: [prediction, forecast, conversion, backtest, simulation, decision_support, model]
+    implementers: [grok, gemini]   # simulation = volume bucket: xai, google
+    # Cross-lineage review: opus (anthropic) ≠ grok/gemini (xai/google).
+    # Financial/forecasting stakes justify deep reasoning (Claude-lineage).
+    reviewer: opus
+    planner: fable
+    mechanical_gate: true
+    review_classes: [R2, R3, R4]

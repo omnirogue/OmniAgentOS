@@ -1,0 +1,25 @@
+{
+  "version": 1,
+  "canonical_transport": "pipeline/bridge/ledger_write.py",
+  "repository_producers": [
+    "pipeline/bridge/github_bridge.py",
+    "pipeline/bridge/integrity.py",
+    "pipeline/bridge/claim.py",
+    "pipeline/bridge/governor.py",
+    "pipeline/bridge/file_proposal.py",
+    "pipeline/bridge/janitor.py",
+    "pipeline/bridge/integration.py",
+    "pipeline/bridge/gate_loop.py",
+    "scripts/gate-watch/gate_watch.py",
+    "scripts/northstar_cert/file_gap_findings.py",
+    "pipeline/bridge/idea.sh",
+    "pipeline/bridge/directive.sh"
+  ],
+  "repository_initializers": [
+    "pipeline/bootstrap.sh"
+  ],
+  "installed_producers": [
+    "/Users/youruser/Work/Ops/LoopCadence/cadence_watch.py",
+    "/Users/youruser/Work/Ops/LoopCadence/hang_recycler.py"
+  ]
+}

@@ -1,0 +1,17 @@
+# Team Work OS point floors + ratchet (multi-company Work OS, 2026-08-13).
+#
+# Read by omniagentos/team/points.py. This file sets POLICY only — what the
+# weekly floor is and when it rises. It never touches scoring semantics:
+# points remain verified-only, S=1 M=3 L=8, computed by
+# omniagentos/team/scoring.py, which this config cannot reach.
+#
+# Schedule: week 1 -> week1_floor, week 2 -> week2_floor, then +ratchet_pct%
+# every ratchet_every_weeks weeks (rounded to the nearest whole point).
+# program_start anchors "week 1" (a Monday, UTC).
+
+program_start: "2026-08-10"
+week1_floor: 10
+week2_floor: 15
+ratchet_pct: 20
+ratchet_every_weeks: 2
+announce_day: friday

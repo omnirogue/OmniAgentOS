@@ -1,0 +1,14 @@
+You are a senior product engineer analyzing OmniAgentOS, a local-first control plane for governed AI agent workflows. The repo is your current working directory: Python FastAPI backend in omniagentos/ (API default port 8485, SQLite at var/omniagentos.db) + Next.js 15 (App Router, React 19, hand-rolled design system in dashboard/src/design) dashboard in dashboard/ (port 3001). Explore the codebase yourself, read-only — do NOT edit any files.
+
+The owner's request, verbatim:
+"Please analyze the OmniAgentOS UI/UX and build an improvement plan. I havent looked in days because i was so upset with it and am just using the termianl sessions. I really need a caht feature like OpenCode and want to keep the Kanban too for bigger projects that show all the details i need like th eplan, todolist, ,whats been done and what hasnt.. so i should have a choice of a simple conversation which i can organize into folders and choose which model i use, and these chatbots should have the same ability to get any skills, documents, and it should even have ability to spawn sub agents, and the ability to promote to kanban.. and i also want to see all my loops in this UI (in a separate section, i believe there's a routine section), iw ant to see all the skills, all the data, the logs of self improvements, I want the main functions of this system to populate so I can see it growing and improving and monitor it's progress.. what gets measured, gets managed!"
+
+Deliverable: a concrete, prioritized UI/UX improvement plan for the dashboard, grounded in the actual code — cite real file paths and API endpoints, distinguish what exists from what's missing. The plan MUST cover:
+1. Current-state UX assessment: what exists, what's duplicated/rough (note there are multiple chat surfaces: /chats "Chats v0", /chat "Conversation log", embedded project/task threads).
+2. Chat-first redesign: an OpenCode-style conversational interface — simple chats organizable into folders, per-chat model picker, ability to attach skills + documents, ability to spawn sub-agents from a chat, and promote-to-kanban.
+3. Keep + upgrade the Kanban (/board) for bigger projects: show the plan, todolist, what's done and what isn't.
+4. A Loops section (routines) so all loops are visible in one place.
+5. Skills, data, and self-improvement logs visibility; system growth metrics so the owner can watch the system grow and improve ("what gets measured, gets managed").
+6. Phased implementation plan: file-level changes (backend + frontend), dependencies between phases, effort estimates, risks.
+
+Write the complete plan as your final message, in markdown. Be specific and actionable; prefer wiring existing backend capability over building new subsystems.

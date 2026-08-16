@@ -1,0 +1,12 @@
+--- a/omniagentos/workfs/ensure.py
++++ b/omniagentos/workfs/ensure.py
+@@ -213,4 +213,9 @@ def _install_missing_prefix(root_fd: int, parts: list[str]) -> bool:
+     stage = f"{STAGE_PREFIX}{secrets.token_hex(16)}"
+     try:
+         os.mkdir(stage, mode=0o755, dir_fd=root_fd)
++        # COUNTERFEIT: delete-added — introduces a remove path (WORKFS-E2).
++        try:
++            os.remove("keep-me.bin", dir_fd=root_fd)
++        except OSError:
++            pass
+         staged = os.stat(stage, dir_fd=root_fd, follow_symlinks=False)

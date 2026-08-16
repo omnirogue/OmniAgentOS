@@ -1,0 +1,33 @@
+.tabLabel {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+/* PageHeader's `actions` slot on /inbox — project badge + live-events pill. */
+.headerActions {
+  display: flex;
+  gap: var(--space-2);
+  align-items: center;
+}
+
+.dialogNote {
+  margin-bottom: var(--space-3);
+}
+
+/* Inline decision-failure message inside the approve/reject dialog — the
+ * dialog stays open and the operator's note is preserved when this shows. */
+.decisionError {
+  margin: var(--space-3) 0 0;
+  padding: var(--space-2, 0.5rem) var(--space-3, 0.75rem);
+  border-radius: var(--radius-md, 0.5rem);
+  border: 1px solid color-mix(in srgb, var(--danger, #e35d6a) 40%, var(--border, #232b3a));
+  background: color-mix(in srgb, var(--danger, #e35d6a) 12%, transparent);
+  color: var(--danger, #e35d6a);
+  font-size: var(--text-small, 0.875rem);
+  line-height: 1.4;
+}
+
+.briefingHeadline {
+  margin: 0;
+}

@@ -1,0 +1,53 @@
+# skill: {{ title }}
+
+{% if discipline_slug %}[[{{ discipline_slug }}]] · {% endif %}[[Home]]
+
+## Summary
+
+{{ summary }}
+
+## Input format
+
+{{ input_format }}
+
+## Steps
+
+{% if steps %}
+{% for step in steps %}
+{{ loop.index }}. {{ step }}
+{% endfor %}
+{% else %}
+_No steps recorded._
+{% endif %}
+
+## Output structure
+
+{{ output_structure }}
+
+## Validation rules
+
+{% if validation_rules %}
+{% for rule in validation_rules %}
+- {{ rule }}
+{% endfor %}
+{% else %}
+_No validation rules recorded._
+{% endif %}
+
+## Tags
+
+{% if tags %}
+{% for tag in tags %}
+- `{{ tag }}`
+{% endfor %}
+{% else %}
+_none_
+{% endif %}
+
+## Provenance
+
+- **Verification gate:** {{ gate_status }} (checked {{ gate_checked_at }})
+- **Evidence:** {{ gate_evidence or "_none recorded_" }}
+- **Source run:** `{{ source_run_id or "_none_" }}`
+
+## Notes (human)

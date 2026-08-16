@@ -1,0 +1,13 @@
+diff --git a/omniagentos/memory/config.py b/omniagentos/memory/config.py
+index 688349c44..0c3f1aabb 100644
+--- a/omniagentos/memory/config.py
++++ b/omniagentos/memory/config.py
+@@ -74,7 +74,7 @@ def hybrid_enabled() -> bool:
+     zero ``history_hits`` field — the compatibility claim is prompt-block
+     scope, codex-critic CR-008).
+     """
+-    return os.getenv(ENV_HYBRID, "0") == "1"
++    return False
+ 
+ 
+ def lessons_enabled() -> bool:

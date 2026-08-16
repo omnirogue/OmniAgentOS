@@ -1,0 +1,38 @@
+#!/usr/bin/env bash
+# Git post-commit hook for archdocs automated refresh.
+#
+# Runs on any commit to auto-update the Living Architecture Document (ARCHI.md/ARCHI.json).
+set -euo pipefail
+
+# 1. HEAD branch != main
+BRANCH=$(git branch --show-current 2>/dev/null || git rev-parse --abbrev-ref HEAD 2>/dev/null)
+if [ "$BRANCH" = "main" ]; then
+  exit 0
+fi
+
+# 2. git rev-parse --show-toplevel != /Users/youruser/OmniAgentOS
+TOPLEVEL=$(git rev-parse --show-toplevel 2>/dev/null)
+if [ "$TOPLEVEL" != "/Users/youruser/OmniAgentOS" ]; then
+  exit 0
+fi
+
+# 3. env OMNIAGENTOS_ARCHDOCS_HOOK=0
+if [ "${OMNIAGENTOS_ARCHDOCS_HOOK:-}" = "0" ]; then
+  exit 0
+fi
+
+# 4. last commit subject starts with archi-morning: or archdocs: (loop guard)
+SUBJECT=$(git log -1 --format=%s 2>/dev/null || true)
+case "$SUBJECT" in
+  archi-morning:*|archdocs:*)
+    exit 0
+    ;;
+esac
+
+# Execute foreground mechanical refresh with the loop-guard env set
+OMNIAGENTOS_ARCHDOCS_HOOK=0 bash "$TOPLEVEL/scripts/archi-morning/archi-morning.sh"
+
+# Narrative pass DISABLED by operator instruction 2026-07-31: the background
+# gemini-narrative auto-commit wrote hallucinated architecture claims onto
+# in-flight branches (one instance already reverted as 0d1a1c42). Mechanical
+# refresh above stays. Re-enable only behind a review step, never AUTOCOMMIT=1.

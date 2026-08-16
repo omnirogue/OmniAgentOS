@@ -1,0 +1,88 @@
+# D3 ratchet — legacy `__file__`-anchored runtime-state paths, FROZEN.
+#
+# Each entry is `<path relative to the repo root>:<symbol>` (the assignment
+# target, else the enclosing function/class). Line numbers are deliberately NOT
+# part of the key: an unrelated edit that shifts a line must never redden a
+# blocking test.
+#
+# The list may only shrink. Convert a site to `omniagentos.runtime_paths` and
+# DELETE its line in the same commit — tests/hygiene/
+# test_no_new_file_anchored_state_paths.py fails in both directions.
+#
+# Frozen for WP4 (sim-isolation lane w2-wp4). Entries sorted; one per line.
+omniagentos/adapters/common.py:base
+omniagentos/api/routes/artifacts_preview.py:_repo_var
+omniagentos/api/routes/improvements.py:_spawn_improvement_worker
+omniagentos/api/routes/improvements.py:log_path
+omniagentos/api/routes/reliability.py:log_path
+omniagentos/api/routes/reliability.py:trigger_audit
+omniagentos/api/routes/system.py:get_improvers
+omniagentos/api/routes/system.py:log_p
+omniagentos/api/routes/system.py:path
+omniagentos/connectors/secrets_env.py:_default_secrets_dir
+omniagentos/contracts.py:default_db_path
+omniagentos/contracts.py:default_ledger_dir
+omniagentos/contracts.py:default_vault_dir
+omniagentos/csi/engine.py:default_db
+omniagentos/csi/evidence.py:_formation_selection_signals
+omniagentos/csi/evidence.py:_skills_snapshot
+omniagentos/csi/evidence.py:ledger
+omniagentos/csi/implement.py:implement_approved
+omniagentos/csi/implement.py:recover_implementation
+omniagentos/csi/implement.py:wt_base
+omniagentos/employee_transcripts/storage.py:_default_root
+omniagentos/gates/engine.py:art_root_path
+omniagentos/gates/planner_canary.py:_log_path
+omniagentos/improvement_chain.py:DEFAULT_ARTIFACT_ROOT
+omniagentos/improvement_chain.py:collect_sources
+omniagentos/improvement_chain.py:improvement_log
+omniagentos/improvement_chain.py:playbook
+omniagentos/lab/surfaces/__init__.py:load_surface_content
+omniagentos/lab/surfaces/__init__.py:path
+omniagentos/llm/budget.py:_ledger_path
+omniagentos/llm/budget.py:_var_root
+omniagentos/maintenance/cache_gc.py:var_root
+omniagentos/memlife/paths.py:memories_root
+omniagentos/memlife/render.py:default_memories_root
+omniagentos/metacog/config.py:artifacts_root
+omniagentos/modelintel/config.py:var_dir
+omniagentos/orchestrator/core.py:_default_reflexion_store_dir
+omniagentos/promptshape/rolepack.py:base_path
+omniagentos/promptshape/rolepack.py:role_path
+omniagentos/reflection/adapters.py:_swarm_dir
+omniagentos/reflection/fable_gate.py:DEFAULT_ARTIFACT_ROOT
+omniagentos/reflection/fable_gate.py:log_path
+omniagentos/reflection/harvest.py:gate_log
+omniagentos/reflection/harvest.py:out_dir
+omniagentos/reflection/harvest.py:runs_dir
+omniagentos/reflection/harvest.py:sessions_dir
+omniagentos/reflection/harvest.py:shadow_log
+omniagentos/reflection/harvest.py:swarm_dir
+omniagentos/reflection/perrun.py:_list_related_file_candidates
+omniagentos/reflection/perrun.py:requested_var
+omniagentos/reflection/perrun.py:retro_dir
+omniagentos/reflection/perrun.py:var_dir
+omniagentos/reflection/propose.py:var_path
+omniagentos/reflection/validate.py:shadow_log_path
+omniagentos/reflection/watchdog.py:ref_dir
+omniagentos/reliability/memory.py:_reflexion_var_root
+omniagentos/reliability/worker_drive.py:worker_log_path
+omniagentos/routing/cascade.py:default_trace_path
+omniagentos/runner/core.py:_default_workspace_base
+omniagentos/runner/core.py:base
+omniagentos/runtime_paths.py:_PACKAGE_VAR_ROOT
+omniagentos/scope/paths.py:_var_root
+omniagentos/scope/paths.py:raw
+omniagentos/secret_registry.py:secret_dirs
+omniagentos/sessions/hook_token.py:_LEGACY_HOOK_TOKENS_ROOT
+omniagentos/sessions/install.py:_LEGACY_BRIDGE_SETTINGS_PATH
+omniagentos/sessions/install.py:_ledger_path
+omniagentos/sessions/ssh_keys.py:_LEGACY_SSH_KEYS_ROOT
+omniagentos/sessions/steering_marker.py:_DEFAULT_VAR_ROOT
+omniagentos/sessions/token.py:_DEFAULT_VAR_ROOT
+omniagentos/swarm/scheduler.py:memory_path
+omniagentos/swarm/scheduler.py:task_md_path
+omniagentos/swarm/scheduler.py:workbook_path
+omniagentos/vault/templating.py:TEMPLATES_DIR
+omniagentos/workmodes/modes.py:var_root
+omniagentos/worktrees/lanes.py:base

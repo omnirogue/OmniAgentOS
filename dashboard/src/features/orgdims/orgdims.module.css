@@ -1,0 +1,126 @@
+.tabRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.noticeRow {
+  display: flex;
+  gap: var(--space-3);
+  align-items: center;
+}
+
+.agentGrid {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.agentHeader {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+
+.agentBadges {
+  display: flex;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+
+.agentCharter {
+  margin: var(--space-2) 0 0;
+  color: var(--text-muted);
+  font-size: var(--text-small);
+  line-height: 1.5;
+}
+
+.agentMeta {
+  margin: var(--space-1) 0 0;
+  color: var(--text-faint);
+  font-size: var(--text-micro);
+}
+
+.agentExpertise {
+  margin: var(--space-1) 0 0;
+  color: var(--text-muted);
+  font-size: var(--text-micro);
+}
+
+.editorHeading {
+  margin: 0 0 var(--space-4) 0;
+}
+
+.editorForm {
+  display: grid;
+  gap: var(--space-3);
+  max-width: 28rem;
+}
+
+.savedSection {
+  margin-top: var(--space-4);
+}
+
+.savedHeading {
+  margin: 0 0 var(--space-3) 0;
+}
+
+.savedTable {
+  max-height: 24rem;
+  overflow: auto;
+}
+
+.loopTemplateHeading {
+  margin: 0 0 var(--space-3) 0;
+}
+
+.loopList {
+  list-style: none;
+  margin: 0 0 var(--space-4) 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.loopItem {
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--surface-raised);
+}
+
+.loopItemMeta {
+  color: var(--text-muted);
+  font-size: var(--text-micro);
+}
+
+.objectRow {
+  padding: var(--space-2) 0;
+  border-bottom: 1px solid var(--border);
+  font-size: var(--text-small);
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: var(--space-3);
+}
+
+.objectRow:last-child {
+  border-bottom: none;
+}
+
+.objectId {
+  font-family: var(--font-mono);
+  color: var(--text);
+}
+
+.objectWorkstream {
+  color: var(--text-muted);
+  font-size: var(--text-micro);
+}
+
+.emptyObjects {
+  padding: var(--space-3);
+  color: var(--text-muted);
+  font-size: var(--text-small);
+}

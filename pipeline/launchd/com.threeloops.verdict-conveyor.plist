@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>Label</key>
+	<string>com.threeloops.verdict-conveyor</string>
+	<key>EnvironmentVariables</key>
+	<dict>
+		<key>PATH</key>
+		<string>/usr/local/bin:/opt/homebrew/bin:/usr/bin:/bin:/usr/sbin:/sbin:/Users/youruser/.local/bin:/Users/youruser/.grok/bin</string>
+	</dict>
+	<key>ProgramArguments</key>
+	<array>
+		<string>/Users/youruser/OmniAgentOS/.venv/bin/python</string>
+		<string>/Users/youruser/OmniAgentOS/pipeline/bridge/verdict_conveyor.py</string>
+		<string>--repo</string>
+		<string>/Users/youruser/OmniAgentOS</string>
+		<string>--loops-root</string>
+		<string>/Users/youruser/OmniAgentOS/var/loopqueue</string>
+		<string>--evidence-dir</string>
+		<string>/Users/youruser/OmniAgentOS/var/gate-evidence/records/verdicts</string>
+		<string>--max-candidates</string>
+		<string>2</string>
+	</array>
+	<key>RunAtLoad</key>
+	<true/>
+	<key>KeepAlive</key>
+	<false/>
+	<key>StartInterval</key>
+	<integer>600</integer>
+	<key>StandardOutPath</key>
+	<string>/Users/youruser/OmniAgentOS/var/log/verdict-conveyor.log</string>
+	<key>StandardErrorPath</key>
+	<string>/Users/youruser/OmniAgentOS/var/log/verdict-conveyor.log</string>
+	<key>WorkingDirectory</key>
+	<string>/Users/youruser/OmniAgentOS/pipeline</string>
+</dict>
+</plist>

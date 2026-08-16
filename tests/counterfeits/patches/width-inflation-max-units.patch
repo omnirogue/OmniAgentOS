@@ -1,0 +1,11 @@
+--- a/omniagentos/allocation/fanout.py
++++ b/omniagentos/allocation/fanout.py
+@@ -44,6 +44,8 @@
+     when capacity allows and dependencies are not sequential (F4 / R2-F3).
+     """
+     units = independent_units if independent_units is not None else int(max(1.0, char.I * 4.0))
++    # COUNTERFEIT: width inflation — the realistic fan-out failure mode.
++    units = max(units, 5)
+     limits = [max(0, int(units)), max(0, int(free_slots)), max(0, int(writer_slots))]
+     if budget_workers is not None:
+         limits.append(max(0, int(budget_workers)))

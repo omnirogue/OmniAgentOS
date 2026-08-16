@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>Label</key>
+	<string>com.threeloops.gate-loop</string>
+	<key>EnvironmentVariables</key>
+	<dict>
+		<key>PATH</key>
+		<string>/usr/local/bin:/opt/homebrew/bin:/usr/bin:/bin:/usr/sbin:/sbin:/Users/youruser/.local/bin</string>
+		<key>THREELOOPS_ALLOW_REMOTE_GATE</key>
+		<string>1</string>
+	</dict>
+	<key>ProgramArguments</key>
+	<array>
+		<string>/Users/youruser/OmniAgentOS/.venv/bin/python</string>
+		<string>/Users/youruser/OmniAgentOS/pipeline/bridge/gate_loop.py</string>
+		<string>--loops-root</string>
+		<string>/Users/youruser/OmniAgentOS/var/loopqueue</string>
+		<string>--repo</string>
+		<string>/Users/youruser/OmniAgentOS</string>
+		<string>--gate-workspace</string>
+		<string>/Users/youruser/OmniAgentOS-gate</string>
+		<string>--repo-key</string>
+		<string>omniagentos</string>
+		<string>--once</string>
+	</array>
+	<key>RunAtLoad</key>
+	<true/>
+	<key>KeepAlive</key>
+	<false/>
+	<key>StartInterval</key>
+	<integer>60</integer>
+	<key>StandardOutPath</key>
+	<string>/Users/youruser/OmniAgentOS/var/log/gate-loop.log</string>
+	<key>StandardErrorPath</key>
+	<string>/Users/youruser/OmniAgentOS/var/log/gate-loop.log</string>
+	<key>WorkingDirectory</key>
+	<string>/Users/youruser/OmniAgentOS/pipeline</string>
+</dict>
+</plist>

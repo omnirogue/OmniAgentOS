@@ -1,0 +1,67 @@
+{
+  "blast_radius": "Read/upsert into the ER2 ticket store; no outbound mail.",
+  "cadence_seconds": 60,
+  "company": "initech",
+  "escalation_tier": "high",
+  "exit_semantics": {
+    "DEGRADED": "degraded",
+    "DOWN": "down",
+    "OK": "ok",
+    "UNVERIFIED": "cannot_evaluate",
+    "default": "cannot_evaluate"
+  },
+  "host": "initech-worker-host",
+  "id": "loop-er2-ingest",
+  "kind": "llm-loop",
+  "last_status": "OK",
+  "last_verified": null,
+  "owner": "estate-ops",
+  "repo": "example-support-service",
+  "staleness_slo_seconds": 900,
+  "throughput": {
+    "derivation": "Read-only database query inside the service's own container over one SSH session. sum(upserted) grouped by day(started_at) over a trailing window; 24h = sum(upserted) where started_at >= now()-24h.",
+    "floor": {
+      "floor": 480.0,
+      "fraction": 0.3,
+      "median": 1600.0,
+      "min_sample_days": 7,
+      "reason": null,
+      "sample": {
+        "2024-01-01": 1000,
+        "2024-01-02": 1200,
+        "2024-01-03": 1400,
+        "2024-01-04": 1600,
+        "2024-01-05": 1800,
+        "2024-01-06": 2000,
+        "2024-01-07": 2200
+      },
+      "sample_days": 7,
+      "sample_window": "2024-01-01..2024-01-07"
+    },
+    "max_error_rate": 0.05,
+    "metric": "tickets_upserted_24h",
+    "notes": [
+      "A high number of sync runs complete in 24h with no error column set (illustrative: roughly 1,900 runs).",
+      "Separately, a small share of upstream provider calls fail with auth or rate-limit errors in 24h; that failure mode does not surface in this loop's own error column and is tracked on loop-er2-llm-burn."
+    ],
+    "observed": {
+      "as_of": null,
+      "burn": null,
+      "error_rate": 0.0,
+      "last_success": null,
+      "process_state": "RUNNING",
+      "volume": 1800
+    },
+    "signal_exists": true,
+    "signal_path": "postgres://example-service-db/example_service (container-local; credentials in EXAMPLE_SERVICE_* env, never read by capmap)#sync_runs",
+    "window": "24h"
+  },
+  "verification": {
+    "field": "tickets_upserted_24h",
+    "note": "Graded on throughput, not liveness: a running loop with zero volume is DEGRADED.",
+    "source": "postgres://example-service-db/example_service (container-local; credentials in EXAMPLE_SERVICE_* env, never read by capmap)#sync_runs",
+    "type": "snapshot_field"
+  },
+  "what_it_does": "Support-ticket ingest loop; volume is tickets upserted per sync run.",
+  "why_it_matters": "This is the front of the support pipeline; a stall here means nothing downstream (classification, deflection, replies) ever sees new tickets."
+}

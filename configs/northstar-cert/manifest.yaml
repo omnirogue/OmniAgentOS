@@ -1,0 +1,290 @@
+# Canonical North Star result-binding catalog.  Every check carries its own
+# explicit binding; the defaults anchor NEVER carries a binding (vacuous-
+# binding class forbidden — tests/scripts/test_northstar_cert_manifest.py).
+# Rebuilt 2026-08-09 from audit/S1..S6-merge.md + COVERAGE-CLOSURE.md;
+# resolution log in devtasks/northstar-cert/AMENDMENT-REQUESTS.md.
+# Every colon-shaped requirement is backed by the sticky reverse-index in
+# writers.yaml; deleting a manifest token alone does not remove its check-id
+# gate or grant PASS. writer: evidence is AST-probed, launchd: is live-probed,
+# and other prefixes use their existing explicit availability/filesystem paths.
+#
+# `version` is the SUITE version (evs_northstar_cert_v<N> in the eval store,
+# recorder: _ensure_suite). Any change to this file's CONTENT changes the
+# manifest digest, and the recorder refuses mixed evidence against a suite row
+# whose dataset_hash no longer matches — so every content change MUST bump this
+# number or all subsequent runs render VOID (measured 2026-08-11: 000000000
+# changed content at implicit v1 and both tiers VOIDed estate-wide).
+version: 2
+defaults: &nsc_defaults
+  capability: northstar-cert
+  tier: t1
+  gate: false
+  requires: []
+  scope: scenario
+  provenance: [merged-catalog]
+checks:
+  - {<<: *nsc_defaults, id: NSC-C01-01, binding: {type: pytest, target: tests/taskcontract/test_model.py::test_contract_hash_stable_and_independent_of_lease}, requires: [glue:fold-legs-pending]}
+  - {<<: *nsc_defaults, id: NSC-C01-02, gate: true, binding: {type: pytest, target: tests/acceptance/test_02_contracts.py::TestNoWorkWithoutAValidContract::test_a_contract_with_no_objective_is_refused}, requires: [glue:fold-legs-pending]}
+  - {<<: *nsc_defaults, id: NSC-C01-03, gate: true, scope: estate, binding: {type: pytest, target: tests/acceptance/test_02_contracts.py::TestNoWorkWithoutAValidContract::test_a_gate_with_no_command_is_refused}, requires: [glue:fold-legs-pending, 'writer:TaskContract.gates']}
+  - {<<: *nsc_defaults, id: NSC-C01-04, binding: {type: pytest, target: tests/dispatch/test_categories.py::pending_specific_carrier_nsc_c01_04}, requires: [glue:fold-legs-pending, 'binding:needs-specific-carrier']}
+  - {<<: *nsc_defaults, id: NSC-C01-05, binding: {type: pytest, target: tests/intake/test_clarify.py::test_spec_when_agent_has_enough, shared: true}, requires: [glue:fold-legs-pending]}
+  - {<<: *nsc_defaults, id: NSC-C01-06, tier: t2, binding: {type: pytest, target: tests/swarm/test_m13_m16_m18_m38_contracts.py::test_task_contract_store_adopt_and_transition_with_ledger_hash}, requires: [glue:fold-legs-pending]}
+  - {<<: *nsc_defaults, id: NSC-C01-07, tier: t3, binding: {type: sem, target: lab-eval:NSC-C01-07-contract-fidelity}, requires: [glue:fold-legs-pending, 'provider:3-lineage', 'campaign:northstar-sem']}
+  - {<<: *nsc_defaults, id: NSC-C02-01, binding: {type: pytest, target: tests/context/test_context_capsule.py::test_excluded_slice_present_in_brief_is_measured_not_assumed}, requires: [glue:fold-legs-pending]}
+  - {<<: *nsc_defaults, id: NSC-C02-02, binding: {type: pytest, target: tests/context/test_context_capsule.py::test_per_slice_over_cap_flagged_truncated_budget}, requires: [glue:fold-legs-pending]}
+  - {<<: *nsc_defaults, id: NSC-C02-03, tier: t2, binding: {type: pytest, target: tests/livesim/categories/test_context.py::pending_specific_carrier_nsc_c02_03}, requires: ['writer:rediscovery-event-trace-collector', 'binding:needs-specific-carrier']}
+  - {<<: *nsc_defaults, id: NSC-C02-04, binding: {type: pytest, target: tests/context/test_completeness.py::test_an_item_outside_the_contract_read_set_fails_authorization}}
+  - {<<: *nsc_defaults, id: NSC-C02-05, tier: t2, binding: {type: pending, target: carrier-unbuilt:NSC-C02-05}, requires: ['writer:provisioning-latency-collector']}
+  - {<<: *nsc_defaults, id: NSC-C02-06, scope: estate, binding: {type: sentinel, target: health-sentinel:context_packages}, requires: [glue:fold-legs-pending, 'launchd:health-sentinel']}
+  - {<<: *nsc_defaults, id: NSC-C02-07, tier: t3, binding: {type: pytest, target: tests/policy/blind_judge.py::pending_specific_carrier_nsc_c02_07}, requires: [glue:fold-legs-pending, 'provider:3-lineage', 'writer:brief-sufficiency-lab-eval-task', 'binding:needs-specific-carrier']}
+  - {<<: *nsc_defaults, id: NSC-C03-01, binding: {type: pytest, target: tests/swarm/test_grant_briefs.py::TestGrantInliningDecisive::test_brief_includes_held_grants_and_updates_on_change}, requires: [glue:fold-legs-pending]}
+  - {<<: *nsc_defaults, id: NSC-C03-02, binding: {type: pytest, target: tests/connectors/test_broker_grants.py::test_positive_scoped_grant_authorizes_matching_target_and_args}, requires: [glue:fold-legs-pending]}
+  - {<<: *nsc_defaults, id: NSC-C03-03, gate: true, binding: {type: pytest, target: tests/livesim/categories/test_tools_permissions.py::test_benign_and_proven_bounded_actions_auto_approve}}
+  - {<<: *nsc_defaults, id: NSC-C03-04, binding: {type: pytest, target: tests/connectors/test_broker_project_binding.py::test_cross_project_grant_is_denied_with_its_own_code, shared: true}}
+  - {<<: *nsc_defaults, id: NSC-C03-05, binding: {type: pytest, target: tests/provision/test_policy.py::test_floor_autogrants_echo_with_a_read_grant_and_a_1800s_ttl}, requires: [glue:fold-legs-pending]}
+  - {<<: *nsc_defaults, id: NSC-C03-06, scope: estate, binding: {type: sentinel, target: health-sentinel:grant-surfaces}, requires: [glue:fold-legs-pending, 'launchd:health-sentinel']}
+  - {<<: *nsc_defaults, id: NSC-C04-01, binding: {type: pytest, target: tests/cbm/test_cbm.py::pending_specific_carrier_nsc_c04_01}, requires: [glue:fold-legs-pending, 'binding:needs-specific-carrier']}
+  - {<<: *nsc_defaults, id: NSC-C04-02, gate: true, binding: {type: pytest, target: tests/swarm/test_reviewer_lineage_assignment.py::test_scheduler_refuses_sol_implementation_with_codex_reviewer, shared: true}}
+  - {<<: *nsc_defaults, id: NSC-C04-03, gate: true, binding: {type: pytest, target: tests/routing/test_escalation_policy.py::TestRetryNotEscalation::test_escalation_advances_rung_and_generation}, requires: [glue:fold-legs-pending]}
+  - {<<: *nsc_defaults, id: NSC-C04-04, binding: {type: pytest, target: tests/cbm/test_cbm_spawn_applies_effort.py::test_cbm_rung_influences_spawn_effort}, requires: [glue:fold-legs-pending]}
+  - {<<: *nsc_defaults, id: NSC-C05-01, binding: {type: pytest, target: tests/simharness/test_orchestration.py::test_budget_enforcement_blocks_admission_after_cap, shared: true}}
+  - {<<: *nsc_defaults, id: NSC-C05-02, binding: {type: pytest, target: tests/livesim/categories/test_telemetry_cost.py::test_provider_call_usage_rows_have_coherent_cost_quality, shared: true}}
+  - {<<: *nsc_defaults, id: NSC-C05-03, binding: {type: pytest, target: tests/simharness/test_orchestration.py::test_zero_work_run_does_not_score_well, shared: true}, requires: [glue:fold-legs-pending, 'writer:simharness-deterministic-zero-call-scenario']}
+  - {<<: *nsc_defaults, id: NSC-C05-04, binding: {type: pytest, target: tests/simharness/test_orchestration.py::test_token_only_provider_does_not_persist_false_zero_cost}}
+  - {<<: *nsc_defaults, id: NSC-C05-05, binding: {type: pytest, target: tests/livesim/categories/test_telemetry_cost.py::test_loop_budget_cap_constants_are_code_defined}, requires: [glue:fold-legs-pending]}
+  - {<<: *nsc_defaults, id: NSC-C06-01, binding: {type: pytest, target: tests/simharness/assertions.py::pending_specific_carrier_nsc_c06_01}, requires: [glue:fold-legs-pending, 'binding:needs-specific-carrier']}
+  - {<<: *nsc_defaults, id: NSC-C06-02, binding: {type: pytest, target: tests/swarm/test_planner.py::TestTopoRepair::test_clean_dag_orders_prerequisites_first}}
+  - {<<: *nsc_defaults, id: NSC-C06-03, binding: {type: pytest, target: tests/swarm/test_planner.py::TestSharedPaths::test_shared_files_move_to_integration_ownership}}
+  - {<<: *nsc_defaults, id: NSC-C06-04, binding: {type: pytest, target: tests/acceptance/test_06_decomposition.py::TestProjectLeadDecomposition::test_every_worker_task_carries_a_verify_command}}
+  - {<<: *nsc_defaults, id: NSC-C06-05, binding: {type: pytest, target: tests/swarm/test_planner.py::TestOwnedPathResolution::test_existing_path_is_unchanged, shared: true}, requires: [glue:fold-legs-pending]}
+  - {<<: *nsc_defaults, id: NSC-C06-06, binding: {type: pytest, target: tests/swarm/test_planner.py::TestPlanAssembly::test_integration_appended_with_leaf_deps_and_suite_verify}}
+  - {<<: *nsc_defaults, id: NSC-C06-07, binding: {type: pytest, target: tests/simharness/test_orchestration.py::test_resume_preserves_already_completed_tasks, shared: true}, requires: [glue:fold-legs-pending]}
+  - {<<: *nsc_defaults, id: NSC-C06-08, tier: t3, binding: {type: pytest, target: tests/acceptance/test_11_trace.py::test_the_blind_presentation_seed_reproduces_the_exact_judging_order}, requires: [glue:fold-legs-pending, 'provider:3-lineage']}
+  - {<<: *nsc_defaults, id: NSC-C07-01, binding: {type: pytest, target: tests/swarm/test_planner.py::TestTopoRepair::test_unknown_and_self_deps_dropped_with_note}}
+  - {<<: *nsc_defaults, id: NSC-C07-02, binding: {type: pytest, target: tests/swarm/test_barriers.py::test_dependency_release_requires_a_satisfying_report_for_the_current_hash}}
+  - {<<: *nsc_defaults, id: NSC-C07-03, binding: {type: pytest, target: tests/simharness/test_orchestration.py::test_failed_dependency_blocks_dependents}}
+  - {<<: *nsc_defaults, id: NSC-C07-04, binding: {type: pytest, target: tests/swarm/test_worktrees.py::TestMerge::test_clean_merge_lands_no_ff_in_main, shared: true}, requires: [glue:fold-legs-pending]}
+  - {<<: *nsc_defaults, id: NSC-C07-05, binding: {type: pytest, target: tests/simharness/test_orchestration.py::test_merge_conflict_routes_to_integration_feedback, shared: true}, requires: [glue:fold-legs-pending]}
+  - {<<: *nsc_defaults, id: NSC-C08-01, binding: {type: pytest, target: tests/simharness/test_orchestration.py::test_two_runs_do_not_share_worktree_paths_or_branches}}
+  - {<<: *nsc_defaults, id: NSC-C08-02, binding: {type: pytest, target: tests/scope/test_locks.py::test_release_is_generation_fenced}}
+  - {<<: *nsc_defaults, id: NSC-C08-03, binding: {type: pytest, target: tests/scope/test_locks.py::test_refusal_is_all_or_nothing_across_the_set}}
+  - {<<: *nsc_defaults, id: NSC-C08-04, binding: {type: pytest, target: tests/swarm/test_worktrees.py::TestMerge::test_clean_merge_lands_no_ff_in_main, shared: true}, requires: [glue:fold-legs-pending]}
+  - {<<: *nsc_defaults, id: NSC-C08-05, binding: {type: pytest, target: tests/simharness/test_orchestration.py::test_planned_concurrency_usage_and_terminal_state}, requires: [glue:fold-legs-pending]}
+  - {<<: *nsc_defaults, id: NSC-C08-06, binding: {type: pytest, target: tests/simharness/test_orchestration.py::test_worktree_removed_after_task_completes}}
+  - {<<: *nsc_defaults, id: NSC-C08-07, binding: {type: pytest, target: tests/scope/test_locks.py::test_mode_defaults_come_from_config}}
+  - {<<: *nsc_defaults, id: NSC-C09-01, binding: {type: pytest, target: tests/simharness/test_orchestration.py::pending_specific_carrier_nsc_c09_01}, requires: [glue:fold-legs-pending, 'binding:needs-specific-carrier']}
+  - {<<: *nsc_defaults, id: NSC-C09-02, binding: {type: pytest, target: tests/acceptance/test_12_fairness.py::TestTheWorkContractIsIdenticalAcrossFormations::test_every_competing_formation_exposes_the_same_role_shape}}
+  - {<<: *nsc_defaults, id: NSC-C09-03, binding: {type: pytest, target: tests/formation/test_formation_binding.py::pending_specific_carrier_nsc_c09_03}, requires: [glue:fold-legs-pending, 'binding:needs-specific-carrier']}
+  - {<<: *nsc_defaults, id: NSC-C09-04, binding: {type: pytest, target: tests/scope/test_locks.py::test_different_realms_never_collide, shared: true}}
+  - {<<: *nsc_defaults, id: NSC-C09-05, scope: estate, binding: {type: sentinel, target: health-sentinel:formation-selections}, requires: [glue:fold-legs-pending, 'launchd:health-sentinel']}
+  - {<<: *nsc_defaults, id: NSC-C10-01, gate: true, binding: {type: pytest, target: tests/simharness/test_orchestration.py::test_merge_conflict_routes_to_integration_feedback, shared: true}, requires: [glue:fold-legs-pending]}
+  - {<<: *nsc_defaults, id: NSC-C10-02, gate: true, binding: {type: pytest, target: tests/simharness/test_orchestration.py::pending_specific_carrier_nsc_c10_02}, requires: [glue:fold-legs-pending, 'binding:needs-specific-carrier']}
+  - {<<: *nsc_defaults, id: NSC-C10-03, gate: true, binding: {type: pytest, target: tests/scripts/test_merge_gate_receipt.py::test_merge_gate_refuses_unsigned_hand_written_receipt}}
+  - {<<: *nsc_defaults, id: NSC-C10-04, binding: {type: pytest, target: tests/scripts/test_merge_gate_m8_refusals.py::pending_specific_carrier_nsc_c10_04}, requires: [glue:fold-legs-pending, 'binding:needs-specific-carrier']}
+  - {<<: *nsc_defaults, id: NSC-C10-05, gate: true, binding: {type: pytest, target: tests/scripts/test_lane_done.py::test_lane_done_refuses_fabricated_claim_sha}, requires: [glue:fold-legs-pending]}
+  - {<<: *nsc_defaults, id: NSC-C10-06, gate: true, binding: {type: pytest, target: tests/gates_scripts/test_mech_gate_scripts.py::pending_specific_carrier_nsc_c10_06}, requires: [glue:fold-legs-pending, 'writer:mech-gate-absolute-red', 'binding:needs-specific-carrier']}
+  - {<<: *nsc_defaults, id: NSC-C11-01, gate: true, binding: {type: pytest, target: tests/counterfeits/test_gate.py::test_full_corpus_report_and_operator_tree_clean}}
+  - {<<: *nsc_defaults, id: NSC-C11-02, gate: true, binding: {type: pytest, target: tests/lab/tournament/test_real_judge.py::test_live_judge_refuses_non_empty_text_as_a_quality_metric}, requires: [glue:fold-legs-pending]}
+  - {<<: *nsc_defaults, id: NSC-C11-03, gate: true, binding: {type: pytest, target: tests/swarm/test_planner_verifier_security.py::test_strict_verifier_grammar_produces_immutable_argv}, requires: [glue:fold-legs-pending]}
+  - {<<: *nsc_defaults, id: NSC-C11-04, gate: true, binding: {type: pytest, target: tests/gates/test_gate_evidence_store.py::test_row_and_artifact_per_gate}}
+  - {<<: *nsc_defaults, id: NSC-C11-05, gate: true, binding: {type: pytest, target: tests/scripts/test_merge_gate_reachability_exempt_trap.py::test_missing_exemption_file_on_the_candidate_is_not_evidence}, requires: [glue:fold-legs-pending]}
+  - {<<: *nsc_defaults, id: NSC-C12-01, gate: true, binding: {type: pytest, target: tests/swarm/test_reviewer_lineage_assignment.py::test_scheduler_refuses_sol_implementation_with_codex_reviewer, shared: true}, requires: [glue:fold-legs-pending]}
+  - {<<: *nsc_defaults, id: NSC-C12-02, binding: {type: pytest, target: tests/verify/test_report.py::test_findings_are_ranked_most_severe_first_by_construction}, requires: [glue:fold-legs-pending]}
+  - {<<: *nsc_defaults, id: NSC-C12-03, gate: true, binding: {type: pytest, target: tests/improve/test_judges.py::test_veto_outranks_missing_owner_response}, requires: [glue:fold-legs-pending, 'writer:structured-findings']}
+  - {<<: *nsc_defaults, id: NSC-C12-04, gate: true, binding: {type: pytest, target: tests/improve/test_judges.py::pending_specific_carrier_nsc_c12_04}, requires: ['writer:review-round-receipts', 'binding:needs-specific-carrier']}
+  - {<<: *nsc_defaults, id: NSC-C12-05, gate: true, scope: estate, binding: {type: sentinel, target: health-sentinel:verification-reports}, requires: [glue:fold-legs-pending, 'launchd:health-sentinel', 'writer:verification-reports']}
+  - {<<: *nsc_defaults, id: NSC-C13-01, gate: true, binding: {type: pytest, target: tests/scripts/test_lane_done.py::test_lane_done_refuses_zero_commits}}
+  - {<<: *nsc_defaults, id: NSC-C13-02, gate: true, binding: {type: pytest, target: tests/ops/test_zerorow_probe.py::pending_specific_carrier_nsc_c13_02}, requires: [glue:fold-legs-pending, 'binding:needs-specific-carrier']}
+  - {<<: *nsc_defaults, id: NSC-C13-03, scope: estate, binding: {type: sentinel, target: health-sentinel:self-reported-completion}, requires: ['launchd:health-sentinel']}
+  - {<<: *nsc_defaults, id: NSC-C13-04, gate: true, binding: {type: pytest, target: tests/scripts/test_merge_gate_m8_refusals.py::test_a_green_counterfeit_run_still_passes_and_mints_a_reusable_receipt}}
+  - {<<: *nsc_defaults, id: NSC-C13-05, binding: {type: pytest, target: tests/scripts/test_reachability_gate.py::pending_specific_carrier_nsc_c13_05}, requires: ['binding:needs-specific-carrier']}
+  - {<<: *nsc_defaults, id: NSC-C13-06, binding: {type: pytest, target: tests/scripts/test_merge_gate_receipt.py::test_merge_gate_accepts_tip_receipt_then_rejects_it_after_one_more_commit}}
+  - {<<: *nsc_defaults, id: NSC-C13-07, gate: true, binding: {type: pytest, target: tests/scripts/test_nscert_record_results.py::test_absent_junit_case_is_not_evaluable_and_gates_inconclusive}, requires: [glue:fold-legs-pending]}
+  - {<<: *nsc_defaults, id: NSC-C14-01, gate: true, binding: {type: pytest, target: tests/simharness/test_orchestration.py::test_attempt_timeout_is_closed_and_escalated}, requires: [glue:fold-legs-pending]}
+  - {<<: *nsc_defaults, id: NSC-C14-02, gate: true, binding: {type: sentinel, target: health-sentinel:retry-fingerprint-duplicates}, requires: [glue:fold-legs-pending, 'writer:swarm_attempts.verdict_hash', 'launchd:health-sentinel']}
+  - {<<: *nsc_defaults, id: NSC-C14-03, gate: true, binding: {type: pytest, target: tests/simharness/test_orchestration.py::test_retry_cap_blocks_persistent_denials}}
+  - {<<: *nsc_defaults, id: NSC-C14-04, gate: true, scope: estate, binding: {type: pytest, target: tests/swarm/test_scheduler.py::TestQualityGate::test_auth_failed_attempts_are_bounded_not_a_relay_loop, shared: true}}
+  - {<<: *nsc_defaults, id: NSC-C14-05, gate: true, binding: {type: pytest, target: tests/simharness/test_orchestration.py::test_repeated_coder_failure_reaches_a_different_model, shared: true}}
+  - {<<: *nsc_defaults, id: NSC-C14-06, gate: true, binding: {type: pytest, target: tests/scheduler/test_gate_evidence.py::test_recording_twice_for_one_run_is_refused}, requires: [glue:fold-legs-pending]}
+  - {<<: *nsc_defaults, id: NSC-C14-07, gate: true, binding: {type: pytest, target: tests/runner/test_state_machine.py::test_unknown_effect_without_probe_fails_closed, shared: true}, requires: [glue:fold-legs-pending]}
+  - {<<: *nsc_defaults, id: NSC-C14-08, gate: true, scope: estate, binding: {type: sentinel, target: health-sentinel:no-silent-abandonment}, requires: ['launchd:health-sentinel']}
+  - {<<: *nsc_defaults, id: NSC-C15-01, binding: {type: pytest, target: tests/memlife/test_graduation_reaches_recall.py::test_graduated_claim_is_recallable_through_the_front_door}, requires: [glue:fold-legs-pending]}
+  - {<<: *nsc_defaults, id: NSC-C15-02, binding: {type: pytest, target: tests/memlife/test_lifecycle.py::TestGraduateWritesAllThreeArtifacts::test_graduate_writes_lesson_decision_and_queue}}
+  - {<<: *nsc_defaults, id: NSC-C15-03, binding: {type: pytest, target: tests/knowledge/test_immutability.py::test_supersede_sets_flags}, requires: [glue:fold-legs-pending]}
+  - {<<: *nsc_defaults, id: NSC-C15-04, tier: t3, binding: {type: pytest, target: tests/livesim/categories/test_memory.py::test_recall_bridge_deterministic_and_data_only}, requires: [glue:fold-legs-pending, 'provider:3-lineage']}
+  - {<<: *nsc_defaults, id: NSC-C15-05, binding: {type: pytest, target: tests/memlife/test_dream.py::TestDecisiveByteConservation::test_two_valid_one_corrupt_conserves_and_quarantines}}
+  - {<<: *nsc_defaults, id: NSC-C15-06, gate: true, scope: estate, binding: {type: pytest, target: tests/scripts/test_northstar_cert_metrics.py::test_c15_repeated_task_class_series_improves}, requires: ['writer:task-class-series']}
+  - {<<: *nsc_defaults, id: NSC-C16-01, tier: t3, binding: {type: pytest, target: tests/improve/test_judges.py::test_premium_panel_cannot_be_skipped}, requires: [glue:fold-legs-pending, 'provider:3-lineage']}
+  - {<<: *nsc_defaults, id: NSC-C16-02, gate: true, binding: {type: pytest, target: tests/formation/test_etar_and_selections.py::test_record_and_list_selections, shared: true}}
+  - {<<: *nsc_defaults, id: NSC-C16-03, binding: {type: pytest, target: tests/certification/test_definition_of_done.py::test_task_contract_hash_stable}, requires: [glue:fold-legs-pending]}
+  - {<<: *nsc_defaults, id: NSC-C17-01, binding: {type: pytest, target: tests/acceptance/test_11_trace.py::test_every_event_reaches_a_live_subscriber_in_order}, requires: [glue:fold-legs-pending]}
+  - {<<: *nsc_defaults, id: NSC-C17-02, tier: t2, binding: {type: pytest, target: tests/scripts/test_northstar_cert_metrics.py::test_c17_phase_latency_decomposition_is_complete_and_monotonic, shared: true}}
+  - {<<: *nsc_defaults, id: NSC-C17-03, tier: t2, binding: {type: pytest, target: tests/scripts/test_northstar_cert_metrics.py::test_c17_phase_latency_decomposition_is_complete_and_monotonic, shared: true}}
+  - {<<: *nsc_defaults, id: NSC-C17-04, tier: t2, binding: {type: pytest, target: tests/scheduler/test_gate_evidence.py::pending_specific_carrier_nsc_c17_04}, requires: [glue:fold-legs-pending, 'binding:needs-specific-carrier']}
+  - {<<: *nsc_defaults, id: NSC-C17-05, tier: t2, binding: {type: pytest, target: tests/scripts/test_northstar_cert_metrics.py::pending_specific_carrier_nsc_c17_05}, requires: ['writer:phase-baseline', 'binding:needs-specific-carrier']}
+  - {<<: *nsc_defaults, id: NSC-C17-06, binding: {type: pytest, target: tests/swarm/test_idle_hotloop.py::test_worker_poll_notification_does_not_advance_pass}}
+  - {<<: *nsc_defaults, id: NSC-C17-07, scope: estate, binding: {type: sentinel, target: health-sentinel:gate-rerun-attribution}, requires: ['launchd:health-sentinel']}
+  - {<<: *nsc_defaults, id: NSC-C18-01, binding: {type: pytest, target: tests/scripts/test_prompt_ab_runner.py::test_main_records_strict_beat_and_signed_arm_digests}, requires: [glue:fold-legs-pending]}
+  - {<<: *nsc_defaults, id: NSC-C18-02, tier: t2, gate: true, binding: {type: pytest, target: tests/reliability/test_pipeline.py::test_sandbox_fail_is_terminal_and_not_judged}}
+  - {<<: *nsc_defaults, id: NSC-C18-03, tier: t2, binding: {type: pytest, target: tests/reliability/test_pipeline.py::test_reliability_log_chain_extends_across_transitions}}
+  - {<<: *nsc_defaults, id: NSC-C18-04, tier: t2, gate: true, binding: {type: pytest, target: tests/reliability/test_pipeline.py::test_panel_blocked_then_human_pull}}
+  - {<<: *nsc_defaults, id: NSC-C18-05, scope: estate, binding: {type: sentinel, target: health-sentinel:improvement-loop}, requires: [glue:fold-legs-pending, 'launchd:com.omniagentos.reflection-nightly', 'launchd:health-sentinel']}
+  - {<<: *nsc_defaults, id: NSC-C18-06, tier: t3, binding: {type: pytest, target: tests/lab/eval/test_evaluator.py::test_judge_blind_hides_arm_and_identity_from_judge_fn_then_attributes_after}, requires: [glue:fold-legs-pending, 'provider:3-lineage']}
+  - {<<: *nsc_defaults, id: NSC-C18-07, gate: true, scope: estate, binding: {type: pytest, target: tests/livesim/categories/test_orchestration.py::test_improvement_loop_liveness}, requires: ['writer:production-self-improvement', 'launchd:com.omniagentos.reflection-nightly']}
+  - {<<: *nsc_defaults, id: NSC-C19-01, binding: {type: pytest, target: tests/projects/test_m1_project_axis_writes.py::pending_specific_carrier_nsc_c19_01}, requires: [glue:fold-legs-pending, 'binding:needs-specific-carrier']}
+  - {<<: *nsc_defaults, id: NSC-C19-02, binding: {type: pytest, target: tests/scope/test_isolation_drill.py::test_isolation_drill_blocks_overlap_and_allows_disjoint_worktrees}, requires: [glue:fold-legs-pending]}
+  - {<<: *nsc_defaults, id: NSC-C19-03, binding: {type: pytest, target: tests/certification/test_definition_of_done.py::test_grant_bounds}}
+  - {<<: *nsc_defaults, id: NSC-C19-04, tier: t2, binding: {type: pytest, target: tests/cbm/test_cbm.py::pending_specific_carrier_nsc_c19_04}, requires: [glue:fold-legs-pending, 'binding:needs-specific-carrier']}
+  - {<<: *nsc_defaults, id: NSC-C19-05, binding: {type: pytest, target: tests/scope/test_locks.py::test_different_realms_never_collide, shared: true}}
+  - {<<: *nsc_defaults, id: NSC-C19-06, tier: t2, binding: {type: pytest, target: tests/scripts/test_northstar_cert_metrics.py::test_c19_and_c39_jain_fairness_requires_floor_as_well_as_index, shared: true}}
+  - {<<: *nsc_defaults, id: NSC-C19-07, tier: t2, binding: {type: pytest, target: tests/swarm/test_fleet_scale.py::pending_specific_carrier_nsc_c19_07}, requires: [glue:fold-legs-pending, 'binding:needs-specific-carrier']}
+  - {<<: *nsc_defaults, id: NSC-C19-08, tier: t3, binding: {type: pytest, target: tests/livesim/categories/test_orchestration.py::pending_specific_carrier_nsc_c19_08}, requires: [glue:fold-legs-pending, 'provider:cheap-model', 'binding:needs-specific-carrier']}
+  - {<<: *nsc_defaults, id: NSC-C20-01, binding: {type: pytest, target: tests/simharness/runner.py::pending_specific_carrier_nsc_c20_01}, requires: [glue:fold-legs-pending, binding:needs-specific-carrier]}
+  - {<<: *nsc_defaults, id: NSC-C20-02, binding: {type: pending, target: carrier-unbuilt:NSC-C20-02}, requires: ['writer:domain-verification-map']}
+  - {<<: *nsc_defaults, id: NSC-C20-03, binding: {type: pending, target: carrier-unbuilt:NSC-C20-03}, requires: ['writer:domain-fixtures', 'writer:content-citation-oracle']}
+  - {<<: *nsc_defaults, id: NSC-C20-04, binding: {type: pending, target: carrier-unbuilt:NSC-C20-04}, requires: ['writer:domain-fixtures', 'writer:finance-cs-fixtures']}
+  - {<<: *nsc_defaults, id: NSC-C20-05, binding: {type: pytest, target: tests/certification/test_definition_of_done.py::pending_specific_carrier_nsc_c20_05}, requires: [glue:fold-legs-pending, 'binding:needs-specific-carrier']}
+  - {<<: *nsc_defaults, id: NSC-C20-06, binding: {type: pytest, target: tests/comms/test_injection_e2e.py::pending_specific_carrier_nsc_c20_06}, requires: [glue:fold-legs-pending, 'writer:domain-fixtures', 'binding:needs-specific-carrier']}
+  - {<<: *nsc_defaults, id: NSC-C20-07, gate: true, binding: {type: pytest, target: tests/livesim/categories/test_northstar_cert.py::test_northstar_domain_fixture_manifest_is_pinned, shared: true}, requires: ['writer:sales-content-fixtures']}
+  - {<<: *nsc_defaults, id: NSC-C21-01, scope: estate, binding: {type: pytest, target: tests/hygiene/test_runtime_path_isolation.py::pending_specific_carrier_nsc_c21_01}, requires: [glue:fold-legs-pending, 'binding:needs-specific-carrier']}
+  - {<<: *nsc_defaults, id: NSC-C21-02, binding: {type: pending, target: carrier-unbuilt:NSC-C21-02}, requires: ['writer:action-attribution']}
+  - {<<: *nsc_defaults, id: NSC-C21-03, scope: estate, binding: {type: pytest, target: tests/livesim/categories/test_telemetry_cost.py::test_provider_call_usage_rows_have_coherent_cost_quality, shared: true}, requires: [glue:fold-legs-pending]}
+  - {<<: *nsc_defaults, id: NSC-C21-04, scope: estate, binding: {type: sentinel, target: health-sentinel:completion-vs-gate-outcome}, requires: [glue:fold-legs-pending, 'launchd:health-sentinel']}
+  - {<<: *nsc_defaults, id: NSC-C21-05, binding: {type: pytest, target: tests/scheduler/test_gate_evidence.py::test_binding_digest_separates_identity_and_work}, requires: [glue:fold-legs-pending]}
+  - {<<: *nsc_defaults, id: NSC-C21-06, scope: estate, binding: {type: pytest, target: tests/ops/test_zerorow_probe.py::pending_specific_carrier_nsc_c21_06}, requires: [glue:fold-legs-pending, 'binding:needs-specific-carrier']}
+  - {<<: *nsc_defaults, id: NSC-C21-07, binding: {type: pytest, target: tests/tracelab/test_metrics.py::test_empty_denominator_rates_are_unknown_through_row_serialization}, requires: [glue:fold-legs-pending]}
+  - {<<: *nsc_defaults, id: NSC-C21-08, gate: true, scope: estate, binding: {type: pytest, target: tests/simharness/test_northstar_scenarios.py::test_runtime_action_taxonomy_closes}, requires: ['writer:action-observability-map']}
+  - {<<: *nsc_defaults, id: NSC-C22-01, binding: {type: pytest, target: tests/swarm/test_planner.py::TestOwnedPathResolution::test_existing_path_is_unchanged, shared: true}, requires: [glue:fold-legs-pending]}
+  - {<<: *nsc_defaults, id: NSC-C22-02, binding: {type: external, target: /Users/youruser/Work/Ops/ThreeLoops/tests/test_file_proposal.py}, requires: [glue:fold-legs-pending, 'suite:external']}
+  - {<<: *nsc_defaults, id: NSC-C22-03, binding: {type: pending, target: carrier-unbuilt:NSC-C22-03}, requires: ['writer:duplicate-detector', 'writer:duplication-detector']}
+  - {<<: *nsc_defaults, id: NSC-C22-04, binding: {type: pytest, target: tests/acceptance/test_11_trace.py::test_artifacts_stay_linked_to_their_run_through_the_ledger}, requires: [glue:fold-legs-pending]}
+  - {<<: *nsc_defaults, id: NSC-C22-05, scope: estate, binding: {type: sentinel, target: health-sentinel:retread-census}, requires: ['writer:retread-census', 'launchd:health-sentinel']}
+  - {<<: *nsc_defaults, id: NSC-C23-01, gate: true, scope: estate, binding: {type: pytest, target: tests/swarm/test_m13_m16_m18_m38_contracts.py::test_task_contract_adopt_is_idempotent_on_hash_lane_ref}, requires: [glue:fold-legs-pending]}
+  - {<<: *nsc_defaults, id: NSC-C23-02, gate: true, scope: estate, binding: {type: pytest, target: tests/swarm/test_m13_m16_m18_m38_contracts.py::pending_specific_carrier_nsc_c23_02}, requires: ['writer:swarm_runs.root_contract_hash', 'binding:needs-specific-carrier']}
+  - {<<: *nsc_defaults, id: NSC-C23-03, binding: {type: pytest, target: tests/swarm/test_m13_m16_m18_m38_contracts.py::test_task_contract_transition_table_fail_closed, shared: true}, requires: [glue:fold-legs-pending]}
+  - {<<: *nsc_defaults, id: NSC-C23-04, gate: true, binding: {type: pytest, target: tests/swarm/test_m13_m16_m18_m38_contracts.py::test_fanin_pipeline_verify_fail_forces_replan_not_false_accept}, requires: [glue:fold-legs-pending]}
+  - {<<: *nsc_defaults, id: NSC-C23-05, binding: {type: pytest, target: tests/swarm/test_m13_m16_m18_m38_contracts.py::pending_specific_carrier_nsc_c23_05}, requires: [glue:fold-legs-pending, 'binding:needs-specific-carrier']}
+  - {<<: *nsc_defaults, id: NSC-C24-01, gate: true, binding: {type: pytest, target: tests/policy/test_l1_corpus_replay.py::test_l1_corpus_replay_gate}}
+  - {<<: *nsc_defaults, id: NSC-C24-02, gate: true, binding: {type: pytest, target: tests/connectors/test_broker_denials.py::pending_specific_carrier_nsc_c24_02}, requires: [glue:fold-legs-pending, 'binding:needs-specific-carrier']}
+  - {<<: *nsc_defaults, id: NSC-C24-03, gate: true, binding: {type: pytest, target: tests/orchestrator/test_approvals_golden_corpus.py::test_evasion_matrix_row_parks}}
+  - {<<: *nsc_defaults, id: NSC-C24-04, gate: true, binding: {type: pytest, target: tests/connectors/test_broker_audit.py::test_non_loop_call_writes_exactly_one_intent_final_pair_without_values}}
+  - {<<: *nsc_defaults, id: NSC-C24-05, gate: true, binding: {type: pytest, target: tests/connectors/test_broker_audit.py::pending_specific_carrier_nsc_c24_05}, requires: [glue:fold-legs-pending, 'binding:needs-specific-carrier']}
+  - {<<: *nsc_defaults, id: NSC-C24-06, gate: true, binding: {type: pytest, target: tests/runner/test_state_machine.py::test_approval_resume_reject_and_cancel}, requires: [glue:fold-legs-pending]}
+  - {<<: *nsc_defaults, id: NSC-C24-07, gate: true, binding: {type: pytest, target: tests/connectors/test_broker_lifecycle.py::pending_specific_carrier_nsc_c24_07}, requires: ['writer:broker-dry-run', 'binding:needs-specific-carrier']}
+  - {<<: *nsc_defaults, id: NSC-C24-08, gate: true, binding: {type: pytest, target: tests/connectors/test_broker_project_binding.py::pending_specific_carrier_nsc_c24_08}, requires: [glue:fold-legs-pending, 'binding:needs-specific-carrier']}
+  - {<<: *nsc_defaults, id: NSC-C24-09, gate: true, binding: {type: pytest, target: tests/runner/test_state_machine.py::test_effect_idempotency_key_override_and_computed_formula, shared: true}, requires: [glue:fold-legs-pending]}
+  - {<<: *nsc_defaults, id: NSC-C24-10, gate: true, scope: estate, binding: {type: pytest, target: tests/livesim/categories/test_northstar_cert.py::test_autonomy_expansions_carry_evidence_reference}, requires: ['writer:autonomy-expansion-evidence']}
+  - {<<: *nsc_defaults, id: NSC-C25-01, gate: true, binding: {type: pytest, target: tests/runner/test_state_machine.py::test_fence_loss_aborts_before_next_adapter_call}, requires: [glue:fold-legs-pending]}
+  - {<<: *nsc_defaults, id: NSC-C25-02, gate: true, binding: {type: pytest, target: tests/runner/test_state_machine.py::test_unknown_effect_without_probe_fails_closed, shared: true}}
+  - {<<: *nsc_defaults, id: NSC-C25-03, gate: true, binding: {type: pytest, target: tests/runner/test_state_machine.py::test_restart_resolves_unknown_effect_with_probe_exactly_once}}
+  - {<<: *nsc_defaults, id: NSC-C25-04, gate: true, binding: {type: pytest, target: tests/runner/test_state_machine.py::test_effect_idempotency_key_override_and_computed_formula, shared: true}, requires: [glue:fold-legs-pending]}
+  - {<<: *nsc_defaults, id: NSC-C25-05, gate: true, binding: {type: pytest, target: tests/runner/test_state_machine.py::test_two_workers_claim_once_and_stale_parked_run_is_reclaimed}, requires: [glue:fold-legs-pending]}
+  - {<<: *nsc_defaults, id: NSC-C25-06, gate: true, binding: {type: pytest, target: tests/runner/test_state_machine.py::test_validation_runs_last_and_finalization_is_exactly_once}, requires: [glue:fold-legs-pending]}
+  - {<<: *nsc_defaults, id: NSC-C25-07, gate: true, binding: {type: pytest, target: tests/connectors/test_broker_audit.py::test_authorized_pre_wire_transport_failure_finalizes_failed}}
+  - {<<: *nsc_defaults, id: NSC-C25-08, gate: true, binding: {type: pytest, target: tests/banking/test_store.py::test_transaction_upsert_dedupes_on_external_id}, requires: [glue:fold-legs-pending]}
+  - {<<: *nsc_defaults, id: NSC-C25-09, gate: true, binding: {type: pending, target: carrier-unbuilt:NSC-C25-09}, requires: ['writer:broker-idempotency-key']}
+  - {<<: *nsc_defaults, id: NSC-C26-01, gate: true, binding: {type: pytest, target: tests/livesim/categories/test_context.py::test_no_cross_session_context_contamination}, requires: [glue:fold-legs-pending]}
+  - {<<: *nsc_defaults, id: NSC-C26-02, binding: {type: pytest, target: tests/context/test_context_capsule.py::test_secret_kind_source_raises_without_digesting}}
+  - {<<: *nsc_defaults, id: NSC-C26-03, binding: {type: pytest, target: tests/scripts/test_merge_gate_history_sweep.py::test_secret_added_then_deleted_across_commits_is_refused}}
+  - {<<: *nsc_defaults, id: NSC-C26-04, binding: {type: pytest, target: tests/connectors/test_broker_grants.py::test_revoked_token_is_rejected}}
+  - {<<: *nsc_defaults, id: NSC-C26-05, binding: {type: pytest, target: tests/swarm/test_grant_briefs.py::TestFormationQualifiedLaneIdentity::test_formation_scoped_grant_reaches_only_its_own_formation}, requires: [glue:fold-legs-pending]}
+  - {<<: *nsc_defaults, id: NSC-C26-06, binding: {type: pytest, target: tests/security/test_sanitize.py::pending_specific_carrier_nsc_c26_06}, requires: [glue:fold-legs-pending, 'writer:broker_calls.redaction_count', 'binding:needs-specific-carrier']}
+  - {<<: *nsc_defaults, id: NSC-C26-07, binding: {type: pytest, target: tests/connectors/test_secret_catalog.py::pending_specific_carrier_nsc_c26_07}, requires: ['binding:needs-specific-carrier']}
+  - {<<: *nsc_defaults, id: NSC-C27-01, gate: true, binding: {type: pytest, target: tests/banking/test_store.py::test_fact_meta_roundtrips}, requires: [glue:fold-legs-pending]}
+  - {<<: *nsc_defaults, id: NSC-C27-02, gate: true, binding: {type: pending, target: carrier-unbuilt:NSC-C27-02}, requires: ['writer:decision-deliverable']}
+  - {<<: *nsc_defaults, id: NSC-C27-03, gate: true, binding: {type: pending, target: carrier-unbuilt:NSC-C27-03}, requires: ['writer:decision-deliverable']}
+  - {<<: *nsc_defaults, id: NSC-C27-04, gate: true, binding: {type: pytest, target: tests/livesim/categories/test_telemetry_cost.py::pending_specific_carrier_nsc_c27_04}, requires: [glue:fold-legs-pending, 'binding:needs-specific-carrier']}
+  - {<<: *nsc_defaults, id: NSC-C27-05, gate: true, binding: {type: pending, target: carrier-unbuilt:NSC-C27-05}, requires: ['writer:decision-deliverable']}
+  - {<<: *nsc_defaults, id: NSC-C27-06, gate: true, tier: t3, binding: {type: pytest, target: tests/lab/eval/test_grader.py::pending_specific_carrier_nsc_c27_06}, requires: [glue:fold-legs-pending, 'provider:3-lineage', 'binding:needs-specific-carrier']}
+  - {<<: *nsc_defaults, id: NSC-C28-01, binding: {type: pytest, target: tests/simharness/test_orchestration.py::test_resume_preserves_already_completed_tasks, shared: true}}
+  - {<<: *nsc_defaults, id: NSC-C28-02, scope: estate, binding: {type: pytest, target: tests/swarm/test_spawn.py::pending_specific_carrier_nsc_c28_02}, requires: [glue:fold-legs-pending, 'writer:resume-block', 'binding:needs-specific-carrier']}
+  - {<<: *nsc_defaults, id: NSC-C28-03, binding: {type: pytest, target: tests/simharness/test_orchestration.py::test_repeated_coder_failure_reaches_a_different_model, shared: true}, requires: [glue:fold-legs-pending]}
+  - {<<: *nsc_defaults, id: NSC-C28-04, scope: estate, binding: {type: pytest, target: tests/livesim/categories/test_orchestration.py::pending_specific_carrier_nsc_c28_04}, requires: ['writer:metacog-checkpoint', 'binding:needs-specific-carrier']}
+  - {<<: *nsc_defaults, id: NSC-C28-05, binding: {type: pytest, target: tests/simharness/test_orchestration.py::pending_specific_carrier_nsc_c28_05}, requires: [glue:fold-legs-pending, 'binding:needs-specific-carrier']}
+  - {<<: *nsc_defaults, id: NSC-C28-06, binding: {type: pytest, target: tests/swarm/test_spawn.py::pending_specific_carrier_nsc_c28_06}, requires: [glue:fold-legs-pending, 'binding:needs-specific-carrier']}
+  - {<<: *nsc_defaults, id: NSC-C29-01, binding: {type: pytest, target: tests/simharness/test_orchestration.py::test_cancel_terminalizes_in_flight_attempts, shared: true}, requires: [glue:fold-legs-pending]}
+  - {<<: *nsc_defaults, id: NSC-C29-02, binding: {type: pytest, target: tests/swarm/test_m13_m16_m18_m38_contracts.py::test_task_contract_transition_table_fail_closed, shared: true}, requires: ['writer:supersession']}
+  - {<<: *nsc_defaults, id: NSC-C29-03, binding: {type: pytest, target: tests/simharness/test_orchestration.py::pending_specific_carrier_nsc_c29_03}, requires: ['writer:supersession', 'binding:needs-specific-carrier']}
+  - {<<: *nsc_defaults, id: NSC-C29-04, binding: {type: pytest, target: tests/scheduler/test_gate_evidence.py::pending_specific_carrier_nsc_c29_04}, requires: [glue:fold-legs-pending, 'writer:supersession', 'binding:needs-specific-carrier']}
+  - {<<: *nsc_defaults, id: NSC-C29-05, binding: {type: pytest, target: tests/simharness/test_orchestration.py::test_cancel_terminalizes_in_flight_attempts, shared: true}, requires: [glue:fold-legs-pending]}
+  - {<<: *nsc_defaults, id: NSC-C29-06, binding: {type: pytest, target: tests/simharness/test_orchestration.py::test_every_wrapped_provider_uses_the_scripted_provider_exec_seam}, requires: [glue:fold-legs-pending, 'writer:supersession']}
+  - {<<: *nsc_defaults, id: NSC-C30-01, binding: {type: pytest, target: tests/livesim/categories/test_degradation.py::test_probe_falls_back_past_dead_litellm}, requires: [glue:fold-legs-pending]}
+  - {<<: *nsc_defaults, id: NSC-C30-02, binding: {type: pytest, target: tests/swarm/test_scheduler.py::TestQualityGate::test_auth_failed_attempts_are_bounded_not_a_relay_loop, shared: true}, requires: [glue:fold-legs-pending]}
+  - {<<: *nsc_defaults, id: NSC-C30-03, binding: {type: pytest, target: tests/livesim/categories/test_degradation.py::test_health_event_hub_degradation_contract}, requires: [glue:fold-legs-pending]}
+  - {<<: *nsc_defaults, id: NSC-C30-04, binding: {type: pytest, target: tests/simharness/test_orchestration.py::test_malformed_provider_json_does_not_kill_run}, requires: [glue:fold-legs-pending]}
+  - {<<: *nsc_defaults, id: NSC-C30-05, binding: {type: pytest, target: tests/reliability/test_detector.py::test_make_signature}, requires: [glue:fold-legs-pending]}
+  - {<<: *nsc_defaults, id: NSC-C31-01, tier: t2, binding: {type: pytest, target: tests/scripts/test_northstar_cert_metrics.py::test_c31_pareto_frontier_uses_all_persisted_cost_axes, shared: true}, requires: ['writer:allocation-frontier-report']}
+  - {<<: *nsc_defaults, id: NSC-C31-02, tier: t2, binding: {type: pytest, target: tests/scripts/test_northstar_cert_metrics.py::test_c31_pareto_frontier_uses_all_persisted_cost_axes, shared: true}, requires: ['writer:allocation-frontier-report']}
+  - {<<: *nsc_defaults, id: NSC-C31-03, tier: t2, binding: {type: pytest, target: tests/simharness/test_orchestration.py::test_zero_work_run_does_not_score_well, shared: true}, requires: ['writer:simharness-deterministic-zero-call-scenario']}
+  - {<<: *nsc_defaults, id: NSC-C31-04, tier: t2, binding: {type: pytest, target: tests/formation/test_etar_and_selections.py::test_record_and_list_selections, shared: true}, requires: [glue:fold-legs-pending]}
+  - {<<: *nsc_defaults, id: NSC-C31-05, tier: t2, binding: {type: pytest, target: tests/swarm/test_scheduler.py::pending_specific_carrier_nsc_c31_05}, requires: [glue:fold-legs-pending, 'writer:tool-set-digest', 'binding:needs-specific-carrier']}
+  - {<<: *nsc_defaults, id: NSC-C32-01, scope: estate, binding: {type: pytest, target: tests/collab/test_board_projection.py::pending_specific_carrier_nsc_c32_01}, requires: [glue:fold-legs-pending, 'binding:needs-specific-carrier']}
+  - {<<: *nsc_defaults, id: NSC-C32-02, scope: estate, binding: {type: pending, target: carrier-unbuilt:NSC-C32-02}, requires: ['writer:normalized-loopqueue-priority', 'writer:loopqueue-priority']}
+  - {<<: *nsc_defaults, id: NSC-C32-03, binding: {type: pytest, target: tests/scheduler/test_dispatch_headofline.py::test_a_slow_loop_does_not_delay_another_projects_dispatch}, requires: [glue:fold-legs-pending]}
+  - {<<: *nsc_defaults, id: NSC-C32-04, scope: estate, binding: {type: sentinel, target: health-sentinel:approved-work-drain}, requires: ['writer:backlog-drain-census', 'launchd:health-sentinel']}
+  - {<<: *nsc_defaults, id: NSC-C32-05, binding: {type: pending, target: carrier-unbuilt:NSC-C32-05}, requires: ['writer:aging-priority', 'writer:queue-aging']}
+  - {<<: *nsc_defaults, id: NSC-C32-06, binding: {type: pytest, target: tests/scheduler/test_dispatch_headofline.py::pending_specific_carrier_nsc_c32_06}, requires: [glue:fold-legs-pending, 'binding:needs-specific-carrier']}
+  - {<<: *nsc_defaults, id: NSC-C32-07, scope: estate, binding: {type: pytest, target: tests/simharness/test_orchestration.py::test_budget_enforcement_blocks_admission_after_cap, shared: true}, requires: [glue:fold-legs-pending]}
+  - {<<: *nsc_defaults, id: NSC-C33-01, gate: true, binding: {type: pytest, target: tests/reliability/test_pipeline.py::test_monitor_confirms_when_clean_at_window_end}, requires: [glue:fold-legs-pending]}
+  - {<<: *nsc_defaults, id: NSC-C33-02, gate: true, binding: {type: pytest, target: tests/reliability/test_pipeline.py::test_monitor_regression_triggers_rollback}}
+  - {<<: *nsc_defaults, id: NSC-C33-03, binding: {type: pytest, target: tests/reliability/test_pipeline.py::test_overlap_with_monitoring_defers}, requires: [glue:fold-legs-pending]}
+  - {<<: *nsc_defaults, id: NSC-C33-04, scope: estate, binding: {type: pytest, target: tests/livesim/categories/test_northstar_cert.py::test_northstar_live_result_surfaces_are_readable}, requires: [glue:fold-legs-pending, 'writer:reliability-monitoring']}
+  - {<<: *nsc_defaults, id: NSC-C33-05, tier: t3, binding: {type: pytest, target: tests/scripts/test_prompt_ab_runner.py::pending_specific_carrier_nsc_c33_05}, requires: ['writer:promotion-baseline', 'binding:needs-specific-carrier']}
+  - {<<: *nsc_defaults, id: NSC-C34-01, gate: true, scope: estate, binding: {type: pytest, target: tests/lab/eval/test_paths.py::test_default_protected_db_path_is_separate_from_shared_db}, requires: ['writer:protected-holdout-runtime']}
+  - {<<: *nsc_defaults, id: NSC-C34-02, binding: {type: pytest, target: tests/lab/eval/test_evaluator.py::test_run_deterministic_delegates_to_the_grader_and_fills_suite_version}, requires: [glue:fold-legs-pending]}
+  - {<<: *nsc_defaults, id: NSC-C34-03, gate: true, binding: {type: pytest, target: tests/lab/campaign/test_heldout_promotion_gate.py::test_heldout_loss_rejects_and_both_splits_counterbalance_order}}
+  - {<<: *nsc_defaults, id: NSC-C34-04, tier: t2, gate: true, binding: {type: pytest, target: tests/lab/eval/test_grader.py::test_audit_metric_jump_flags_suspicious_perfect_held_out_score, shared: true}}
+  - {<<: *nsc_defaults, id: NSC-C34-05, gate: true, binding: {type: pytest, target: tests/lab/eval/test_pentest_leak.py::test_pentest_tmpdir_enumeration_recovers_only_ciphertext_not_the_canary}, requires: [glue:fold-legs-pending]}
+  - {<<: *nsc_defaults, id: NSC-C35-01, tier: t3, binding: {type: pytest, target: tests/lab/eval/test_evaluator.py::pending_specific_carrier_nsc_c35_01}, requires: [glue:fold-legs-pending, 'provider:3-lineage', 'binding:needs-specific-carrier']}
+  - {<<: *nsc_defaults, id: NSC-C35-02, tier: t3, gate: true, binding: {type: pytest, target: tests/lab/tournament/test_real_judge.py::test_blind_panel_requires_cross_lineage_validity_and_agreement}, requires: ['provider:3-lineage']}
+  - {<<: *nsc_defaults, id: NSC-C35-03, tier: t3, binding: {type: pytest, target: tests/lab/eval/test_grader.py::test_audit_metric_jump_flags_suspicious_perfect_held_out_score, shared: true}, requires: [glue:fold-legs-pending, 'provider:3-lineage']}
+  - {<<: *nsc_defaults, id: NSC-C35-04, tier: t3, gate: true, binding: {type: pytest, target: tests/lab/eval/test_blind.py::test_unlinkable_token_never_embeds_the_arm_or_case_id}, requires: ['provider:3-lineage']}
+  - {<<: *nsc_defaults, id: NSC-C35-05, tier: t3, scope: estate, binding: {type: sentinel, target: health-sentinel:judge-drift}, requires: [glue:fold-legs-pending, 'launchd:health-sentinel']}
+  - {<<: *nsc_defaults, id: NSC-C35-06, tier: t3, gate: true, binding: {type: pytest, target: tests/lab/eval/test_evaluator.py::pending_specific_carrier_nsc_c35_06}, requires: ['writer:calibration-ordering', 'binding:needs-specific-carrier']}
+  - {<<: *nsc_defaults, id: NSC-C36-01, binding: {type: pending, target: carrier-unbuilt:NSC-C36-01}, requires: ['writer:outcome-oracle']}
+  - {<<: *nsc_defaults, id: NSC-C36-02, binding: {type: pending, target: carrier-unbuilt:NSC-C36-02}, requires: ['writer:outcome-oracle']}
+  - {<<: *nsc_defaults, id: NSC-C36-03, tier: t3, binding: {type: pytest, target: tests/lab/tournament/test_real_judge.py::pending_specific_carrier_nsc_c36_03}, requires: [glue:fold-legs-pending, 'provider:3-lineage', 'binding:needs-specific-carrier']}
+  - {<<: *nsc_defaults, id: NSC-C36-04, binding: {type: pending, target: carrier-unbuilt:NSC-C36-04}, requires: ['writer:outcome-oracle']}
+  - {<<: *nsc_defaults, id: NSC-C36-05, binding: {type: pytest, target: tests/livesim/categories/test_northstar_cert.py::test_northstar_domain_fixture_manifest_is_pinned, shared: true}, requires: ['writer:outcome-oracle']}
+  - {<<: *nsc_defaults, id: NSC-C37-01, scope: estate, binding: {type: pytest, target: tests/hygiene/test_no_new_file_anchored_state_paths.py::test_ratchet_detects_a_newly_introduced_state_path}, requires: [glue:fold-legs-pending]}
+  - {<<: *nsc_defaults, id: NSC-C37-02, scope: estate, binding: {type: pytest, target: tests/pulse/test_aggregator.py::pending_specific_carrier_nsc_c37_02}, requires: [glue:fold-legs-pending, 'writer:northstar.c37-series', 'binding:needs-specific-carrier']}
+  - {<<: *nsc_defaults, id: NSC-C37-03, tier: t2, binding: {type: pytest, target: tests/hygiene/test_eval_retired_decisive.py::test_omniagentos_eval_import_raises_module_not_found}}
+  - {<<: *nsc_defaults, id: NSC-C38-01, binding: {type: pytest, target: tests/certification/test_definition_of_done.py::test_gate_g8_parks_without_grant}, requires: [glue:fold-legs-pending]}
+  - {<<: *nsc_defaults, id: NSC-C38-02, binding: {type: pending, target: carrier-unbuilt:NSC-C38-02}, requires: ['writer:approval-recommendation']}
+  - {<<: *nsc_defaults, id: NSC-C38-03, binding: {type: pytest, target: tests/certification/test_definition_of_done.py::test_auto_mode_only_irreversible_parks, shared: true}}
+  - {<<: *nsc_defaults, id: NSC-C38-04, binding: {type: pytest, target: tests/certification/test_definition_of_done.py::test_auto_mode_only_irreversible_parks, shared: true}}
+  - {<<: *nsc_defaults, id: NSC-C38-05, scope: estate, binding: {type: pytest, target: tests/notifications/test_dal.py::pending_specific_carrier_nsc_c38_05}, requires: [glue:fold-legs-pending, 'writer:approval-consumption', 'binding:needs-specific-carrier']}
+  - {<<: *nsc_defaults, id: NSC-C38-06, tier: t3, binding: {type: sem, target: lab-eval:NSC-C38-06-decision-sufficiency}, requires: [glue:fold-legs-pending, 'provider:3-lineage', 'campaign:northstar-sem']}
+  - {<<: *nsc_defaults, id: NSC-C38-09, scope: estate, binding: {type: pytest, target: tests/scripts/test_northstar_cert_metrics.py::test_c38_human_intervention_series_trend}, requires: ['writer:human-intervention-series']}
+  - {<<: *nsc_defaults, id: NSC-C39-01, gate: true, tier: t3, binding: {type: pytest, target: tests/simharness/test_northstar_scenarios.py::test_portfolio_scheduler_has_bounded_width_and_equal_progress}, requires: [glue:fold-legs-pending]}
+  - {<<: *nsc_defaults, id: NSC-C39-02, tier: t2, gate: true, binding: {type: pytest, target: tests/connectors/test_broker_project_binding.py::test_cross_project_grant_is_denied_with_its_own_code, shared: true}, requires: [glue:fold-legs-pending]}
+  - {<<: *nsc_defaults, id: NSC-C39-03, tier: t3, gate: true, binding: {type: pytest, target: tests/scripts/test_northstar_cert_metrics.py::test_c19_and_c39_jain_fairness_requires_floor_as_well_as_index, shared: true}, requires: [glue:fold-legs-pending]}
+  - {<<: *nsc_defaults, id: NSC-C39-04, gate: true, scope: estate, binding: {type: pytest, target: tests/connectors/test_broker_project_binding.py::test_migration_115_records_the_binding_on_both_tables}, requires: [glue:fold-legs-pending, 'writer:runs.project_id']}
+  - {<<: *nsc_defaults, id: NSC-C39-05, tier: t3, binding: {type: pytest, target: tests/livesim/categories/test_e2e_live.py::pending_specific_carrier_nsc_c39_05}, requires: [glue:fold-legs-pending, 'provider:cheap-model', 'binding:needs-specific-carrier']}
+  - {<<: *nsc_defaults, id: NSC-C39-06, gate: true, scope: estate, binding: {type: pytest, target: tests/orgdims/test_orgdims.py::test_seed_companies_workstreams_and_grok_agents}, requires: [glue:fold-legs-pending, 'writer:company-axis']}
+  - {<<: *nsc_defaults, id: NSC-C40-01, binding: {type: pytest, target: tests/api/test_capability_requests.py::test_a_worker_emits_tool_echo_ping_and_observes_its_own_grant}, requires: [glue:fold-legs-pending]}
+  - {<<: *nsc_defaults, id: NSC-C40-02, binding: {type: pytest, target: tests/skills/test_resolve_content.py::test_runner_step_injects_verified_skill_content}, requires: [glue:fold-legs-pending, 'writer:metacog-registry-bridge']}
+  - {<<: *nsc_defaults, id: NSC-C40-03, binding: {type: pytest, target: tests/provision/test_policy.py::test_every_terminal_state_carries_an_actionable_next_move}, requires: [glue:fold-legs-pending]}
+  - {<<: *nsc_defaults, id: NSC-C40-04, binding: {type: pytest, target: tests/livesim/categories/test_skills.py::test_live_registry_never_serves_quarantined}}
+  - {<<: *nsc_defaults, id: NSC-C41-01, binding: {type: pytest, target: tests/swarm/test_planner_fanout_width.py::TestPlannerFanoutWidth::test_target_n_never_exceeds_dag_width}}
+  - {<<: *nsc_defaults, id: NSC-C41-02, binding: {type: pytest, target: tests/swarm/test_planner_fanout_width.py::TestPlannerFanoutWidth::test_dag_width_is_max_antichain_not_root_count}}
+  - {<<: *nsc_defaults, id: NSC-C41-03, tier: t2, binding: {type: pytest, target: tests/simharness/test_orchestration.py::test_concurrency_never_exceeds_plan_target}, requires: [glue:fold-legs-pending]}
+  - {<<: *nsc_defaults, id: NSC-C41-04, tier: t2, binding: {type: pytest, target: tests/swarm/test_planner.py::TestPlanAssembly::test_solo_when_ratio_below_threshold}, requires: [glue:fold-legs-pending]}
+  - {<<: *nsc_defaults, id: NSC-C41-05, tier: t2, binding: {type: pytest, target: tests/scripts/test_northstar_cert_metrics.py::test_c41_idle_and_critical_path_ratio_reconcile, shared: true}}
+  - {<<: *nsc_defaults, id: NSC-C41-06, tier: t2, binding: {type: pytest, target: tests/scripts/test_northstar_cert_metrics.py::test_c41_idle_and_critical_path_ratio_reconcile, shared: true}}
+  - {<<: *nsc_defaults, id: NSC-C41-07, scope: estate, binding: {type: pytest, target: tests/acceptance/test_06_decomposition.py::TestProjectLeadDecomposition::test_independent_work_becomes_a_swarm_not_a_solo_run}}
+  - {<<: *nsc_defaults, id: NSC-C42-01, binding: {type: pytest, target: tests/intake/test_clarify.py::test_questions_first_round}, requires: [glue:fold-legs-pending]}
+  - {<<: *nsc_defaults, id: NSC-C42-02, binding: {type: pytest, target: tests/intake/test_clarify.py::pending_specific_carrier_nsc_c42_02}, requires: [glue:fold-legs-pending, 'binding:needs-specific-carrier']}
+  - {<<: *nsc_defaults, id: NSC-C42-03, binding: {type: pytest, target: tests/intake/test_clarify.py::test_spec_when_agent_has_enough, shared: true}, requires: [glue:fold-legs-pending]}
+  - {<<: *nsc_defaults, id: NSC-C42-04, binding: {type: pytest, target: tests/intake/test_clarify.py::test_round_budget_forces_a_spec}, requires: [glue:fold-legs-pending]}
+  - {<<: *nsc_defaults, id: NSC-C42-05, binding: {type: pytest, target: tests/intake/test_clarify.py::test_heuristic_fallback_when_llm_unavailable}, requires: [glue:fold-legs-pending]}
+  - {<<: *nsc_defaults, id: NSC-C43-01, gate: true, binding: {type: pytest, target: tests/counterfeits/test_gate.py::test_counterfeit_is_caught, shared: true}, requires: [glue:fold-legs-pending]}
+  - {<<: *nsc_defaults, id: NSC-C43-02, gate: true, binding: {type: pytest, target: tests/counterfeits/test_gate.py::test_counterfeit_is_caught, shared: true}, requires: [glue:fold-legs-pending]}
+  - {<<: *nsc_defaults, id: NSC-C43-03, gate: true, tier: t2, binding: {type: pytest, target: tests/lab/eval/test_evaluator.py::test_judge_blind_rejects_a_token_it_never_minted}, requires: [glue:fold-legs-pending]}
+  - {<<: *nsc_defaults, id: NSC-C43-04, gate: true, binding: {type: pytest, target: tests/livesim/categories/test_degradation.py::test_probe_all_providers_down_returns_available_false}, requires: [glue:fold-legs-pending]}
+  - {<<: *nsc_defaults, id: NSC-C43-05, gate: true, scope: estate, binding: {type: pytest, target: tests/scheduler/test_gate_evidence.py::test_tampered_record_on_disk_is_not_loadable}, requires: [glue:fold-legs-pending, 'fs:var/health-sentinel/latest.json']}
+  - {<<: *nsc_defaults, id: NSC-C43-06, gate: true, binding: {type: pytest, target: tests/scheduler/test_gate_evidence.py::test_stored_evidence_survives_a_round_trip}, requires: [glue:fold-legs-pending]}
+  - {<<: *nsc_defaults, id: NSC-C43-07, gate: true, scope: estate, binding: {type: pytest, target: tests/scheduler/test_loop_gate_refusal.py::pending_specific_carrier_nsc_c43_07}, requires: ['binding:needs-specific-carrier']}
+  - {<<: *nsc_defaults, id: NSC-C43-08, gate: true, binding: {type: pytest, target: tests/counterfeits/test_gate.py::test_manifest_loads_and_patches_exist}, requires: [glue:fold-legs-pending]}
+  - {<<: *nsc_defaults, id: NSC-C43-09, gate: true, scope: estate, binding: {type: pytest, target: tests/scripts/test_nscert_record_results.py::test_verdict_algebra_enforces_measured_cap_and_instrument_void}, requires: [glue:fold-legs-pending]}
+  - {<<: *nsc_defaults, id: NSC-C43-10, gate: true, binding: {type: pytest, target: tests/scripts/test_nscert_record_results.py::test_record_results_refuses_writes_to_live_runtime_db}, requires: [glue:fold-legs-pending]}

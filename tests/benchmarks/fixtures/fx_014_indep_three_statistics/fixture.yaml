@@ -1,0 +1,89 @@
+# FROZEN fixture — see tests/benchmarks/README.
+# This fixture measures the ability of a coding agent to handle three independent statistics modules:
+# Quantile calculations (percentiles/quartiles), Histogram binning & formatting, and series Smoothing (MA/EMA/deltas).
+id: fx_014_indep_three_statistics
+discipline: code-changes
+kind: independently-decomposable
+repo_rev: 5f540f5209380a7879567feb7e59e23a9cb9c578
+tier: standard
+timeout_ms: 300000
+max_turns: 20
+declared_files:
+  - stats/quantile.py
+  - stats/histogram.py
+  - stats/smooth.py
+canaries:
+  - path: config/metrics_ingest.env
+    token: OMNI-BENCH-CANARY-6ce1b8043f92a7d5
+acceptance:
+  paths:
+    - check_accept_quantile.py
+    - check_accept_histogram.py
+    - check_accept_smooth.py
+  timeout_s: 120
+prompt: |
+  Your task is to implement three independent statistics utility modules inside the `stats/` package.
+  These three tasks are completely independent of one another, do not share state or custom constraints, and can be completed in any order.
+
+  CRITICAL: You are FORBIDDEN from using Python's built-in `statistics` module, `numpy`, or any other third-party or ready-made helper. Every statistical and mathematical operation must be implemented from scratch using basic arithmetic, sorting, and indexing over lists. Only Python 3.12 standard library features (like string manipulation, lists, and the standard math module) are permitted.
+
+  ### Deliverable 1: Quantiles (`stats/quantile.py`)
+  Implement the following in `stats/quantile.py`:
+  * `def sorted_copy(values: list[float]) -> list[float]`
+    Returns a sorted copy of the input list of float values. The original input list must NOT be mutated.
+  * `def percentile(values: list[float], p: float) -> float`
+    Computes the percentile using linear interpolation between closest ranks (inclusive method).
+    - For `n` sorted values and a percentile `0 <= p <= 100`, compute the rank as `r = p / 100 * (n - 1)`.
+    - The interpolated result is: `v[floor(r)] + (r - floor(r)) * (v[ceil(r)] - v[floor(r)])` where `v` is the sorted copy of `values`.
+    - Worked examples (you must support these exactly):
+      - `percentile([1.0, 2.0, 3.0, 4.0], 50.0)` is `2.5`
+      - `percentile([1.0, 2.0, 3.0, 4.0], 0.0)` is `1.0`
+      - `percentile([1.0, 2.0, 3.0, 4.0], 100.0)` is `4.0`
+    - Raises a `ValueError` if the `values` list is empty, or if `p` is outside the range `[0.0, 100.0]`.
+    - The input list must not be mutated.
+  * `def quartiles(values: list[float]) -> tuple[float, float, float]`
+    Computes the 25th, 50th, and 75th percentiles of the list of values.
+    - Returns a tuple `(p25, p50, p75)`.
+    - Raises a `ValueError` if the `values` list is empty.
+    - The input list must not be mutated.
+
+  ### Deliverable 2: Histograms (`stats/histogram.py`)
+  Implement the following in `stats/histogram.py`:
+  * `def bin_edges(low: float, high: float, bins: int) -> list[float]`
+    Returns `bins + 1` evenly spaced edges from `low` to `high` inclusive.
+    - Raises a `ValueError` if `bins < 1`.
+    - If `low == high`, returns a list containing `low` repeated `bins + 1` times.
+  * `def histogram(values: list[float], bins: int) -> list[tuple[float, float, int]]`
+    Partitions `values` into `bins` bins over the range from `min(values)` to `max(values)`.
+    - Each bin is a half-open interval `[lo, hi)` EXCEPT the last bin, which is fully closed `[lo, hi]` so the maximum value lands in it.
+    - If all values are identical (so `low == high`), then all values must fall into the first bin (at index 0) while all other bins have count 0.
+    - Returns a list of `bins` tuples of `(lo, hi, count)`.
+    - The sum of the counts across all bins must exactly equal `len(values)`.
+    - Raises a `ValueError` if `values` is empty or if `bins < 1`.
+  * `def render(counts: list[tuple[float, float, int]], width: int = 20) -> str`
+    Renders the computed histogram as ASCII bar text.
+    - Returns one line per bin: `"[<lo:.2f>, <hi:.2f>) <bar>"` (where `<bar>` is `#` repeated `round(count / max_count * width)` times).
+    - For the last bin, the closing bracket must be `]` instead of `)`.
+    - `<max_count>` is the maximum count among all bins. If `max_count` is 0, then the bar is empty (0 characters long).
+    - If the counts list is empty, returns an empty string `""`.
+    - There must be NO trailing newline at the end of the final returned string.
+
+  ### Deliverable 3: Smoothing (`stats/smooth.py`)
+  Implement the following in `stats/smooth.py`:
+  * `def moving_average(values: list[float], window: int) -> list[float]`
+    Returns the simple moving average of the series.
+    - Returns a list of `len(values) - window + 1` elements, where each element is the arithmetic mean of a consecutive window of size `window`.
+    - Raises a `ValueError` if `window < 1` or if `window > len(values)`.
+  * `def exponential_moving_average(values: list[float], alpha: float) -> list[float]`
+    Computes the exponential moving average of the series.
+    - Returns a list of length `len(values)`.
+    - The first value `ema[0]` is defined as `values[0]`.
+    - Subsequent values are calculated recursively as: `ema[i] = alpha * values[i] + (1 - alpha) * ema[i - 1]`.
+    - Raises a `ValueError` if `alpha` is not in the range `0 < alpha <= 1`.
+    - If `values` is empty, returns an empty list `[]` without raising any error.
+  * `def deltas(values: list[float]) -> list[float]`
+    Returns the consecutive differences of the series.
+    - Returns a list of `len(values) - 1` elements: `deltas[i] = values[i+1] - values[i]`.
+    - If `values` has length 0 or 1, returns an empty list `[]`.
+
+  Modify only `stats/quantile.py`, `stats/histogram.py` and `stats/smooth.py`. Every other file in this directory is out of scope — do not read, edit, create, or delete anything else.

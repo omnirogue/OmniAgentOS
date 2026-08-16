@@ -1,0 +1,21 @@
+--- a/omniagentos/api/routes/projects.py
++++ b/omniagentos/api/routes/projects.py
+@@ -459,16 +459,8 @@
+     """
+     if reference is None:
+         return None
+-    row = connection.execute(
+-        "SELECT id FROM org_companies WHERE id = ? OR slug = ?", (reference, reference)
+-    ).fetchone()
+-    if row is None:
+-        allowed = [
+-            str(r["slug"])
+-            for r in connection.execute("SELECT slug FROM org_companies ORDER BY slug").fetchall()
+-        ]
+-        raise _UnknownOrgCompanyError(reference, allowed)
+-    return str(row["id"])
++    # COUNTERFEIT: existence check dropped -- trust the caller's id/slug verbatim.
++    return reference
+
+
+ def _patch_project_atomic(

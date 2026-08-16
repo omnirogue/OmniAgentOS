@@ -1,0 +1,99 @@
+#!/usr/bin/env python3
+
+# Restricts rsync to a subdirectory declared in .ssh/authorized_keys.
+# Vendored from upstream RsyncProject/rsync support/rrsync (Python version by
+# Wayne Davison); kept in-tree so macOS hubs do not depend on an OS package.
+
+import argparse
+import os
+import re
+import subprocess
+import sys
+from pathlib import Path
+
+RSYNC = "/usr/bin/rsync"
+SAFE_SHORT = re.compile(r"^-[ACDEHIJKLNORSUWXbcdgklmnopqrstuvxyz@B0-9.]+$")
+SAFE_LONG = {
+    "--bwlimit",
+    "--checksum-choice",
+    "--compress-choice",
+    "--compress-level",
+    "--dirs",
+    "--existing",
+    "--from0",
+    "--ignore-existing",
+    "--links",
+    "--max-size",
+    "--min-size",
+    "--mkpath",
+    "--modify-window",
+    "--no-implied-dirs",
+    "--no-relative",
+    "--partial",
+    "--perms",
+    "--recursive",
+    "--safe-links",
+    "--server",
+    "--size-only",
+    "--stats",
+    "--timeout",
+    "--times",
+}
+
+
+def die(message: str) -> None:
+    print(f"{sys.argv[0]} error: {message}", file=sys.stderr)
+    raise SystemExit(1)
+
+
+def confined(root: Path, value: str) -> str:
+    value = value.lstrip("/")
+    if any(part == ".." for part in Path(value).parts):
+        die("do not use .. in transfer paths")
+    candidate = (root / value).resolve()
+    if candidate != root and root not in candidate.parents:
+        die(f"unsafe transfer path: {value}")
+    return value or "."
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description="restricted rsync forced command")
+    mode = parser.add_mutually_exclusive_group()
+    mode.add_argument("-ro", action="store_true")
+    mode.add_argument("-wo", action="store_true")
+    parser.add_argument("directory")
+    args = parser.parse_args()
+    root = Path(args.directory).resolve()
+    if not root.is_dir():
+        die("restricted directory does not exist")
+    original = os.environ.get("SSH_ORIGINAL_COMMAND", "")
+    if original == "true":
+        return 0
+    words = original.split()
+    if words[:2] != ["rsync", "--server"]:
+        die("SSH_ORIGINAL_COMMAND does not run rsync --server")
+    sender = "--sender" in words
+    if args.ro and not sender:
+        die("sending to read-only server is not allowed")
+    if args.wo and sender:
+        die("reading from write-only server is not allowed")
+    try:
+        dot = words.index(".")
+    except ValueError:
+        die("invalid rsync command syntax")
+    options = words[2:dot]
+    for option in options:
+        name = option.split("=", 1)[0]
+        if option == "--sender":
+            continue
+        if option.startswith("--") and name not in SAFE_LONG:
+            die(f"option disabled: {name}")
+        if option.startswith("-") and not option.startswith("--") and not SAFE_SHORT.match(option):
+            die(f"option disabled: {option}")
+    paths = [confined(root, item) for item in words[dot + 1 :]] or ["."]
+    os.chdir(root)
+    return subprocess.run([RSYNC, "--server", *options, "--", ".", *paths], check=False).returncode
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

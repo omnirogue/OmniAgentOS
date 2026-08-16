@@ -1,0 +1,169 @@
+[project]
+name = "omniagentos"
+version = "0.1.0"
+description = "OmniAgentOS — local-first control plane for self-improving AI agent workflows (Horizon 1)"
+requires-python = ">=3.12"
+dependencies = [
+    "fastapi>=0.115",
+    "python-multipart>=0.0.18",
+    "uvicorn[standard]>=0.30",
+    "pydantic>=2.7",
+    "pyyaml>=6",
+    "jinja2>=3.1",
+    "cryptography>=50.0.0",
+    "psycopg[binary]>=3.2",
+    "pgvector>=0.3",
+    "requests>=2.31",
+    # H5: httpx is imported by prod modules (connectors/broker.py, comms/pollers/*,
+    # voice/elevenlabs.py, voice/xai.py, steward/notify.py), so it must resolve
+    # without the dev dependency group installed — it belongs here, not only in
+    # [dependency-groups].dev. requests (above) is still used (knowledge/embeddings.py,
+    # knowledge/cli.py, modelintel/{research,sources,router}.py), so it stays as-is.
+    "httpx>=0.27",
+    # FAST DISPATCH Gate 1 (PKG-FAST-DISPATCH): a local semantic router over a
+    # FastEmbed ONNX encoder (bge-small). Imported LAZILY in omniagentos/dispatch/
+    # gate.py -- a missing package degrades to the Haiku gate, so intake keeps
+    # working before these land in the live venv (integrator installs + pre-downloads).
+    "semantic-router>=0.1",
+    "fastembed>=0.3",
+    # Slack Socket Mode ingestion (omniagentos/comms/sockets/slack.py) — a PROD
+    # module imports it, so it belongs here rather than in [dependency-groups].dev,
+    # by the same H5 argument made for httpx above. The BUILT-IN SocketModeClient
+    # is used (stdlib socket/ssl); the aiohttp and websocket-client flavours would
+    # each add another transport dependency and are deliberately not used.
+    "slack-sdk>=3.33",
+]
+
+[project.optional-dependencies]
+harness = [
+    "mini-swe-agent==2.4.5",
+    "openhands-sdk==1.35.0",
+]
+
+[project.scripts]
+omniagentos-session-hook = "omniagentos.sessions.hook_client:main"
+omniagentos-tool = "omniagentos.toolplane.cli:main"
+
+[dependency-groups]
+dev = [
+    "pytest>=8",
+    "pytest-timeout>=2",
+    # httpx moved to [project].dependencies (H5) — it's a prod dependency now, not dev-only.
+    "ruff>=0.5",
+    "mypy>=1.10",
+    "types-PyYAML",
+    "pytest-xdist>=3.6",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["omniagentos"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+# .claude holds session state + git WORKTREES (separate checkouts, sometimes
+# stale snapshots) — their code must never count against this tree's lint.
+extend-exclude = ["dashboard", "vault", "devtasks", "var", ".claude"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "UP", "B", "TID251"]
+ignore = ["E501"]
+
+# TID251: time.mktime interprets a struct_time as LOCAL wall time. Every
+# timestamp this codebase carries is UTC (Z-suffixed), so a mktime-based
+# epoch conversion silently misreads UTC values under any non-UTC TZ (see
+# pipeline/bridge/file_proposal.py's expiry check and pipeline/bridge/
+# governor.py's probe-age check, both fixed alongside this rule). Callers
+# converting a UTC struct_time to epoch seconds must use calendar.timegm;
+# callers with a genuine local-wall-time struct_time should use an aware
+# datetime's .timestamp() instead. time.strptime is not banned -- parsing
+# is not the defect, local-epoch conversion is.
+[tool.ruff.lint.flake8-tidy-imports.banned-api]
+"time.mktime" = { msg = "time.mktime interprets its argument as LOCAL wall time. For a UTC struct_time, use calendar.timegm; for a genuine local-wall-time value, use an aware datetime's .timestamp()." }
+
+[tool.mypy]
+python_version = "3.12"
+packages = ["omniagentos"]
+disallow_untyped_defs = true
+warn_unused_ignores = false
+no_implicit_optional = true
+
+[[tool.mypy.overrides]]
+module = ["minisweagent.*", "openhands.*", "litellm.*", "yaml.*", "pgvector.*", "requests.*", "anthropic.*"]
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+timeout = 180
+markers = [
+    "nsc_writer_proof(token): North Star writer proof test self-declaring the exact registry token it attests",
+    "e2e: live user-visible end-to-end outcome probes",
+    "slow: tests expected to take longer than the normal unit-test budget",
+  "no_worktree_interlock_lift: opt out of the worktree interlock lift (tests/worktrees/conftest.py)",
+    "fast: bounded tests included in the parallel fast lane",
+    "smoke: end-to-end smoke tests (spawn real processes)",
+    "live_cli: tests that invoke real provider CLIs (cost; excluded by default)",
+    "perf: performance benchmarks (excluded by default)",
+    "live_ollama: tests that require real Ollama (excluded by default)",
+    "live: tests that require external services (excluded by default)",
+    "s19b_live_restart: the release gate's live_restart payload (applied by S19B; the gate selects 'smoke and s19b_live_restart' so a missing payload fails the phase instead of passing on an unrelated smoke test)",
+    "s19b_load_contention: the release gate's load_contention payload (applied by S19B; the gate selects 'perf and s19b_load_contention')",
+    "scale: bounded scale/backpressure gates (token-free; safe in default suite)",
+    "acceptance_smoke: AT4 Smoke Test Suite -- run after EVERY commit, must stay under 60s (docs/acceptance/SUITES.md)",
+    "acceptance_daily: AT4 Daily Regression Suite -- one representative test per task category (docs/acceptance/SUITES.md)",
+    "counterfeit_gate: W4-10 counterfeit corpus gate (make counterfeit-gate; excluded from default make test)",
+    "feature_health: feature-health lane (tiered per-feature coverage under tests/feature_health; excluded from default and fast lanes; run via scripts/feature_health/run.sh; may contain red-by-design tests documenting known product defects)",
+    "fh_known_issue: feature-health test that documents a KNOWN product defect (args: id=docs/testing/KNOWN-ISSUES.yaml key); its failure is expected and the ledger tags it expected=true",
+    # --- CI-port vocabulary (2026-08-05) -------------------------------------
+    # Declared BEFORE anything is quarantined, on purpose. `ci/quarantine.txt`
+    # is the last resort; the first resort is naming the property that makes a
+    # test hardware- or ordering-dependent so it can be fixed or deselected
+    # deliberately instead of being silently unreliable. Neither marker is in
+    # `addopts`: adding them here changes NO selection, it only makes the
+    # statement sayable.
+    "timing_sensitive: asserts a WALL-CLOCK budget, so its verdict depends on host speed. Prefer a causal assertion (X must not wait on the 2.0s helper) over a calibrated constant; a budget tuned on one machine is a hardware assertion wearing a behaviour assertion's clothes",
+    "serial: MUST NOT be handed to pytest-xdist (mutates shared on-disk fixtures in place). Mirrors scripts/testlanes/impacted.py:SERIAL_TEST_PREFIXES; tests/doctrine is the standing example (7 cross-worker races measured under -n 8)",
+    # --- LiveSim (2026-08-06) ------------------------------------------------
+    # Observational live-simulation suite under tests/livesim. Runs against the
+    # RUNNING system (live :8485 API, live runtime DB, process table, reaper
+    # stack) with full per-run telemetry. NEVER gates a merge or deploy; run it
+    # only via scripts/livesim/run.py. Excluded from default and fast lanes.
+    "livesim: LiveSim observational live-simulation test (never gates a merge)",
+    "positive: LiveSim — expected happy-path behaviour under valid input",
+    "negative: LiveSim — expected rejection/handling of invalid input",
+    "boundary: LiveSim — behaviour exactly at a threshold/limit",
+    "concurrency: LiveSim — behaviour under concurrent access/writes",
+    "recovery: LiveSim — recovery after failure/restart/orphan",
+    "permission: LiveSim — auth/scope/permission enforcement",
+    "degradation: LiveSim — graceful behaviour when a dependency is down",
+    "e2e_live: LiveSim — user-visible end-to-end outcome on the live system",
+]
+addopts = "-m 'not (live_cli or perf or live_ollama or live or counterfeit_gate or feature_health or e2e or livesim)'"
+
+# M-10 / M-22 — whole-package coverage only. Never treat a partial run's
+# .coverage as the package-wide number (see configs/coverage_policy.yaml).
+[tool.coverage.run]
+source = ["omniagentos"]
+branch = true
+# PHASE 5 (test-impact analysis): record WHICH test exercised each line, not just
+# that some test did. scripts/tia/coverage_map.py derives its {source file ->
+# tests} map from these contexts; without it the map is unbuildable and the
+# selector degrades to always-FULL. Contexts change only the recorded metadata,
+# never the measured line/branch numbers, so coverage_policy.yaml floors are
+# unaffected. Do NOT switch this run block to COVERAGE_CORE=sysmon: coverage
+# refuses sys.monitoring while branch=true on Python 3.12.
+dynamic_context = "test_function"
+omit = [
+    "*/tests/*",
+    "*/__pycache__/*",
+]
+
+[tool.coverage.report]
+skip_empty = true
+show_missing = true
+# Global floor is informational; subset rejection lives in testpolicy.
+fail_under = 0

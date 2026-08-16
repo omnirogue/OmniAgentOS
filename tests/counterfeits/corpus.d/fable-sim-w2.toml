@@ -1,0 +1,58 @@
+# WP7 Counterfeit Corpus Fragment — sim-isolation wave (W2)
+# These six entries verify that the fixes in WP3-WP6 guard against re-introduction of
+# the defects they closed. Each pair has a patch that breaks the guard and a test
+# that must RED when the break is applied.
+
+[[counterfeit]]
+id = "cf-simfloor-readmits-executing-checkout"
+patch = "patches/cf-simfloor-readmits-executing-checkout.patch"
+rationale = "Restores board_files' unconditional executing-checkout admission in sim mode (WP3 fix deleted this line). The F-015 approved-root floor becomes permissive when a sym-mode request names the production checkout."
+must_fail = [
+  "tests/api/test_board_files.py::test_approved_workspace_roots_sim_mode_excludes_running_checkout",
+]
+failure_re = "Left contains one more item"
+
+[[counterfeit]]
+id = "cf-simgate-accepts-truthy-sim-mode"
+patch = "patches/cf-simgate-accepts-truthy-sim-mode.patch"
+rationale = "Widens simgate's strict '1'-only parse so OMNIAGENTOS_SIM_MODE='true' is treated as sim (WP1 N-6(b) re-open). Admitting truthy spellings allows ambient env poisoning."
+must_fail = [
+  "tests/simgate/test_sim_gate.py::test_invalid_sim_mode_spelling_is_quoted[true]",
+]
+failure_re = "assert \"'true'\" in"
+
+[[counterfeit]]
+id = "cf-simgate-string-prefix-containment"
+patch = "patches/cf-simgate-string-prefix-containment.patch"
+rationale = "Replaces one of simgate's inode containment checks with a string prefix/startswith comparison (WP1 N-7 re-open). Sibling-prefix directories like OmniAgentOS-sims-evil slip past as 'inside' the sim root."
+must_fail = [
+  "tests/simgate/test_sim_gate.py::test_symlinked_campaign_root_escaping_sim_root_is_refused",
+]
+failure_re = "DID NOT RAISE SimGateError"
+
+[[counterfeit]]
+id = "cf-dirgrants-readmits-production-bases"
+patch = "patches/cf-dirgrants-readmits-production-bases.patch"
+rationale = "Makes allowed_grant_roots' sim branch return production project bases in addition to the campaign root (WP4 §3 re-open). Sim mode agents regain access to the production checkout and OMNIAGENTOS_PROJECT_BASES."
+must_fail = [
+  "tests/policy/test_mount_grants.py::test_sim_allowed_roots_are_only_the_canonical_campaign_root",
+]
+failure_re = "Left contains one more item"
+
+[[counterfeit]]
+id = "cf-coral-eager-mkdir-in-init"
+patch = "patches/cf-coral-eager-mkdir-in-init.patch"
+rationale = "Restores the CORAL skeleton mkdir as a side effect of SubprocessSwarmWorktrees.__init__ (WP5 D5 re-open). Construction is supposed to be filesystem-write-free so launches stay reproducible."
+must_fail = [
+  "tests/swarm/test_worktrees.py::TestCoralWorkspaceSetup::test_enforce_creates_skeleton_and_empty_context_does_not_block_create",
+]
+failure_re = "assert not .*exists"
+
+[[counterfeit]]
+id = "cf-coral-drops-construction-realpath"
+patch = "patches/cf-coral-drops-construction-realpath.patch"
+rationale = "Drops the realpath() canonicalization of _coral_shared_root at construction (WP5 D5 re-open). A symlinked configured root is stored as-is instead of being resolved to its target, causing path mismatches."
+must_fail = [
+  "tests/swarm/test_worktrees.py::TestCoralWorkspaceSetup::test_coral_shared_root_symlink_is_canonicalized_without_construction_writes",
+]
+failure_re = "assert.*canonical|== canonical_root"

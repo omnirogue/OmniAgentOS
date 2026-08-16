@@ -1,0 +1,236 @@
+/* Swarm Command Center (C1). Tokens only — never raw hex. */
+
+.muted { color: var(--text-muted); font-size: var(--text-small); }
+.mono { font-family: var(--font-mono); }
+
+/* Reconnect / stale banners — same shape as collab's reconnectingBanner. */
+.banner {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-top: var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid color-mix(in srgb, var(--warn) 35%, var(--border));
+  border-radius: var(--radius-md);
+  background: color-mix(in srgb, var(--warn) 8%, var(--surface));
+  color: var(--text-muted);
+  font-size: var(--text-micro);
+}
+
+/* ---- Fleet strip ---------------------------------------------------------- */
+.utilRow {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
+  gap: var(--space-3);
+  margin-bottom: var(--space-3);
+}
+
+.fleetGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr));
+  gap: var(--space-3);
+}
+
+/* Throughput tasks/hour sparkline row (C2). */
+.sparkRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin-top: var(--space-3);
+}
+
+.runCard {
+  display: grid;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--run-tone, var(--accent));
+  border-radius: var(--radius-lg);
+  background: color-mix(in srgb, var(--surface) 72%, var(--canvas));
+}
+
+.runHead {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+.runId { font: 600 var(--text-body) var(--font-mono); }
+
+.chips { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+
+/* ---- Progress bar (shared: fleet rows + throughput) ----------------------- */
+.progress { display: flex; align-items: center; gap: var(--space-2); }
+.progressTrack {
+  flex: 1;
+  height: 6px;
+  border-radius: var(--radius-pill);
+  background: var(--border);
+  overflow: hidden;
+}
+.progressFill {
+  height: 100%;
+  background: var(--run-tone, var(--running));
+  border-radius: var(--radius-pill);
+  transition: width 240ms ease;
+}
+.progressLabel {
+  color: var(--text-faint);
+  font-size: var(--text-micro);
+  white-space: nowrap;
+  font-family: var(--font-mono);
+}
+
+/* Fleet run-card footer (cost + open-on-board action). */
+.cardFooter {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  margin-top: auto;
+}
+
+/* ---- Terminal grid -------------------------------------------------------- */
+.terminalCell {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+.stateCell { display: inline-flex; align-items: center; gap: var(--space-2); }
+
+/* ---- Provider health ------------------------------------------------------ */
+.providerGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr));
+  gap: var(--space-3);
+}
+.providerCard {
+  display: grid;
+  gap: var(--space-2);
+  padding: var(--space-3);
+}
+.providerHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+.providerName { display: inline-flex; align-items: center; gap: var(--space-2); font-weight: 600; }
+.cooldown {
+  color: var(--warn);
+  font-size: var(--text-small);
+  font-family: var(--font-mono);
+}
+
+/* ---- Team panel (leaders + parallel agents) ------------------------------- */
+.teamPanel { display: grid; gap: var(--space-4); }
+.teamStat {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  padding: var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+}
+.teamStatValue {
+  font-size: var(--text-title);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+.teamStatLabel {
+  color: var(--text-muted);
+  font-size: var(--text-micro);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.teamSection { display: grid; gap: var(--space-2); }
+.teamSectionTitle {
+  margin: 0;
+  font-size: var(--text-small);
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+.teamList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--space-2);
+}
+.teamRow {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: var(--space-3);
+  align-items: center;
+  padding: var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+}
+.teamMain { min-width: 0; }
+.teamTitle {
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.teamMeta {
+  color: var(--text-muted);
+  font-size: var(--text-small);
+  margin-top: var(--space-1);
+}
+.teamFeed {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--space-1);
+  max-height: 12rem;
+  overflow-y: auto;
+}
+.teamFeedItem {
+  display: grid;
+  grid-template-columns: 5.5rem 1fr;
+  gap: var(--space-2);
+  font-size: var(--text-small);
+  color: var(--text-muted);
+}
+.linkButton {
+  appearance: none;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text);
+  border-radius: var(--radius-sm);
+  padding: var(--space-1) var(--space-2);
+  font-size: var(--text-small);
+  cursor: pointer;
+}
+.linkButton:hover { border-color: var(--text-muted); }
+
+/* ---- Transcript drawer ---------------------------------------------------- */
+.drawer { display: grid; gap: var(--space-4); }
+.transcriptList {
+  display: grid;
+  gap: var(--space-3);
+  max-height: 24rem;
+  overflow-y: auto;
+}
+.transcriptEntry { border-bottom: 1px solid var(--border); padding-bottom: var(--space-2); }
+.transcriptHead {
+  display: flex;
+  gap: var(--space-2);
+  align-items: center;
+  color: var(--text-muted);
+  font-size: var(--text-small);
+}
+.fileList { margin: 0; padding-left: var(--space-4); }
+.fileList code { font-size: var(--text-small); }
+
+/* TerminalHistoryDrawer layout (migrated off inline styles). */
+.drawerFooter { display: flex; justify-content: space-between; gap: var(--space-2); width: 100%; }
+.badgeRow { display: flex; flex-wrap: wrap; gap: var(--space-2); align-items: center; }
+.transcriptSummary { margin: var(--space-1) 0 0; }

@@ -1,0 +1,92 @@
+# System map — OmniAgentOS
+
+System map for OmniAgentOS, regenerated verbatim each morning by `scripts/archi-morning/archi-morning.sh` from the hand-curated node/edge tables in `omniagentos/archdocs/diagram.py` (edit those tables when the architecture changes — this file is output, not source). Boxes are subsystems (`ARCHI.md` Subsystems section) plus the swarm pipeline stages; solid arrows are real call/ownership/dataflow relationships, dashed arrows are advisory or context feeds (rankings, recall, learned playbooks). Provider CLIs are always local subprocesses — never direct HTTP clients. Per-domain detail lives in `docs/architecture/*.md`.
+
+```mermaid
+flowchart LR
+    subgraph operator["Operator surface"]
+        dashboard["Dashboard - Next.js :3000"]
+        api["API - FastAPI :8485"]
+    end
+    subgraph swarm["Swarm pipeline"]
+        intake["Intake"]
+        planner["Planner - brief to DAG"]
+        scheduler["Scheduler - coordinator + slots"]
+        router["Router - adaptive tiers"]
+        spawner["Spawner"]
+        reviewer["Reviewer"]
+        summary["Summary + Throughput Score"]
+        optimizer["Optimizer - 2x daily"]
+    end
+    subgraph providers["Provider CLIs"]
+        cli_claude["claude"]
+        cli_codex["codex"]
+        cli_grok["grok"]
+        cli_gemini["gemini"]
+        cli_kimi["kimi"]
+    end
+    subgraph execution["Execution"]
+        runner["Runner - polling worker"]
+        orchestrator["Orchestrator - tier cascade"]
+        adapters["CLI adapter registry"]
+        db["SQLite WAL var/omniagentos.db"]
+        ledger["Ledger - append-only JSONL"]
+        vault["Vault notes"]
+    end
+    subgraph scheduling["Scheduling"]
+        launchd["launchd jobs - LaunchAgents"]
+        routines["Routines engine - 300s tick"]
+        archdocs["archdocs - ARCHI.md + system map"]
+    end
+    subgraph relorg["Reliability"]
+        reliability["Reliability V2 - watch, audit, daily, weekly"]
+        organization["Agent org - CTO, VPs, managers"]
+    end
+    governance["Governance - ActionClass gate, approvals, budgets"]
+    knowledge["Knowledge - skills, Synapse, memory, repomap"]
+    longhaul["Longhaul engine - attempt chain"]
+    accounts["limit_state / claude_accounts - cooldown + rotation"]
+    modelintel["modelintel registry - daily 07:15"]
+    dashboard -->|same-origin token proxy| api
+    api --> db
+    api -.->|approvals + token gate| governance
+    api --> intake
+    intake -->|swarm brief| planner
+    intake -->|fastlane / orchestrations| orchestrator
+    intake -->|lane=longhaul| longhaul
+    knowledge -.->|recall priors| planner
+    planner -->|provisioned DAG| scheduler
+    scheduler -->|state rebuilt from rows| db
+    scheduler -->|tier ladder| router
+    router -->|route decision| spawner
+    modelintel -.->|rankings| router
+    spawner --> providers
+    spawner -.->|account pick| accounts
+    scheduler -->|attempt terminal| reviewer
+    reviewer --> summary
+    summary -->|mined run outcomes| optimizer
+    optimizer -.->|learned.json playbook| planner
+    optimizer -->|swarm playbook| vault
+    launchd -->|03:45 + 15:45| optimizer
+    launchd -->|keep-alive| runner
+    launchd -->|every 300s| routines
+    launchd -->|watch / audit / daily / weekly| reliability
+    launchd -->|07:15| modelintel
+    launchd -->|07:05 archi-morning| archdocs
+    routines -->|routine_runs + tasks| db
+    runner -->|polls queued runs| db
+    runner -->|step plans| adapters
+    adapters -->|local CLI subprocess| providers
+    runner -.->|ActionClass approval gate| governance
+    runner -->|JSONL manifest| ledger
+    runner -->|run notes| vault
+    orchestrator -->|tier-escalating sessions| adapters
+    knowledge -.->|context injection| orchestrator
+    reliability -->|dept reviews + CTO pass| organization
+    reliability -.->|confirmed fix to skill| knowledge
+    archdocs -.->|arch context| reliability
+    longhaul -->|executor attempts| providers
+    longhaul -.->|cooldown, never disable| accounts
+    longhaul -->|attempt chain + slots| db
+    modelintel -.->|registry-ranked workers| longhaul
+```

@@ -1,0 +1,38 @@
+"""Single source of truth for columns written by the fleetcap extractor."""
+
+from __future__ import annotations
+
+EXTRACT_COLUMNS: dict[str, str] = {
+    "session_id": "TEXT",
+    "cli": "TEXT",
+    "account": "TEXT",
+    "cwd": "TEXT",
+    "agent": "TEXT",
+    "models": "TEXT",
+    "start_ts": "REAL",
+    "end_ts": "REAL",
+    "wall_s": "REAL",
+    "active_s": "REAL",
+    "model_s": "REAL",
+    "tool_s": "REAL",
+    "human_s": "REAL",
+    "n_user": "INTEGER",
+    "n_assistant": "INTEGER",
+    "n_tool": "INTEGER",
+    "n_err": "INTEGER",
+    "n_compact": "INTEGER",
+    "tokens_in": "INTEGER",
+    "tokens_out": "INTEGER",
+    "tokens_cached": "INTEGER",
+    "tools": "TEXT",
+    "events": "TEXT",
+    "outcome": "TEXT",
+    "outcome_note": "TEXT",
+    "capture_method": "TEXT",
+    "created_ts": "REAL",
+    "device": "TEXT",
+    "device_owner": "TEXT",
+    "dispatch_class": "TEXT",
+    "dispatcher": "TEXT",
+    "dispatch_evidence": "TEXT",
+}

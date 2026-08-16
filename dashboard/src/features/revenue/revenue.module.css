@@ -1,0 +1,35 @@
+/* Revenue / P&L page content classes. Page-level layout/header come from the
+   shared <Page>/<PageHeader> (@/design) — see app/revenue/page.tsx. Follows
+   features/steward/steward.module.css's convention of one module per feature. */
+.muted { color: var(--text-muted); font-size: var(--text-small); }
+.faint { color: var(--text-faint); font-size: var(--text-micro); }
+
+.metaRow { display: flex; align-items: center; gap: var(--space-3); flex-wrap: wrap; color: var(--text-muted); font-size: var(--text-small); }
+
+/* KPI tiles */
+.statGrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr)); gap: var(--space-4); }
+
+/* Money/ratio figures anywhere in a table body: monospace + tabular-nums so
+   digits align column-to-column instead of jittering with proportional
+   kerning (this is a real-money page — figures must read as a stable grid). */
+.moneyCell { font-family: var(--font-mono); font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+/* Data quality & coverage — the honesty surface. Deliberately its own
+   raised, always-visible card (never a collapsible/accordion) directly under
+   the KPI tiles so it cannot be scrolled past unnoticed. */
+.qualityPanel { display: grid; gap: var(--space-4); }
+.qualityList { display: grid; gap: var(--space-2); margin: 0; padding: 0; list-style: none; }
+.qualityNote { display: flex; align-items: flex-start; gap: var(--space-2); padding: var(--space-2) var(--space-3); border-radius: var(--radius-md); font-size: var(--text-small); line-height: 1.5; }
+.qualityNoteWarn { background: color-mix(in srgb, var(--awaiting) 10%, transparent); color: var(--text); }
+.qualityNoteInfo { background: color-mix(in srgb, var(--text-muted) 6%, transparent); color: var(--text-muted); }
+.qualityNoteIcon { flex: none; margin-top: 0.15rem; }
+
+.coverageGrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr)); gap: var(--space-4); }
+.coverageGroup { display: grid; gap: var(--space-2); }
+.coverageGroupTitle { margin: 0; font-size: var(--text-micro); font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; color: var(--text-faint); }
+.coverageTags { display: flex; flex-wrap: wrap; gap: var(--space-2); min-height: 1.75rem; align-items: center; }
+.coverageEmpty { color: var(--text-faint); font-size: var(--text-micro); }
+
+@media (max-width: 34rem) {
+  .metaRow { gap: var(--space-2); }
+}

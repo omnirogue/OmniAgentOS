@@ -1,0 +1,290 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+# This workflow intentionally has no secrets or deployment permissions.  Every job
+# runs solely on a fresh GitHub-hosted runner.
+permissions:
+  contents: read
+
+# One in-flight run per ref; a new push/PR update cancels the previous run
+# for the same ref instead of queuing behind it (saves runner minutes, and
+# the newer commit's result is what matters anyway). main is the exception:
+# merge trains push to main ~30s apart, so cancel-in-progress there killed
+# IN-PROGRESS main runs and left most main commits with no completed CI
+# verdict (10 of the 15 cancelled runs in the last 60 were exactly this).
+# Now an in-progress main run always completes; GitHub still supersedes all
+# but the newest PENDING run in the group, so the train tip is always judged.
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
+jobs:
+  # This uses the base branch's gate script against the PR tip: a candidate
+  # must never be allowed to edit the instrument that judges it. The job name
+  # is deliberately stable so repository administrators can make it required.
+  merge-gate:
+    name: merge-gate
+    if: github.event_name == 'pull_request'
+    # macOS: the full suite is proven on macOS hosts, while Linux boxes have
+    # failed env-coupled tests (unix-socket paths, missing sqlite3 CLI).
+    # REVERT PATH if macOS runners queue badly: `runs-on: ubuntu-latest` and
+    # hardcode MERGE_GATE_LADDER_WORKERS back to "1" in the gate step.
+    runs-on: macos-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.base.ref }}
+          fetch-depth: 0
+      # Git identity for the trial merge (`git merge --no-ff --no-commit`,
+      # merge-gate.sh) — without an ident git exits 128 "Committer identity
+      # unknown" BEFORE any merge work, silently skipping every suite the
+      # gate exists to run. REPO-LOCAL config, deliberately not --global and
+      # not job env: --global clobbered the box owner's real ~/.gitconfig on
+      # a persistent runner (caught in review 2026-08-13, live on mw0001),
+      # and job-scoped GIT_AUTHOR_*/GIT_COMMITTER_* env leaked into the
+      # gate's own trial-merge instrument tests, which construct
+      # no-identity scratch repos and assert the failure classifies as
+      # instrument error (observed live: 2 failed on the estate run). Local
+      # config rides this checkout and its worktrees only; pytest scratch
+      # repos in $TMPDIR never see it.
+      - name: Configure repo-local git identity for the trial merge
+        run: |
+          git config user.email "ci@omniagentos.local"
+          git config user.name "merge-gate ci"
+      # Hosted runners only: on macOS self-hosted, setup-python's toolchain
+      # hardcodes a root-owned /Users/runner prefix (mkdir denied for a
+      # least-privilege runner account — observed live on mw0002). uv
+      # provisions its own CPython from uv.lock, so self-hosted needs no
+      # preinstalled interpreter.
+      - uses: actions/setup-python@v5
+        if: runner.environment == 'github-hosted'
+        with:
+          python-version: "3.12"
+      - uses: astral-sh/setup-uv@v6
+        with:
+          # PINNED (2026-08-11): unpinned, this action resolves "latest" through a live
+          # GitHub API call per job; that call failed on main's tip and redded the
+          # required `type` check with nothing wrong in the tree.
+          version: "0.10.4"
+          enable-cache: true
+          cache-dependency-glob: "uv.lock"
+      - name: Install Python dependencies
+        run: uv sync --locked
+      - name: Fetch immutable pull-request candidate
+        env:
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          BASE_REF: ${{ github.event.pull_request.base.ref }}
+        run: |
+          git fetch --no-tags origin "+refs/pull/${PR_NUMBER}/head:refs/remotes/origin/pr/${PR_NUMBER}"
+          git checkout --force -B main "origin/${BASE_REF}"
+          git status --porcelain=v1 --untracked-files=all
+          test -z "$(git status --porcelain=v1 --untracked-files=all)"
+      - name: Prove history-sweep refusal control
+        # This fixture makes a two-commit candidate that adds then deletes a
+        # secret. It must be refused by the real gate; restoring the historical
+        # net-diff-only scan makes that exact candidate pass.
+        run: >-
+          uv run pytest -q
+          tests/scripts/test_merge_gate_history_sweep.py::test_secret_added_then_deleted_across_commits_is_refused
+          -p no:randomly --timeout=120
+      - name: Mint candidate-bound receipt
+        env:
+          CANDIDATE_REF: refs/remotes/origin/pr/${{ github.event.pull_request.number }}
+          EVIDENCE_ROOT: ${{ runner.temp }}/merge-gate-evidence
+          CANDIDATE_WORKSPACE: ${{ runner.temp }}/merge-gate-candidate
+        run: |
+          candidate_sha="$(git rev-parse "$CANDIDATE_REF")"
+          merge_base_sha="$(git merge-base main "$candidate_sha")"
+          # Persistent-runner hygiene: Actions wipes runner.temp between jobs
+          # but the repo's worktree REGISTRATION survives, so the second gate
+          # job on a self-hosted runner dies with "missing but already
+          # registered worktree" at the add below. Prune stale registrations
+          # first (a no-op on hosted runners and on the first run).
+          git worktree prune
+          git worktree add --detach "$CANDIDATE_WORKSPACE" "$candidate_sha"
+          uv run python scripts/mint-merge-candidate.py \
+            --candidate-sha "$candidate_sha" \
+            --merge-base-sha "$merge_base_sha" \
+            --evidence-root "$EVIDENCE_ROOT" \
+            --workspace "$CANDIDATE_WORKSPACE"
+      - name: Run full merge gate against pull-request candidate
+        env:
+          CANDIDATE_REF: refs/remotes/origin/pr/${{ github.event.pull_request.number }}
+          MERGE_GATE_EVIDENCE_ROOT: ${{ runner.temp }}/merge-gate-evidence
+        # Workers = HALF the host's cores (mw0001→12, mw0002→8), computed at
+        # runtime because estate runners differ in size. Half, never full or
+        # xdist auto-detect: full-count manufactures oversubscribed false reds
+        # on a box that also carries wq slots (load doctrine). Floor of 1
+        # keeps a tiny/hosted fallback runner correct with no edit here.
+        run: |
+          cores=$(sysctl -n hw.ncpu 2>/dev/null || nproc)
+          workers=$(( cores / 2 )); [ "$workers" -lt 1 ] && workers=1
+          echo "ladder workers: $workers (of $cores cores)"
+          MERGE_GATE_LADDER_WORKERS="$workers" scripts/merge-gate.sh --candidate "$CANDIDATE_REF"
+      - name: Summarize merge-gate coverage
+        if: always()
+        run: |
+          {
+            echo "## Merge-gate CI coverage"
+            echo
+            echo "- Ran the full merge gate, including the trial merge, ladder, doctrine, dominance, memlife, and counterfeit corpus when present."
+            echo "- Ran the history-sweep counterfeit: an add-then-delete secret candidate is refused; restoring the net-diff scan makes it pass."
+            echo "- No merge-gate check is skipped on the estate runner. The ladder runs half the host's cores as xdist workers (runtime-computed)."
+            echo "- The gate script is checked out from the PR base branch; the immutable PR tip is the candidate under test."
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  lint:
+    name: lint
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: astral-sh/setup-uv@v6
+        with:
+          version: "0.10.4"  # pinned, see above
+          enable-cache: true
+          cache-dependency-glob: "uv.lock"
+      - name: Install Python dependencies
+        run: uv sync --locked
+      - name: Check Python lint
+        run: uv run ruff check .
+
+  type:
+    name: type
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: astral-sh/setup-uv@v6
+        with:
+          version: "0.10.4"  # pinned, see above
+          enable-cache: true
+          cache-dependency-glob: "uv.lock"
+      - name: Install Python dependencies
+        run: uv sync --locked
+      - name: Check Python types
+        run: uv run mypy omniagentos
+
+  # BLOCKING as of 2026-08-14 (see docs/ci/README.md). The precondition the
+  # old shield waited for is met: main's PR/full-tree test lane is green — the
+  # ~30 pre-existing failures were driven to zero across #444/#445/#454/#457/
+  # #464/#479 (env/host-shape premises, ratchet debt, module identity, the
+  # archdocs trial-merge stamp) and #484 (the verdict-dispatch pair was a real
+  # tty-less nohup liveness bug, not a flake). continue-on-error is removed so a
+  # red test lane now fails the run instead of accumulating silently — the class
+  # that let those ~30 reds hide in the first place. To make it BLOCK MERGE,
+  # `test` must also be added to branch-protection required checks (repo setting;
+  # see docs/ci/README.md).
+  test:
+    name: test
+    runs-on: ubuntu-latest
+    # Backstop only — the in-step `timeout` below must always fire first. A
+    # job-level timeout surfaces as conclusion `cancelled`, which
+    # continue-on-error does NOT shield (it only shields `failure`), so a
+    # run whose merge-gate/lint/type/dashboard all passed still concluded
+    # `cancelled` whenever this job overran (the full suite runs 28.4-29.0
+    # min against the old 30-min cap, and setup time has no enforced bound).
+    # The test steps therefore compute their own budget from JOB_START, so
+    # TERM + the 60s kill-grace lands >=60s before this cap regardless of
+    # setup duration — provided setup returns before the cap at all (a
+    # setup step that never returns is cancelled at the cap, which is
+    # accurate signal for a genuine stall). JOB_START is recorded by
+    # the FIRST STEP, but the cap starts charging at job start — the
+    # runner's "Set up job"/action-download phase runs before any step, so
+    # the cap carries a 600s reserve over JOB_BUDGET for it (normal cost:
+    # seconds; a pre-step stall beyond the reserve is a genuine infra
+    # incident whose `cancelled` conclusion is accurate signal, not the
+    # systematic race this fixes). The cap/budget/reserve coupling is
+    # enforced by tests/scripts/test_ci_workflow_budget.py.
+    timeout-minutes: 60
+    env:
+      JOB_BUDGET: "3000"  # <= timeout-minutes*60 - 600s pre-step reserve
+    steps:
+      - name: Record job start for the test budget
+        run: echo "JOB_START=$(date +%s)" >> "$GITHUB_ENV"
+      # The PR lane uses merge-base with main to determine impacted tests.
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: astral-sh/setup-uv@v6
+        with:
+          version: "0.10.4"  # pinned, see above
+          enable-cache: true
+          cache-dependency-glob: "uv.lock"
+      - name: Install Python dependencies
+        run: uv sync --locked
+      - name: Run PR-safe Python tests (pull_request)
+        if: github.event_name == 'pull_request'
+        # `make test-pr` composes the exclusions declared in pyproject.toml and
+        # additionally excludes smoke tests; do not replace its marker expression.
+        # Default base (merge-base with main) is correct for a PR event.
+        # `timeout` turns an overrun into a nonzero step FAILURE (124, or
+        # 137 after forced KILL) — now that the shield is gone this FAILS the
+        # run, which is accurate signal (a test lane that cannot finish in
+        # budget is a real problem, not a race). It is still never a
+        # job-timeout `cancelled`: the computed budget reserves 120s for the
+        # 60s kill-grace plus teardown so the step's own timer always beats
+        # the job cap. The job cap yields `cancelled` only for a pre-step
+        # setup stall, before this timer starts.
+        run: |
+          budget=$(( JOB_BUDGET - ($(date +%s) - JOB_START) - 120 ))
+          if [ "$budget" -lt 300 ]; then
+            echo "::error::setup left under 5 min of test budget (${budget}s)"; exit 1
+          fi
+          timeout -k 60 "${budget}s" make test-pr
+      - name: Run PR-safe Python tests (push)
+        if: github.event_name == 'push'
+        # On a push event, resolve_base defaults to HEAD (the commit that
+        # just landed), which diffs a commit against itself and impacts
+        # nothing. LANE_BASE must be the pre-push SHA so the lane actually
+        # sees what changed in this push.
+        env:
+          LANE_BASE: ${{ github.event.before }}
+        run: |
+          budget=$(( JOB_BUDGET - ($(date +%s) - JOB_START) - 120 ))
+          if [ "$budget" -lt 300 ]; then
+            echo "::error::setup left under 5 min of test budget (${budget}s)"; exit 1
+          fi
+          timeout -k 60 "${budget}s" make test-pr LANE_BASE="$LANE_BASE"
+
+  dashboard:
+    name: dashboard
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: dashboard/package-lock.json
+      - name: Install dashboard dependencies
+        working-directory: dashboard
+        run: npm ci
+      - name: Lint dashboard
+        working-directory: dashboard
+        run: npm run lint
+      - name: Type-check dashboard
+        working-directory: dashboard
+        run: npm run typecheck
+      - name: Build dashboard
+        working-directory: dashboard
+        run: npm run build
+      - name: Test dashboard
+        working-directory: dashboard
+        run: npm test

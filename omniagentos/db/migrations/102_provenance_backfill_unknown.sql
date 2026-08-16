@@ -1,0 +1,44 @@
+-- Correct 101's backfill: historical rows are 'unknown', not 'real'.
+--
+-- 101 added the provenance columns with DEFAULT 'real'. ALTER TABLE ... ADD
+-- COLUMN applies that default to every pre-existing row, so all ~1,849
+-- historical rows were stamped as production.
+--
+-- (Numbering note: this pair was authored in-lane as 098/099, renumbered to
+-- 100/101 at the first landing attempt, and renumbered again to 101/102 when
+-- this train merged main -- per the number-assigned-at-merge rule. Other
+-- sessions landed 098_company_goals, 099_transcript_uploads and
+-- 100_plans_durable first, and a number is only owned once it is at head.)
+--
+-- That is not true, and we can prove it is not true. These tables contain
+-- non-production rows by construction:
+--   * the only sessions supervisor ran bound to var/e2e-bench/state.sqlite3
+--     for several days (a long-lived benchmark process), writing bench rows here;
+--   * a leaked uvicorn served a pytest tmpdir database on a stray local
+--     port for two days.
+-- We cannot say WHICH rows are which -- only that some are not real.
+--
+-- Labelling them 'real' makes `WHERE source = 'real'` silently include bench
+-- and test artifacts, so every completion rate computed from it would look
+-- measured while remaining an upper-bound estimate. That launders exactly the
+-- uncertainty the column was added to expose, which is worse than having no
+-- column: it converts a known unknown into a false certainty. 'unknown' keeps
+-- the ignorance visible and forces any analysis to opt in deliberately.
+--
+-- WHY THIS IS A SEPARATE FILE: migrations here are append-only (the merge gate
+-- refuses edits to applied history), so this ships forward rather than
+-- amending 101.
+--
+-- WHY THE BLANKET UPDATE IS SAFE: 101 has never been applied on any database
+-- -- the live control plane is at schema head 100 (plans_durable, landed on
+-- main) and 101 is new in this branch -- so 101 and 102 necessarily run in the
+-- same `migrate` pass. Every row visible to the
+-- statements below therefore predates the column and is by definition
+-- historical. The DEFAULT stays 'real', so rows written after this migration
+-- are production unless a write path says otherwise.
+--
+-- Vocabulary after this migration: real | simulated | test | unknown.
+
+UPDATE swarm_attempts SET source = 'unknown';
+UPDATE swarm_runs SET source = 'unknown';
+UPDATE sessions SET run_source = 'unknown';

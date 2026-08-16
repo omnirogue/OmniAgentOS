@@ -1,0 +1,41 @@
+# Built-but-unscheduled heartbeat registry.
+#
+# THE CLASS THIS EXISTS TO CATCH
+# scripts/health-sentinel/health_sentinel.py:951 check_launchd() compares
+# RENDERED plists -> INSTALLED plists -> LOADED labels. It is a good meta-watchdog
+# for jobs that ARE labels. It is STRUCTURALLY BLIND to a correct, working script
+# that is not a launchd label at all: there is no plist for it to notice missing,
+# no label for it to notice unloaded, and nothing anywhere says the script was
+# ever supposed to run on a cadence.
+#
+# This file closes that class by asserting the ARTIFACT instead of the schedule.
+# If the thing a script is supposed to produce is stale, the script is not running
+# — whether that is because its plist is unloaded, because its crontab line was
+# never added, or because nobody ever scheduled it in the first place.
+#
+# Consumed by the `unscheduled_heartbeat` check in configs/audit-checks.yaml.
+#
+# TO ADD AN ENTRY
+#   script:          the thing that is supposed to run (repo-relative)
+#   artifact:        the file it writes when it runs (repo-relative)
+#   max_age_hours:   how stale that artifact may get before this is a finding
+#   provenance:      where max_age_hours came from — derived, or an honest guess
+#   why:             one line an operator can act on without opening anything else
+
+version: 1
+
+heartbeats:
+
+  fleet-supervisor:
+    script: scripts/fleet-supervisor.sh
+    artifact: var/swarm/fleet-status.md
+    max_age_hours: 24
+    provenance: default-guess-24h-unmeasured
+    why: >-
+      SEEDED AS THE SINGLE EXAMPLE OF THE CLASS. scripts/fleet-supervisor.sh is
+      executable, correct, and appears in NO plist under var/launchd/rendered,
+      NO plist in ~/Library/LaunchAgents, and NO crontab. check_launchd() cannot
+      see it because it is not a label. Its artifact var/swarm/fleet-status.md
+      last changed 2026-08-01 08:16. max_age_hours is a guess (the script
+      declares no intended cadence anywhere); replace the provenance the moment
+      a real cadence is decided.

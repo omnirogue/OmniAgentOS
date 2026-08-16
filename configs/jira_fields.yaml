@@ -1,0 +1,70 @@
+# Jira custom-field map for the jira-goals integration (A1 / FA-1).
+#
+# Logical names are the ONLY public API surface. Raw customfield_* ids must never
+# be accepted by JiraClient methods that take field names.
+#
+# SETUP-J POPULATED (2026-07-31) from GET /rest/api/3/field + per-project
+# createmeta resolution. the operator created the two fields separately in EACH of the five
+# projects, per BUILD-PLAN-V2 ("the ten per-project field IDs"), so every project
+# below carries a DISTINCT id — this is not one shared global context.
+#
+# Live project keys (G-A2): ACM · CA · INI · HOO · OAOS
+# Canonical status name (G-A1): "In Review" — never bare "Review".
+# Site (G-A3): example-team.atlassian.net
+
+version: 1
+
+site: example-team.atlassian.net
+project_keys:
+  - ACM
+  - CA
+  - INI
+  - HOO
+  - OAOS
+
+# Status catalog (name-matched, never by assumed global IDs).
+statuses:
+  - Proposed
+  - Approved
+  - Planning
+  - In Queue
+  - In Progress
+  - Blocked
+  - In Review
+  - Done
+
+fields:
+  department:
+    type: single_select
+    label: Department
+    # Allowed values in display order (taxonomy §3).
+    values:
+      - Sales
+      - Customer Service
+      - Operations
+      - Development
+      - Marketing
+      - Finance
+    # Per-project custom field ids — one distinct field per project (live, verified
+    # 2026-07-31 via createmeta). Never reuse an id across projects.
+    project_ids:
+      ACM: customfield_10048
+      CA: customfield_10051
+      INI: customfield_10050
+      HOO: customfield_10046
+      OAOS: customfield_10043
+
+  ai_proposal_state:
+    type: single_select
+    label: AI Proposal State
+    values:
+      - Human-created
+      - AI-proposed
+    # Per-project custom field ids — one distinct field per project (live, verified
+    # 2026-07-31 via createmeta). Never reuse an id across projects.
+    project_ids:
+      ACM: customfield_10047
+      CA: customfield_10052
+      INI: customfield_10049
+      HOO: customfield_10045
+      OAOS: customfield_10044

@@ -1,0 +1,32 @@
+diff --git a/omniagentos/api/routes/chats.py b/omniagentos/api/routes/chats.py
+index d16a2382..8c19f9a8 100644
+--- a/omniagentos/api/routes/chats.py
++++ b/omniagentos/api/routes/chats.py
+@@ -1444,7 +1444,8 @@ def _promote_action_items(
+         # after dispatch (the previous shape) left the loser holding a live
+         # session that outlived the card it cancelled.
+         with _promote_item_gate(chat_id, item_key):
+-            existing = chat_store.find_promoted_task_by_item_key(chat_id, item_key)
++            # COUNTERFEIT: Remove both dedupe layers (fast-path + DB claim)
++            existing = None
+             task_id: str | None = None
+             if existing is None:
+                 task_id = chat_store.reserve_promoted_card(
+diff --git a/omniagentos/chats/store.py b/omniagentos/chats/store.py
+index 2a4be973..dfad21a6 100644
+--- a/omniagentos/chats/store.py
++++ b/omniagentos/chats/store.py
+@@ -868,11 +868,8 @@ class ChatStore:
+         placeholders = ", ".join("?" for _ in values)
+         inserted = self._store._write_count(
+             f"INSERT INTO board_tasks ({', '.join(columns)}) "
+-            f"SELECT {placeholders} WHERE NOT EXISTS ("
+-            "SELECT 1 FROM board_tasks other "
+-            f"WHERE json_extract({readable}, '$.chat_id') = ? "
+-            f"AND json_extract({readable}, '$.promoted_item_key') = ?)",
+-            (*values, chat_id, item_key),
++            f"VALUES ({placeholders})",
++            tuple(values),
+         )
+         return task_id if inserted else None
+ 

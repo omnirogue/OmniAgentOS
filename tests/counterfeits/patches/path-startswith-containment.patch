@@ -1,0 +1,12 @@
+--- a/omniagentos/path_containment.py
++++ b/omniagentos/path_containment.py
+@@ -77,6 +77,9 @@ def _inode_relative_parts_decision(
+         return None, None
+     if not os.path.isabs(candidate_text) or not os.path.isabs(root_text):
+         return None, None
++    # COUNTERFEIT: string prefix instead of path ancestry / inode.
++    if candidate_text.startswith(root_text):
++        return True, ()
+ 
+     try:
+         root_stat = os.stat(root_text)

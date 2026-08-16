@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  wq-tunnel.plist.template — PRIMARY-SIDE LaunchAgent. Installed on the
+  primary Mac (Mac-Studio), one per non-tailnet machine that needs to reach
+  wq-server. This is how mw0001-owner, mw0002 and acmeuni (no Tailscale yet) reach
+  the loopback-only server: the primary dials OUT to the remote box and asks
+  it to forward the remote's own 127.0.0.1:8487 back to the primary's
+  127.0.0.1:8487 (`ssh -N -R 127.0.0.1:8487:127.0.0.1:8487 <remote>`). The
+  worker on the remote box then talks to `http://127.0.0.1:8487` locally and
+  reaches the primary's server through the tunnel — no inbound port is ever
+  opened on the primary, and wq-server never binds anything but loopback.
+
+  SECURITY: the listen-side bind address in the -R spec is pinned to
+  127.0.0.1 explicitly. Without it (a bare `8487:127.0.0.1:8487`), whether
+  the REMOTE host's port 8487 ends up loopback-only or exposed on every one
+  of that host's interfaces is decided by the remote's sshd GatewayPorts
+  setting alone — this repo neither controls nor checks that. Pinning the
+  bind address here makes the listen side loopback-only regardless of the
+  remote sshd's GatewayPorts value.
+
+  ServerAliveInterval 30 + ExitOnForwardFailure yes make a dead tunnel (or a
+  refused loopback bind) fail fast and loud instead of sitting silently
+  forwarding nowhere, or falling open to every interface; launchd KeepAlive
+  restarts it. One of these plists per remote host — Label and
+  ProgramArguments are rendered per host by enroll.sh/serve.sh.
+-->
+<plist version="1.0">
+<dict>
+	<key>Label</key>
+	<string>com.omniagentos.wq-tunnel.__HOST_SLUG__</string>
+	<key>ProgramArguments</key>
+	<array>
+		<string>/usr/bin/ssh</string>
+		<string>-N</string>
+		<string>-o</string>
+		<string>ServerAliveInterval=30</string>
+		<string>-o</string>
+		<string>ServerAliveCountMax=3</string>
+		<string>-o</string>
+		<string>ExitOnForwardFailure=yes</string>
+		<string>-o</string>
+		<string>BatchMode=yes</string>
+		<string>-o</string>
+		<string>StrictHostKeyChecking=accept-new</string>
+		<string>-R</string>
+		<string>127.0.0.1:8487:127.0.0.1:8487</string>
+		<string>__REMOTE_SSH_TARGET__</string>
+	</array>
+	<key>RunAtLoad</key>
+	<true/>
+	<key>KeepAlive</key>
+	<true/>
+	<key>ThrottleInterval</key>
+	<integer>15</integer>
+	<key>StandardOutPath</key>
+	<string>__LOG_DIR__/wq-tunnel.__HOST_SLUG__.out.log</string>
+	<key>StandardErrorPath</key>
+	<string>__LOG_DIR__/wq-tunnel.__HOST_SLUG__.err.log</string>
+</dict>
+</plist>

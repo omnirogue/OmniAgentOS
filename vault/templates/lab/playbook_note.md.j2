@@ -1,0 +1,17 @@
+# playbook: {{ discipline }}
+
+[[Home]]
+
+## Validated traits
+
+{% if entries %}
+| Trait | Status | Confidence | Elo support | Scope | Evidence (experiments) | Evidence (tournaments) |
+|---|---|---|---|---|---|---|
+{% for e in entries %}
+| {{ e.trait }} | {{ e.status }} | {{ e.confidence }} | {{ e.elo_support if e.elo_support is not none else "n/a" }} | {{ e.scope or "_unset_" }} | {% if e.evidence_experiments %}{% for exp_id in e.evidence_experiments %}[[{{ exp_id }}]]{% if not loop.last %}, {% endif %}{% endfor %}{% else %}_none_{% endif %} | {% if e.evidence_tournaments %}{% for tnm_id in e.evidence_tournaments %}[[{{ tnm_id }}]]{% if not loop.last %}, {% endif %}{% endfor %}{% else %}_none_{% endif %} |
+{% endfor %}
+{% else %}
+_No validated traits recorded yet._
+{% endif %}
+
+## Notes (human)

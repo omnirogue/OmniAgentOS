@@ -1,0 +1,479 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://omniagentos.local/schema/loops/envelope-v1.1.json",
+  "title": "Loop artifact envelope v1.1",
+  "description": "MINIMAL interop surface. One artifact in inquiries/, findings/, proposals/, or candidates/. House doctrine (review verdicts, carrier tables, falsifiers) is NOT here - it lives in profile/omniagentos.schema.json as an optional overlay. Artifacts are immutable after creation; state transitions are ledger events. See CONTRACT.md.",
+  "type": "object",
+  "required": [
+    "id",
+    "kind",
+    "title",
+    "created_at",
+    "producer",
+    "payload"
+  ],
+  "additionalProperties": true,
+  "properties": {
+    "contract": {
+      "type": "string",
+      "description": "e.g. \"v1.1\""
+    },
+    "id": {
+      "type": "string",
+      "pattern": "^sha256:[0-9a-f]{64}$",
+      "description": "sha256 of RFC 8785 (JCS) canonicalization of `payload`. Use a JCS library; hand-rolled 'sorted keys' canonicalization differs on floats/unicode and silently defeats dedup."
+    },
+    "kind": {
+      "enum": [
+        "inquiry",
+        "finding",
+        "proposal",
+        "candidate"
+      ]
+    },
+    "title": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 200
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "priority": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 3,
+      "default": 2,
+      "description": "OPTIONAL. 0=bottleneck, 1=fix, 2=normal (default), 3=background. Lower is claimed/built sooner. Absent is treated as 2 everywhere -- legacy envelopes with no `priority` field remain valid and process as normal. See CONTRACT.md \u00a73 and \u00a76."
+    },
+    "producer": {
+      "type": "object",
+      "required": [
+        "role"
+      ],
+      "additionalProperties": true,
+      "properties": {
+        "role": {
+          "enum": [
+            "planner",
+            "reviewer",
+            "implementer",
+            "external"
+          ]
+        },
+        "actor": {
+          "type": "string",
+          "description": "process, model, or person"
+        }
+      }
+    },
+    "base_sha": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{40}$",
+      "description": "FULL 40-char SHA. Abbreviations have collided on this estate."
+    },
+    "head_sha": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{40}$",
+      "description": "Immutable candidate identity. The branch is only a convenience ref and may disappear; if it exists it must still resolve to this exact commit."
+    },
+    "branch": {
+      "type": "string"
+    },
+    "paths": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "EVERY file touched. Integration's conflict graph is built from this; understating it is a correctness bug, not a nit. Left unconstrained (no minItems) HERE at the shared top-level property, because `kind: proposal` legitimately declares `paths: []` under the host-config escape hatch (payload.landing_surface = 'host-config'; see the `allOf` proposal branch). `kind: candidate` has no such hatch, so its own `allOf` branch overrides this property with `minItems: 1` locally."
+    },
+    "supersedes": {
+      "type": "string",
+      "pattern": "^sha256:[0-9a-f]{64}$"
+    },
+    "evidence": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "claim",
+          "verified_by"
+        ],
+        "additionalProperties": true,
+        "properties": {
+          "claim": {
+            "type": "string"
+          },
+          "verified_by": {
+            "enum": [
+              "execution",
+              "reading"
+            ],
+            "description": "A 'reading' may never carry a blocker."
+          },
+          "command": {
+            "type": "string"
+          },
+          "exit_code": {
+            "type": "integer"
+          },
+          "result": {
+            "type": "string"
+          },
+          "receipt": {
+            "type": "string",
+            "description": "path under receipts/ for bulk output"
+          }
+        },
+        "if": {
+          "properties": {
+            "verified_by": {
+              "const": "execution"
+            }
+          }
+        },
+        "then": {
+          "required": [
+            "command",
+            "exit_code"
+          ]
+        }
+      }
+    },
+    "payload": {
+      "type": "object",
+      "description": "Kind-specific body. THE ONLY THING HASHED INTO id."
+    }
+  },
+  "allOf": [
+    {
+      "$comment": "inquiry - the reverse edge. A QUESTION, not a fix. Deliberately cheap.",
+      "if": {
+        "properties": {
+          "kind": {
+            "const": "inquiry"
+          }
+        },
+        "required": [
+          "kind"
+        ]
+      },
+      "then": {
+        "properties": {
+          "payload": {
+            "type": "object",
+            "required": [
+              "area",
+              "observation",
+              "why_not_a_fix"
+            ],
+            "additionalProperties": true,
+            "properties": {
+              "area": {
+                "type": "string"
+              },
+              "observation": {
+                "type": "string"
+              },
+              "why_not_a_fix": {
+                "type": "string",
+                "description": "What you do NOT know. This field is the point of the artifact: it turns a vague complaint into a research task."
+              },
+              "evidence_refs": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "urgency": {
+                "enum": [
+                  "low",
+                  "normal",
+                  "high"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "$comment": "finding - observed breakage. `class` is OPTIONAL by design: an external CI or telemetry harvester often cannot classify, and a wrong class is worse than none. Whoever picks the finding up must classify before acting on it.",
+      "if": {
+        "properties": {
+          "kind": {
+            "const": "finding"
+          }
+        },
+        "required": [
+          "kind"
+        ]
+      },
+      "then": {
+        "properties": {
+          "payload": {
+            "type": "object",
+            "required": [
+              "symptom"
+            ],
+            "additionalProperties": true,
+            "properties": {
+              "symptom": {
+                "type": "string"
+              },
+              "class": {
+                "enum": [
+                  "candidate-defect",
+                  "instrument-error",
+                  "blocked-on-human",
+                  "stale-base",
+                  "answered"
+                ]
+              },
+              "source": {
+                "type": "string",
+                "description": "e.g. pr-review-comment, failing-test, telemetry, human"
+              },
+              "source_ref": {
+                "type": "string",
+                "description": "e.g. PR #52 review comment URL"
+              },
+              "repro": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "$comment": "proposal - a plan awaiting an Implementer. Interop-required: `problem`, `implementation_plan`, and a NON-EMPTY top-level `paths`. `paths` was optional here until 2026-08-08, which is the whole defect: the Implementer builds its parallel-landing conflict graph from `paths` and refuses a proposal without one, while every machine reader - this schema, CONTRACT.md, bridge/validate_envelope.py - treated the absent field as fine. 13 of 36 queued proposals carried an empty `paths` and 10 of 14 replan refusals were for exactly that. An abnormal condition must not read as a favourable value. File proposals with bridge/file_proposal.py, which checks the rules this schema cannot express (paths naming real files, lane coverage, understatement against a branch or PR diff).",
+      "if": {
+        "properties": {
+          "kind": {
+            "const": "proposal"
+          }
+        },
+        "required": [
+          "kind"
+        ]
+      },
+      "then": {
+        "properties": {
+          "payload": {
+            "type": "object",
+            "required": [
+              "problem",
+              "implementation_plan"
+            ],
+            "additionalProperties": true,
+            "properties": {
+              "new_paths": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "description": "The subset of `paths` this plan CREATES. Declaring them is what lets a writer-side check refuse a path that names nothing - the pre-rename-name trap, where a plan targeted PROMPT-repair-loop.md months after commit 0000000 renamed it - without also refusing every legitimate new file."
+              },
+              "lanes": {
+                "type": "array",
+                "minItems": 1,
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "paths"
+                  ],
+                  "additionalProperties": true,
+                  "properties": {
+                    "paths": {
+                      "type": "array",
+                      "minItems": 1,
+                      "items": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "description": "The files THIS lane owns. Lanes are the parallelism: a lane with no files cannot be shown disjoint from its siblings, so the file-disjointness asserted in known_conflicts is unverifiable. The union of all lanes must equal top-level `paths`."
+                    }
+                  }
+                }
+              },
+              "problem": {
+                "type": "string"
+              },
+              "implementation_plan": {
+                "type": "string"
+              },
+              "answers_inquiry": {
+                "type": "string",
+                "pattern": "^sha256:[0-9a-f]{64}$"
+              },
+              "expected_benefit": {
+                "type": "string"
+              },
+              "effort": {
+                "enum": [
+                  "xs",
+                  "s",
+                  "m",
+                  "l",
+                  "xl"
+                ]
+              },
+              "risk": {
+                "enum": [
+                  "low",
+                  "medium",
+                  "high"
+                ]
+              },
+              "dependencies": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "rollback": {
+                "type": "string"
+              },
+              "success_metrics": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "$comment": "`paths` is required and non-empty UNLESS the plan explicitly declares payload.landing_surface = 'host-config'. That escape hatch exists because some real work touches no repo file at all - proposal sha256:e413dda1 is System Settings > Spotlight privacy entries and Backblaze exclusions, and its own payload says 'no code, no merge train'. Forcing it to invent paths would put phantom nodes in the conflict graph, which is worse than none. But the hatch must be DECLARED and ENUMERATED: an absent `paths` is indistinguishable from a forgotten one, which is the defect this schema was tightened to close. host-config work carries `touches` instead, and the Implementer must serialise it rather than schedule it in parallel, because it has no conflict-graph nodes to be disjoint on.",
+        "allOf": [
+          {
+            "if": {
+              "required": [
+                "payload"
+              ],
+              "properties": {
+                "payload": {
+                  "required": [
+                    "landing_surface"
+                  ],
+                  "properties": {
+                    "landing_surface": {
+                      "const": "host-config"
+                    }
+                  }
+                }
+              }
+            },
+            "then": {
+              "properties": {
+                "payload": {
+                  "required": [
+                    "touches",
+                    "landing_surface_rationale"
+                  ],
+                  "properties": {
+                    "touches": {
+                      "type": "array",
+                      "minItems": 1,
+                      "items": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "description": "What host-config work touches, enumerated. Not repo-relative and NOT conflict-graph nodes - a plist path, a GUI pane, an env var. Enumerated anyway, because 'we could not list it' and 'we did not' must not look the same."
+                    },
+                    "landing_surface_rationale": {
+                      "type": "string",
+                      "minLength": 1,
+                      "description": "Why this work touches no repo file. Stating it is the cost of the exemption."
+                    }
+                  }
+                }
+              }
+            },
+            "else": {
+              "required": [
+                "paths"
+              ],
+              "properties": {
+                "paths": {
+                  "type": "array",
+                  "minItems": 1,
+                  "items": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "description": "EVERY file the plan will touch, including files it will CREATE. Non-empty is not a style rule: an empty list produces a WRONG schedule (colliding lanes landed in parallel), not merely a slow one."
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "$comment": "candidate - a branch ready to land. These requirements ARE interop-critical: Integration cannot schedule or verify without them.",
+      "if": {
+        "properties": {
+          "kind": {
+            "const": "candidate"
+          }
+        },
+        "required": [
+          "kind"
+        ]
+      },
+      "then": {
+        "required": [
+          "base_sha",
+          "head_sha",
+          "branch",
+          "paths",
+          "evidence"
+        ],
+        "properties": {
+          "paths": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "string",
+              "minLength": 1
+            },
+            "description": "A candidate has no host-config escape hatch (unlike a proposal): `paths` must be PRESENT (see `required` above) AND non-empty. Before Lane C, `required` alone let `paths: []` validate for a candidate -- Integration's conflict graph then read it as file-disjoint from everything, corrupting the schedule."
+          },
+          "evidence": {
+            "type": "array",
+            "minItems": 1,
+            "contains": {
+              "properties": {
+                "verified_by": {
+                  "const": "execution"
+                }
+              },
+              "required": [
+                "verified_by"
+              ]
+            },
+            "description": "At least one entry must be verified_by: execution - this is what makes Integration's admission promise machine-checkable."
+          },
+          "payload": {
+            "type": "object",
+            "$comment": "`fixes` is OPTIONAL, per CONTRACT.md §3: a candidate requires base_sha, immutable head_sha, branch, paths, and >=1 execution evidence; the fix narrative and everything else is optional (Ruling #3, 2026-08-09).",
+            "additionalProperties": true,
+            "properties": {
+              "fixes": {
+                "type": "string"
+              },
+              "resolves": {
+                "type": "string",
+                "pattern": "^sha256:[0-9a-f]{64}$",
+                "description": "the finding or proposal this closes"
+              }
+            }
+          }
+        }
+      }
+    }
+  ]
+}

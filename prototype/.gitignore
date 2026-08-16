@@ -1,0 +1,32 @@
+# Byte-compiled / caches
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Build artefacts
+build/
+dist/
+*.egg-info/
+.eggs/
+
+# Environments
+.venv/
+venv/
+
+# Runtime state a loop writes where it is run from. None of these are ever
+# created at import time; they appear only once an adapter is pointed at a path.
+*.sqlite3
+*.sqlite3-wal
+*.sqlite3-shm
+*.db
+*.lease
+events-*.jsonl
+.selfloop/
+
+# Editor / OS
+.DS_Store
+.idea/
+.vscode/

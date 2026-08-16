@@ -1,0 +1,21 @@
+{
+  "id": "example-api-liveness",
+  "company": "omniagentos",
+  "kind": "mechanical-automation",
+  "host": "localhost",
+  "repo": "OmniAgentOS",
+  "what_it_does": "Probes the local OmniAgentOS API health endpoint so the capability map has a liveness row for the control plane.",
+  "why_it_matters": "If the API is down, every approval, board, and session surface is blind; this row makes that failure visible within one cadence.",
+  "blast_radius": "Dashboard and runner coordination degrade until the API returns.",
+  "verification": {
+    "type": "command",
+    "argv": ["curl", "-fsS", "http://127.0.0.1:8485/health"]
+  },
+  "exit_semantics": {"0": "ok", "22": "down", "7": "down"},
+  "cadence_seconds": 300,
+  "staleness_slo_seconds": 900,
+  "escalation_tier": "notify",
+  "owner": "emp_owner",
+  "last_verified": null,
+  "last_status": "cannot_evaluate"
+}

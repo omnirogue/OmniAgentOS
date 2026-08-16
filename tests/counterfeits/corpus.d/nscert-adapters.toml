@@ -1,0 +1,19 @@
+# corpus.d/nscert-adapters.toml — North Star adapter failure modes.
+
+[[counterfeit]]
+id = "cf-nscert-absent-junit-passes"
+patch = "patches/cf-nscert-absent-junit-passes.patch"
+rationale = "Turns an expected manifest check that is absent from JUnit into PASS. This is the adapter's highest-risk favorable-absence regression: a deselected, renamed, or never-executed hard gate would certify without producing evidence. The guard binds both halves of the rule by requiring NOT_EVALUABLE(no_writer_evidence) and the resulting hard-gate INCONCLUSIVE run verdict."
+must_fail = [
+  "tests/scripts/test_nscert_record_results.py::test_absent_junit_case_is_not_evaluable_and_gates_inconclusive",
+]
+failure_re = "CheckVerdict.PASS|no_writer_evidence|assert.*PASS"
+
+[[counterfeit]]
+id = "cf-nscert-drops-not-evaluable-gaps"
+patch = "patches/cf-nscert-drops-not-evaluable-gaps.patch"
+rationale = "Narrows the dry-run gap walk to explicit FAIL rows and silently drops NOT_EVALUABLE rows. The mutation leaves ordinary red-test gap emission green while erasing exactly the missing-writer and missing-precondition findings North Star is expected to expose; the guard proves an absent hard gate still becomes a normalized dry-run gap."
+must_fail = [
+  "tests/scripts/test_nscert_emit_gaps.py::test_not_evaluable_eval_row_always_emits_gap",
+]
+failure_re = "StopIteration|NSC-C14-ABSENT|NOT_EVALUABLE"

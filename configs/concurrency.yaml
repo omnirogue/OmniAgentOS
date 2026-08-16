@@ -1,0 +1,42 @@
+# OmniAgentOS concurrency dials (separate product).
+# Raise only after isolation drill green + shadow soak. Auto-rollback guidance
+# is documented in docs/architecture/concurrency-ramp.md.
+#
+# AUTHORITY (fleet-scale-200): configs/swarm.yaml is AUTHORITATIVE for the three
+# `fleet:` keys that appear in both files (max_sessions_global,
+# reserved_small_task_slots, max_concurrent_swarms). No code reads THIS file --
+# limit_state.fleet_available() and intake.service read configs/swarm.yaml. The
+# duplicates below exist so the ramp runbook shows the whole dial board in one
+# place; tests/routing/test_fleet_scale.py fails if the two files ever drift.
+# Change swarm.yaml first, then mirror here.
+#
+# The two keys THIS file owns outright (not present in swarm.yaml):
+#   runner.concurrency        mirrors the OMNIAGENTOS_RUNNER_CONCURRENCY env var
+#                             the runner actually reads (runner/__main__.py:23,
+#                             runner/core.py:357). Documentation of the intended
+#                             value -- the launch script exports the live one.
+#   max_sessions_per_project  per-project fairness cap. DOCUMENTED, NOT ENFORCED:
+#                             no scheduler reads it yet (fleet admission is
+#                             global-only via fleet_available()). See
+#                             `fleet_preflight` output, which reports it as
+#                             advisory.
+
+runner:
+  # OMNIAGENTOS_RUNNER_CONCURRENCY — ramped 4 → 8 → 16 for the 200-agent fleet.
+  concurrency: 16
+
+fleet:
+  # MIRROR of configs/swarm.yaml (authoritative). Keep in lockstep.
+  max_sessions_global: 260
+  reserved_small_task_slots: 40
+  max_concurrent_swarms: 20
+  # Per-project fairness so one hot project cannot starve others.
+  # 25 x 10 projects = 250 <= max_sessions_global, so 10 saturated projects can
+  # still coexist; 20 concurrent projects contend, which is the intent (fairness
+  # cap, not a reservation). ADVISORY ONLY today — see the AUTHORITY note above.
+  max_sessions_per_project: 25
+
+rollback:
+  on_scope_conflict_spike: true
+  on_database_locked: true
+  cooldown_minutes: 30

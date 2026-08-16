@@ -1,0 +1,20 @@
+# source: {{ title }}
+
+[[model-intelligence]] · capability domain
+
+{{ description }}
+
+**Current best:** {% if ranking %}[[{{ ranking[0].key }}|{{ ranking[0].title }}]] ({{ ranking[0].score }}){% else %}_no data_{% endif %}
+
+## Ranking
+
+| # | Model | Score | Basis |
+|---|---|---|---|
+{% for r in ranking %}| {{ loop.index }} | [[{{ r.key }}\|{{ r.title }}]] | {{ r.score }} | {{ r.basis | join(', ') }} |
+{% endfor %}
+
+{% if blend %}Live evidence blended into this domain: {% for b in blend %}[[{{ b.key }}|{{ b.title }}]] (w={{ b.weight }}){% if not loop.last %} · {% endif %}{% endfor %}.
+{% else %}Scores in this domain are curated priors{% if extra_basis %} adjusted by {{ extra_basis }}{% endif %}.
+{% endif %}
+
+## Notes (human)

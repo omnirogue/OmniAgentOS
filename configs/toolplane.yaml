@@ -1,0 +1,20 @@
+# Toolplane knobs: deferred tool catalog + resource-aware scheduler.
+# Both ship DARK. `mode: off` means byte-identical behaviour to not having this file.
+# Env overrides (bidirectional, and they win over this file):
+#   OMNIAGENTOS_TOOL_CATALOG=off|shadow|enforce
+#   OMNIAGENTOS_TOOL_SCHEDULER=off|shadow|enforce
+
+tool_catalog:
+  mode: "off"
+  # 3-5 high-frequency tools that are ALWAYS loaded in full, never deferred.
+  core_tools: []
+  # Full tool definitions returned per deferred-search query.
+  max_definitions: 5
+  # Small-catalog bypass: at or below EITHER bound, load everything, defer nothing.
+  small_catalog_max_tools: 10
+  small_catalog_max_tokens: 10000
+
+tool_scheduler:
+  mode: "off"
+  # Maximum calls admitted into one concurrent wave.
+  concurrency_budget: 4

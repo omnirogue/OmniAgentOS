@@ -1,0 +1,3 @@
+id: "task_002"
+prompt: "Write a Python function fibonacci(n: int) -> int that returns the n-th Fibonacci number (0-indexed, fibonacci(0)=0, fibonacci(1)=1). Provide a test case."
+discipline: "code-changes"

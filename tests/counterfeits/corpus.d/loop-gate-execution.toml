@@ -1,0 +1,77 @@
+# Counterfeit fragment — lane/loop-gate-execution.
+#
+# One entry per invariant, and each one is a mutation that leaves the loop
+# WORKING. That is the signature of this whole defect class: the loop still
+# ticks, still parks, still reports; only the verdict quietly stops being
+# independent. Every entry below would have been green under the code that
+# shipped ten self-graded acceptances on w3-health-monitor.
+
+[[counterfeit]]
+id = "cf-loop-verdict-from-self-report"
+patch = "patches/cf-loop-verdict-from-self-report.patch"
+rationale = """Restores the shipped defect exactly: the firing tick stamps `finished_at`
+and writes the worker's own status into `gate_passed`/`accepted`. The row is then born
+settled, so `settle_pending` — the only code that executes `gate_config.command` — skips
+it forever and the routine's declared gate never runs. Nothing looks broken: the loop
+launches, the worker reports, the row is green. This is the live state that produced
+rtn_1e5567b9f3314a2c9d76 at 10 runs / 10 accepted / acceptance 1.0 with ten parks, zero
+heals, and a gate that had never executed once."""
+must_fail = [
+  "tests/scheduler/test_loop_gate_execution.py::test_a_loop_tick_records_a_run_id_and_leaves_the_verdict_to_settlement",
+  "tests/scheduler/test_loop_gate_execution.py::test_a_loops_declared_gate_command_actually_executes",
+  "tests/scheduler/test_loop_gate_execution.py::test_a_loop_reporting_completed_whose_gate_fails_settles_adverse",
+  "tests/scheduler/test_loop_gate_execution.py::test_doctrine_no_self_report_can_produce_an_acceptance_without_gate_evidence[completed]",
+]
+failure_re = "the declared gate did not execute|the firing tick may never write a gate verdict|accepted on the loop's word alone|and refuted|assert"
+
+[[counterfeit]]
+id = "cf-loop-runs-excluded-from-settlement"
+patch = "patches/cf-loop-runs-excluded-from-settlement.patch"
+rationale = """Puts the INNER join back on the settlement candidate query. A built-in
+tick has no `runs` row, so an inner join silently drops every loop run from settlement —
+the structural half of the original defect, and the one that leaves no trace: the rows
+stay PENDING (finished_at NULL) forever, no gate ever runs, and every row-level
+assertion about how a claim is recorded still passes. The self-report column is still
+read, still written, still queryable; it just never reaches a gate."""
+must_fail = [
+  "tests/scheduler/test_loop_gate_execution.py::test_a_loops_declared_gate_command_actually_executes",
+  "tests/scheduler/test_loop_gate_execution.py::test_a_loop_reporting_completed_whose_gate_fails_settles_adverse",
+  "tests/scheduler/test_loop_gate_execution.py::test_a_park_or_idle_still_settles_neutral_when_the_gate_passes[parked-loop_parked_awaiting_human]",
+  "tests/scheduler/test_loop_gate_execution.py::test_a_routine_whose_declared_gate_fails_by_construction_auto_pauses",
+]
+failure_re = "the declared gate did not execute|the gate really ran|and refuted|assert"
+
+[[counterfeit]]
+id = "cf-failing-gate-swallowed-by-a-non-result"
+patch = "patches/cf-failing-gate-swallowed-by-a-non-result.patch"
+rationale = """Drops the `gate_passed is not False` guard from the neutral overlay, so a
+loop that parks is settled NEUTRAL even when its declared gate RAN AND FAILED. It reads
+like a simplification and it re-opens the exact hiding place the taxonomy was built to
+close: a loop that parks every tick with a red gate becomes permanently invisible —
+excluded from the denominator, never auto-paused, dashboard green. Neutrality exists to
+protect a non-RESULT, never to protect a broken loop, and a gate that ran and failed is
+evidence of failure rather than absence of evidence."""
+must_fail = [
+  "tests/scheduler/test_loop_gate_execution.py::test_a_failing_gate_condemns_even_a_non_result",
+]
+failure_re = "assert"
+
+[[counterfeit]]
+id = "cf-uncorroborated-scored-as-failure"
+patch = "patches/cf-uncorroborated-scored-as-failure.patch"
+rationale = """Scores a self-reported tick with NO gate evidence as a FAILURE ("if we
+could not verify it, it does not count"). Superficially the strict, safe choice; in fact
+the 2026-07-31 defect re-armed on the new path (record/settle rollup 94e34b23,
+fire-time floor 1a4226a9, pulse settled-definition divergence, no-gate settlement
+a6c0cc7e — four auto-pause incidents in one day). Absence of evidence is not evidence of
+failure: on an installation with no gate workspace, or during the seconds a workspace is
+dirty, every healthy loop would auto-pause itself for behaving correctly. Absence must
+be LOUD (NULL/NULL is what the sentinel's gate_settlement streak check alarms on) and
+never unfavourable."""
+must_fail = [
+  "tests/scheduler/test_loop_gate_execution.py::test_no_gate_workspace_settles_null_null_never_zero[completed]",
+  "tests/scheduler/test_loop_gate_execution.py::test_no_gate_workspace_settles_null_null_never_zero[parked]",
+  "tests/scheduler/test_loop_gate_execution.py::test_a_dirty_gate_workspace_is_absence_not_failure",
+  "tests/scheduler/test_loop_gate_execution.py::test_a_park_or_idle_still_settles_neutral_when_the_gate_passes[idle-loop_idle_no_work]",
+]
+failure_re = "a dirty workspace judged nothing|a non-result is never an acceptance|assert"

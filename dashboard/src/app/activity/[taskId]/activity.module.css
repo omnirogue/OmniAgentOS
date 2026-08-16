@@ -1,0 +1,317 @@
+/* activity.module.css */
+
+.stepper {
+  display: flex;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  gap: var(--space-2);
+  overflow-x: auto;
+}
+
+.stepperItem {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--text-small);
+  white-space: nowrap;
+}
+
+.stepperItemActive {
+  color: var(--accent);
+}
+
+.stepperItemCompleted {
+  color: var(--text);
+}
+
+.stepperItemPending {
+  color: var(--text-muted);
+}
+
+.stepperBadge {
+  align-items: center;
+  border-radius: 999px;
+  color: var(--accent-text);
+  display: inline-flex;
+  height: 20px;
+  justify-content: center;
+  width: 20px;
+}
+
+.stepperBadgeActiveCompleted {
+  background: var(--accent);
+}
+
+.stepperBadgePending {
+  background: var(--surface-2);
+  color: var(--text-body, var(--text-muted));
+}
+
+.stepperDivider {
+  color: var(--border);
+}
+
+.progressHeader {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin-bottom: var(--space-2);
+}
+
+.progressBar {
+  width: 100%;
+  accent-color: var(--accent);
+}
+
+.cardsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: var(--space-4);
+}
+
+.cardTitle {
+  font-size: var(--text-body);
+  margin-top: 0;
+}
+
+.errorMessage {
+  color: var(--danger);
+  font-size: var(--text-small);
+}
+
+.chatLog {
+  display: grid;
+  gap: var(--space-3);
+  margin-bottom: var(--space-3);
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.chatItem {
+  padding-bottom: var(--space-2);
+  border-bottom: 1px solid var(--border);
+}
+
+.chatMeta {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-bottom: var(--space-1);
+}
+
+.chatMetaTime {
+  font-size: var(--text-small);
+  color: var(--text-muted);
+}
+
+.chatText {
+  margin: 0;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.guidanceContainer {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.textarea {
+  box-sizing: border-box;
+  padding: var(--space-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  resize: vertical;
+}
+
+.textNotice {
+  margin-bottom: var(--space-2);
+}
+
+.workbookCode {
+  padding: var(--space-3);
+  background: var(--overlay);
+  border-radius: var(--radius-md);
+  overflow: auto;
+  max-height: 600px;
+}
+
+.workbookFaint {
+  color: var(--text-muted);
+  font-size: var(--text-small);
+}
+
+.backLink {
+  color: var(--text-muted);
+  text-decoration: none;
+}
+
+.headerActions {
+  display: inline-flex;
+  gap: var(--space-2);
+}
+
+.badgeRow {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+}
+
+.textPriority {
+  color: var(--text-muted);
+  font-size: var(--text-small);
+}
+
+.textFaint {
+  color: var(--text-muted);
+  font-size: var(--text-small);
+  margin: var(--space-2) 0 0;
+}
+
+.grid {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.flexRow {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.linkApprovals {
+  font-size: var(--text-small);
+  font-weight: 600;
+}
+
+.textMutedSm {
+  color: var(--text-muted);
+  font-size: var(--text-small);
+}
+
+.linkSession {
+  margin-left: auto;
+  font-size: var(--text-small);
+}
+
+.textFaintMargin {
+  color: var(--text-muted);
+  font-size: var(--text-small);
+  margin: var(--space-2) 0 0;
+}
+
+.progressLabel {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin-bottom: var(--space-2);
+}
+
+.progressElement {
+  width: 100%;
+  accent-color: var(--accent);
+}
+
+.todoList {
+  display: grid;
+  gap: var(--space-2);
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.todoItem {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+}
+
+.labelGuidance {
+  display: block;
+  font-weight: 600;
+  margin-bottom: var(--space-2);
+}
+
+.steerContainer {
+  align-items: center;
+  display: flex;
+  gap: var(--space-3);
+  margin-top: var(--space-2);
+}
+
+.sidebarGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: var(--space-4);
+}
+
+.headingMd {
+  font-size: var(--text-body);
+  margin-top: 0;
+}
+
+.badgeContainer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.activityGrid {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.activityItem {
+  border-bottom: 1px solid var(--border);
+  padding-bottom: var(--space-2);
+}
+
+.activityItem:last-child {
+  border-bottom: none;
+}
+
+.todoItemPending {
+  opacity: 0.6;
+}
+
+.todoContentCompleted {
+  text-decoration: line-through;
+}
+
+.todoContentInProgress {
+  font-weight: 600;
+}
+
+.todoContentNormal {
+  font-weight: 400;
+}
+
+.filesTouchedList {
+  margin: 0;
+  padding-left: var(--space-4);
+}
+
+.activityItemMeta {
+  color: var(--text-muted);
+  display: flex;
+  font-size: var(--text-small);
+  gap: var(--space-2);
+}
+
+.activityItemText {
+  margin: var(--space-1) 0 0;
+}
+
+.cardMarginTop {
+  margin-top: var(--space-3);
+}
+
+.steerTextarea {
+  box-sizing: border-box;
+  min-height: 80px;
+  padding: var(--space-2);
+  resize: vertical;
+  width: 100%;
+}

@@ -1,0 +1,92 @@
+# Low-cost TEST profile — bench/campaign runs only. NEVER a production default.
+#
+# Why this exists: benchmark campaigns burn subscription rate-limit headroom (and,
+# on any metered account, real money). This profile routes swarm workers, planner
+# and reviewers to cheap OpenRouter models so real work keeps its subscription
+# capacity. Activate with OMNIAGENTOS_TEST_PROFILE=1 (absent = byte-identical
+# production routing).
+#
+# Budget ceiling set by the owner: <= $2.00 / 1M input, <= $8.00 / 1M output.
+# Prices below are USD per 1M tokens, pulled live from the OpenRouter models API
+# on 2026-07-26 — re-check before trusting them, vendors move prices.
+#
+# HARD POLICY (unchanged, enforced by omniagentos/routing/api_policy.py and
+# omniagentos/routing/test_profile.py):
+#   * NEVER route claude/anthropic lineage via OpenRouter or any paid API.
+#   * NEVER route gpt-* lineage via a paid API.
+#   Those two lineages stay on their subscription CLIs or do not run at all.
+#   Everything listed here is a non-claude, non-gpt model — verify any addition.
+#   OpenRouter biller for every enabled role route (billing_provider=openrouter,
+#   transport=api). Exactly seven roles; ≥3 reviewer lineages.
+
+test_profile:
+  enabled_by_env: OMNIAGENTOS_TEST_PROFILE
+
+  # Role -> model. Exactly seven roles form the immutable validated snapshot.
+  # EVERY id below is verified to pass omniagentos.routing.api_policy on the
+  # openrouter path and resolves an authoritative lineage in modelintel.
+  # Reviewer-class roles (verifier, strong_synthesizer, cross_reviewer) span
+  # deepseek + kimi + glm = three lineages.
+  roles:
+    # Bulk implementation work.
+    fast_implementer:
+      model: qwen/qwen3-coder-flash        # $0.20 / $0.97   ctx 1M
+      kind: implementer
+    standard_implementer:
+      model: deepseek/deepseek-v4-pro      # $0.43 / $0.87   ctx 1M
+      kind: implementer
+    # Planner emits structured JSON — needs reliable schema adherence, so this
+    # is the one role that pays for a stronger model.
+    strong_planner:
+      model: x-ai/grok-4.3                 # $1.25 / $2.50   ctx 1M
+      kind: planner
+    # Reviewer judgement quality matters most (three lineages across reviewers).
+    verifier:
+      model: deepseek/deepseek-v4-pro      # $0.43 / $0.87   ctx 1M
+      kind: reviewer
+    strong_synthesizer:
+      model: moonshotai/kimi-k2.6          # registered kimi lineage
+      kind: reviewer
+    # Cheapest usable rung for trivial/mechanical tasks (registered gemini).
+    bulk_cheap:
+      model: google/gemini-3.5-flash-lite  # $0.30 / $2.50   ctx 1M
+      kind: bulk
+    # Third reviewer lineage for the three_reviewer_lineages gate.
+    cross_reviewer:
+      model: z-ai/glm-5.2                  # $0.67 / $2.10   ctx 1M
+      kind: reviewer
+
+  # Substitutions applied when the profile is on: the LEFT side is what
+  # production routing would have picked; the RIGHT side is what runs instead.
+  # Right-side targets used by the enabled role map must be registered.
+  substitutions:
+    grok-4.5:        x-ai/grok-4.3              # same lineage, 1/3 the price
+    gpt-5.6-sol:     deepseek/deepseek-v4-pro
+    gpt-5.6-terra:   qwen/qwen3-coder-flash
+    gpt-5.6-luna:    google/gemini-3.5-flash-lite
+    kimi-k3:         moonshotai/kimi-k2.6
+    # gemini-3.6-flash is $1.50/$7.50 on OpenRouter — inside the ceiling but the
+    # priciest option here. Prefer the existing LiteLLM loopback (:4000) which
+    # bills the direct Gemini key instead; only fall to OpenRouter if it is down.
+    gemini-3.6-flash: gemini-3.6-flash@litellm
+
+  # Cheaper/stronger candidates noted for future promotion (not in active map).
+  pending_registration:
+    - moonshotai/kimi-k2.7-code   # $0.73 / $3.50  ctx 262k
+    - deepseek/deepseek-v4-flash  # $0.14 / $0.28  ctx 1M
+
+  # Claude/Fable have NO substitute — they are subscription-only by policy.
+  # Under this profile the planner chain SKIPS them entirely rather than
+  # substituting, so a test campaign never consumes claude capacity:
+  planner_chain_test:
+    - x-ai/grok-4.3                     # $1.25 / $2.50  ctx 1M
+    - deepseek/deepseek-v4-pro          # $0.43 / $0.87  ctx 1M
+    - google/gemini-3.5-flash-lite      # $0.30 / $2.50  ctx 1M
+    - z-ai/glm-5.2                      # $0.67 / $2.10  ctx 1M
+
+  # Spend guard: campaigns must not silently run away.
+  budget:
+    max_usd_per_run: 3.00
+    max_usd_per_campaign: 30.00
+    # Above the campaign cap the scheduler must refuse new runs, not degrade.
+    on_exceeded: refuse

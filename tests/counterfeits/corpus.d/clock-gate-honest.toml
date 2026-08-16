@@ -1,0 +1,255 @@
+# Counterfeit fragment — lane/clock-gate-honest.
+#
+# The grandfather clock gate is the reference implementation every future loop
+# will copy, and it shipped in 0249b28a with three ways of being green while
+# knowing nothing. Two independent cross-lineage reviews then found three more
+# in the FIX. All of them were reproduced by hand before these entries were
+# written; each patch below restores one, in the shape a future reader would
+# actually reach for — every rationale is a real argument, because a counterfeit
+# nobody would plausibly write proves nothing about the guard.
+#
+# The `must_fail` targets all live in tests/test_grandfather_clock_gate_selftest.py
+# for two mechanical reasons: the harness runs node ids WITHOUT `-o addopts=`
+# and the gate file itself is `e2e`-marked (it reads the operator's filed
+# artifact), and the harness executes every node id on the PRODUCTION venv, so
+# a target under loops/tests/ could not be imported at all. That second reason
+# is why the instance's own guarantees are graded in the selftest.
+
+[[counterfeit]]
+id = "cf-clock-gate-latest-dated-dir-wins"
+patch = "patches/cf-clock-gate-latest-dated-dir-wins.patch"
+rationale = """Restores the shipped defect: `get_artifact_path` returns the artifact in the
+newest dated directory with no binding to any run — no stamp, no freshness, no agreement
+between the directory's date and the artifact's own. The comment sells it as removing
+ceremony, and on a machine where the loop ran an hour ago it changes nothing visible.
+Reproduced against the merged code with Kimi's attack: `HOME=<fake home>` containing a
+hand-written `Grandfather-Clock-<yesterday>/clock.html` -> 9 passed, stale AND foreign.
+That is not a weak gate, it is an inverted one: if the loop breaks or stops firing,
+yesterday's file keeps the gate green, settlement records FAVOURABLE, acceptance stays
+1.0, and the >=3-judged-adverse auto-pause floor (routines.py) can never trip. A dead
+loop runs green forever, and every loop that copies this template inherits it."""
+must_fail = [
+  "tests/test_grandfather_clock_gate_selftest.py::test_gate_refuses_an_unstamped_artifact",
+  "tests/test_grandfather_clock_gate_selftest.py::test_gate_refuses_an_artifact_from_a_previous_clock_day",
+  "tests/test_grandfather_clock_gate_selftest.py::test_gate_refuses_a_stamp_that_disagrees_with_its_directory",
+  "tests/test_grandfather_clock_gate_selftest.py::test_gate_refuses_a_future_dated_stamp",
+  "tests/test_grandfather_clock_gate_selftest.py::test_gate_refuses_an_artifact_stamped_by_another_instance",
+  "tests/test_grandfather_clock_gate_selftest.py::test_gate_refuses_an_artifact_with_no_run_id",
+  "tests/test_grandfather_clock_gate_selftest.py::test_gate_refuses_a_copy_of_a_valid_artifact",
+]
+failure_re = "DID NOT RAISE|assert"
+
+[[counterfeit]]
+id = "cf-clock-static-grading-defanged"
+patch = "patches/cf-clock-static-grading-defanged.patch"
+rationale = """Empties the static grading of the clock's time expression, with the
+argument that node already executes the clock in three timezones across a DST boundary.
+The static analysis is no longer a grading PATH — a node-less gate now refuses rather
+than falling back to it — but it is still the check that names the two defects which ARE
+decidable from the source, and it is the only thing standing between a reviewer's patch
+and a clock that re-parses a locale string. Defanged, the double-conversion clock that
+shipped in 0249b28a and the reviewer's `Date.now() - 4*3600*1000` regression both read as
+clean source, and the only thing left that can catch them is a node binary nobody has
+promised will be there."""
+must_fail = [
+  "tests/test_grandfather_clock_gate_selftest.py::test_static_grading_refuses_a_reparsed_locale_string",
+  "tests/test_grandfather_clock_gate_selftest.py::test_static_grading_refuses_a_hardcoded_offset",
+  "tests/test_grandfather_clock_gate_selftest.py::test_static_grading_refuses_a_clock_that_names_the_zone_only_once",
+]
+failure_re = "the static grading accepted|assert"
+
+[[counterfeit]]
+id = "cf-clock-grading-path-unrecorded"
+patch = "patches/cf-clock-grading-path-unrecorded.patch"
+rationale = """Collapses the behavioural check back to one case with a fixed node id, so
+the grading path stops reaching recorded evidence. The stated reason is real — a node id
+that changes with the toolchain makes two runs look like different gates — and the counts
+stay green either way, which is what makes it tempting. But `gate_runner` discards the
+gate's stdout and deletes its JUnit XML and certification inventory with their scratch
+directory; the only fields that survive into the signed receipt are exit_code, the four
+check counts, deselected_count and node_inventory_digest. Patched, a settlement that
+executed the clock across three zones and a DST boundary and one that graded a single
+instant record byte-identical evidence, and nobody can ever discover that the strong
+check stopped running."""
+must_fail = [
+  "tests/test_grandfather_clock_gate_selftest.py::test_the_grading_path_is_named_in_the_case_ids",
+  "tests/test_grandfather_clock_gate_selftest.py::test_the_two_grading_paths_are_distinguishable_in_recorded_evidence",
+]
+failure_re = "checks_collected must differ|node_inventory_digest must differ|assert"
+
+[[counterfeit]]
+id = "cf-clock-ungraded-settles-green"
+patch = "patches/cf-clock-ungraded-settles-green.patch"
+rationale = """Restores the degrade-and-pass path: with no JS engine, grade the clock's
+SOURCE and settle green. The argument in the comment is the one that was actually
+believed and merged — a missing tool is a defect in the grader's environment, and
+refusing on one manufactures the false-adverse verdicts that auto-paused four routines on
+2026-07-31 — and the RULE is still right. The PREMISE was false. Two reviewers broke it
+independently with two different clocks: every `America/New_York` switched to `UTC` with
+the zone string re-inserted twice as dead code, and hands formatted in `America/Chicago`
+while the readout stays Eastern and a COMMENT supplies the second zone literal. Both
+render the wrong time. Both pass every static rule. Both were measured at 10/10 passed
+with node stripped and 9/9 failed the moment the clock was executed. A grade that any
+wrong clock can wear is not a weaker grade, it is a vacuum with a name."""
+must_fail = [
+  "tests/test_grandfather_clock_gate_selftest.py::test_no_js_engine_refuses_instead_of_passing_an_ungraded_clock",
+]
+failure_re = "DID NOT RAISE|assert"
+
+[[counterfeit]]
+id = "cf-clock-engine-probe-dropped"
+patch = "patches/cf-clock-engine-probe-dropped.patch"
+rationale = """Reduces the engine search back to `shutil.which("node")`: no known-install
+fallback, no capability probe. The circularity objection in the comment is a fair thing
+to think, and this passes on any developer machine, which is what hides it. It breaks in
+both directions. A node built without full ICU answers EVERY `timeZone` with UTC, so the
+gate would compare a UTC rendering against a UTC expectation and certify the exact defect
+it exists to catch — the grader silently agreeing with the counterfeit. And a scheduler
+started with a thin PATH would find no node where the machine plainly has one, turning a
+working install into an ungraded refusal on every tick. "node exists" was never the
+question; "node can resolve America/New_York" is."""
+must_fail = [
+  "tests/test_grandfather_clock_gate_selftest.py::test_a_broken_node_is_a_grader_defect_not_an_artifact_defect",
+]
+failure_re = "assert|AssertionError"
+
+[[counterfeit]]
+id = "cf-clock-settlement-window-restored"
+patch = "patches/cf-clock-settlement-window-restored.patch"
+rationale = """Re-adds the unconditional 3600-second refusal on the stamp's age. It reads
+as defence in depth and it is the rule this gate actually shipped with, which is exactly
+why it will be proposed again. It is a control-plane assumption — how long publish ->
+settlement is allowed to take — enforced as though it were a property of the artifact, so
+a CORRECT clock published at 06:00 and settled at 07:01 by a scheduler that crashed and
+restarted settles ADVERSE. Three of those trip the auto-pause floor, and this repo has
+already paid the bill once: routine_runs 741-749, gates whose own receipts say
+exit_code=0 and 20/20 passed, scored adverse by a clock comparison that measured the
+wrong interval. Staleness is now expressed in the artifact's OWN unit — its clock day —
+and forgery is caught by the mtime disagreeing with the stamp, neither of which can fire
+on an artifact this loop produced."""
+must_fail = [
+  "tests/test_grandfather_clock_gate_selftest.py::test_gate_accepts_a_correct_artifact_whose_settlement_was_delayed",
+]
+failure_re = "assert|AssertionError|refuses the grandfather clock artifact"
+
+[[counterfeit]]
+id = "cf-clock-mtime-corroboration-dropped"
+patch = "patches/cf-clock-mtime-corroboration-dropped.patch"
+rationale = """Drops the check that the file's mtime agrees with the stamp it carries. The
+removal argument is half right, and this rationale used to be wrong about which half:
+`cp -p`, `rsync -a`, `ditto`, `tar xp` and `shutil.copy2` do NOT rewrite the mtime, they
+RESTORE the source's, so an mtime agreeing with a stamp is no evidence of origin against
+those. The other half still stands. The copiers that do rewrite it — plain `cp`, a git
+checkout, a re-render — are the ordinary ones, and against them the disagreement is what
+separates a certified copy from the real thing; the operator's tree has exactly one writer,
+and `publish` takes the instant, renders the stamp and writes the bytes inside one call, so
+the two cannot disagree in an artifact this loop produced. The metadata-preserving copy is
+caught one rule further down, by the inode check (`st_ctime`, the one timestamp no copier
+can restore). Removing THIS rule re-opens run attribution to anyone with `cp`."""
+must_fail = [
+  "tests/test_grandfather_clock_gate_selftest.py::test_gate_refuses_a_copy_of_a_valid_artifact",
+]
+failure_re = "DID NOT RAISE|assert"
+
+[[counterfeit]]
+id = "cf-clock-inode-corroboration-dropped"
+patch = "patches/cf-clock-inode-corroboration-dropped.patch"
+rationale = """Drops the check that the artifact's inode is as old as the stamp it carries,
+with the best argument against it — `st_ctime` moves on ANY inode change, so a chmod, an
+xattr or a hardlink on a perfectly good clock refuses it, and manufacturing adverse
+settlements against correct work is the exact sin this lane exists to undo. That cost is
+real and it is written down where the rule is defined. It is paid because `st_ctime` is the
+ONLY timestamp on the file that a copier cannot restore: `cp -p`, `rsync -a`, `ditto`,
+`tar xp` and `shutil.copy2` all put the source's mtime AND (on APFS) its birthtime on the
+copy, so with this rule gone a valid artifact copied into the operator's tree agrees with
+its own stamp on every column the gate can read, and replay is free again. Measured, not
+argued: setattrlist(ATTR_CMN_CHGTIME) returns success and changes nothing, while
+setattrlist(ATTR_CMN_CRTIME) sets birthtime outright and os.utime drags it backwards on its
+own. Removing this rule returns the gate to grading whether someone once produced a good
+clock, not whether one was produced now."""
+must_fail = [
+  "tests/test_grandfather_clock_gate_selftest.py::test_gate_refuses_a_metadata_preserving_copy[cp-p]",
+  "tests/test_grandfather_clock_gate_selftest.py::test_gate_refuses_a_metadata_preserving_copy[rsync-a]",
+]
+failure_re = "DID NOT RAISE|assert"
+
+[[counterfeit]]
+id = "cf-clock-run-id-not-required"
+patch = "patches/cf-clock-run-id-not-required.patch"
+rationale = """Stops requiring `<meta name="loop-run">` to be a run id, keeping it in the
+document as documentation. The argument is the strongest one against this whole mechanism
+and it is half right: the gate genuinely CANNOT compare the id against the run under
+judgement, because gate_runner's sanitised environment carries no run id. What it misses
+is that requiring the id to EXIST and be well-formed is not the same as comparing it. An
+artifact with no run id cannot be attributed by anything downstream either — the
+instance's verify() would have nothing to match against — so the id's absence is the
+difference between a gate that admits only machine-written artifacts and one that admits
+anything with a plausible <head>."""
+must_fail = [
+  "tests/test_grandfather_clock_gate_selftest.py::test_gate_refuses_an_artifact_with_no_run_id",
+  "tests/test_grandfather_clock_gate_selftest.py::test_gate_refuses_a_hand_typed_run_id",
+]
+failure_re = "DID NOT RAISE|assert"
+
+[[counterfeit]]
+id = "cf-clock-publish-key-not-per-run"
+patch = "patches/cf-clock-publish-key-not-per-run.patch"
+rationale = """Removes the run id from the candidate and mints one at filing time instead.
+The comment states the exact reasoning this instance shipped with, and it is the reasoning
+a careful reader reconstructs: `generate_evaluate_improve` digests the candidate into the
+publish effect's business key, and a candidate that changes every tick means the receipt
+guard no longer de-duplicates a replayed superstep (P1/P7). The cost was never counted.
+The receipt table has no expiry, so a byte-deterministic candidate produces ONE key for
+all time and the first successful publish suppresses every later one: measured on
+2026-08-02, two ticks against one control plane, the second reporting status=completed
+while the filed artifact still carried the FIRST tick's stamp and mtime. That second run
+is then certified against a file it never wrote. Minting the id at filing time looks like
+it restores attribution and does not — the value verify() compares against comes from the
+ARGUMENTS, so an id the writer chose a moment earlier checks nothing but itself.
+Cross-tick de-duplication was never a safety property here: the effect is an idempotent
+overwrite of a path derived from arguments."""
+must_fail = [
+  "tests/test_grandfather_clock_gate_selftest.py::test_the_publish_business_key_is_per_run",
+  "tests/test_grandfather_clock_gate_selftest.py::test_publish_refuses_a_candidate_with_no_run_id",
+  "tests/test_grandfather_clock_gate_selftest.py::test_verify_refuses_a_predecessors_artifact",
+]
+failure_re = "share a publish business key|DID NOT RAISE|assert"
+
+[[counterfeit]]
+id = "cf-clock-verify-skips-run-binding"
+patch = "patches/cf-clock-verify-skips-run-binding.patch"
+rationale = """Hardcodes the three run-binding checks in verify() to True, on the argument
+that `filed_copy_matches` and `stamp_is_fresh` already cover it. They do not, and the
+difference is the entire replay: those two say the two copies agree with each other and
+that the stamp is recent, which is exactly what a PREDECESSOR's artifact also says.
+verify() is the only place in the system holding both the run's identity and the bytes on
+disk — the objective gate executes with no run id in its environment — so these three
+checks are the sole mechanism by which a run that published nothing fails to be certified
+against the previous run's file. Patched, the tick that did nothing reports verified=True
+and settles favourable."""
+must_fail = [
+  "tests/test_grandfather_clock_gate_selftest.py::test_verify_refuses_a_predecessors_artifact",
+  "tests/test_grandfather_clock_gate_selftest.py::test_verify_reads_the_run_id_from_arguments_not_from_the_result",
+  "tests/test_grandfather_clock_gate_selftest.py::test_verify_refuses_when_the_run_id_is_not_a_run_id",
+]
+failure_re = "assert|steered its own verification"
+
+[[counterfeit]]
+id = "cf-clock-filing-follows-symlinks"
+patch = "patches/cf-clock-filing-follows-symlinks.patch"
+rationale = """Returns both write sites to `Path.write_text`. The comment's objection is
+real — a temp sibling can be left behind by a process that dies mid-write, and the
+operator's directory is the one place a stray dotfile is visible — and the plain write is
+simpler, which is how it got here in the first place. `write_text` opens for writing and
+FOLLOWS a symlink, and the dated directory's name is derived from the calendar, so
+anything running as the operator can create tomorrow's directory today and plant
+`clock.html -> <any operator-writable file>`. The loop then overwrites that file
+UNATTENDED, on a timer, which is precisely when nobody is watching. No privilege boundary
+is crossed, which is why this is hardening and not an emergency; the reason it is worth
+the temp file anyway is that `os.replace` acts on the LINK rather than on what it points
+at, and it makes the gate's read atomic as a side effect."""
+must_fail = [
+  "tests/test_grandfather_clock_gate_selftest.py::test_filing_replaces_a_planted_symlink_instead_of_writing_through_it",
+  "tests/test_grandfather_clock_gate_selftest.py::test_the_var_copy_also_refuses_to_follow_a_symlink",
+]
+failure_re = "redirected through a planted symlink|survived the write|assert"

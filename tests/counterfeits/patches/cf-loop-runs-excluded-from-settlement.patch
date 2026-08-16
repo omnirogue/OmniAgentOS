@@ -1,0 +1,13 @@
+diff --git a/omniagentos/scheduler/routines_settle.py b/omniagentos/scheduler/routines_settle.py
+index 97a7214e..e61a86a4 100644
+--- a/omniagentos/scheduler/routines_settle.py
++++ b/omniagentos/scheduler/routines_settle.py
+@@ -445,7 +445,7 @@ def settle_pending(
+     self_report_supported = RoutinesStore(store).supports_self_report()
+     if self_report_supported:
+         join_sql = (
+-            f"LEFT JOIN runs r ON r.id = rr.run_id "
++            f"JOIN runs r ON r.id = rr.run_id "
+             f"WHERE rr.run_id IS NOT NULL "
+             f"AND rr.finished_at IS NULL "
+             f"AND (rr.{SELF_REPORT_COLUMN} IS NOT NULL OR r.state IN ({placeholders})) "

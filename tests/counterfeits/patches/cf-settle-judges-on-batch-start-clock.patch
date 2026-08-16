@@ -1,0 +1,16 @@
+diff --git a/omniagentos/scheduler/routines_settle.py b/omniagentos/scheduler/routines_settle.py
+index 74ce1345..a9a7856f 100644
+--- a/omniagentos/scheduler/routines_settle.py
++++ b/omniagentos/scheduler/routines_settle.py
+@@ -628,10 +628,7 @@ def settle_pending(
+                 evidence_store=evidence_store,
+                 gate_runner=gate_runner,
+                 workspace=gate_workspace,
+-                # Hand down the CLOCK, never this batch's instant: settlement
+-                # executes the gate, so the moment of judgement is later than
+-                # `moment` by however long the gate took to run.
+-                clock=judging_clock,
++                now=moment,
+             )
+             if res:
+                 settled.append(res)

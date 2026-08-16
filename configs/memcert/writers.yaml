@@ -1,0 +1,6 @@
+# memcert sticky reverse-index of writer-evidence obligations (fresh history).
+# Mirrors configs/northstar-cert/writers.yaml semantics: once a check id claims a
+# writer: requirement, deleting the manifest token alone does not remove the
+# obligation — entries here only resolve by satisfying or formally amending them.
+version: 3
+tokens: {}

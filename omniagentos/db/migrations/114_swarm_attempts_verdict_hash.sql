@@ -1,0 +1,69 @@
+-- Migration 114: `swarm_attempts.verdict_hash` — the loop-progress fingerprint.
+--
+-- WHY 114 AND NOT 109 (the number the filesystem said was next)
+-- AGENTS.md's rule is "the filesystem is the authority: next = highest prefix + 1",
+-- which on this tree reads 109. The RUNTIME disagreed, and the runtime is what a
+-- migration has to survive: `var/runtime/state.sqlite3` already had versions
+-- 109-113 recorded in `schema_migrations` (applied 2026-08-03 12:35 and 13:36 by
+-- packages whose files are not on this branch). Numbering this file 109 made
+-- `migrate()` raise MigrationChecksumMismatch — recorded checksum c980359… vs disk
+-- c426035… — which does not merely skip this feature, it breaks `make migrate` for
+-- the WHOLE repo until someone deletes a row from schema_migrations by hand.
+-- Verified refused before renaming, verified applied after. 114 is the next version
+-- unused by BOTH the filesystem and the runtime, and it stays correct when the
+-- missing 110-113 files land from their own branches.
+--
+-- THE MEASURED FAILURE THIS EXISTS TO STOP
+-- scripts/rework-pump.sh ran `while :;` with no per-lane attempt counter. Every
+-- cycle it re-dispatched the same lane against the same reviewer verdict; the
+-- agent died in 11-12s and the pump immediately re-dispatched. 5,702 REWORK
+-- sessions, flat at 29-30/hour/lane for 24 hours, 726/726 p1-counterfeit
+-- dispatches quoting the SAME `sed: var/task.md: No such file or directory`,
+-- ZERO commits, ~22.2h of session time. The scheduler's shipped 2-retry cap
+-- (omniagentos/swarm/scheduler.py) governed none of it, because no pump wrote a
+-- `swarm_attempts` row for the cap to read.
+--
+-- WHY THE VERDICT *TEXT*, NOT `end_reason`
+-- `end_reason` records how the PROCESS ended (crashed / timeout / completed).
+-- Every one of those 726 dispatches would have carried the same end_reason
+-- whether the reviewer's complaint had changed or not, so end_reason cannot
+-- distinguish "retrying against new information" from "retrying against
+-- literally the same paragraph". The verdict BODY can: two consecutive
+-- identical hashes for one lane means the loop is not moving and the next
+-- dispatch is guaranteed to reproduce the previous one. That is a
+-- non-progress proof, not a heuristic.
+--
+-- WHAT WRITES IT
+-- The four pumps (rework / review / verdict / sim), through the existing
+-- SwarmDal attempt API (`open_attempt` → `record_attempt_usage` →
+-- `close_attempt`). Definition, per `SwarmDal.pump_verdict_hash`:
+--   sha256 of the reviewer-verdict text the dispatch is REACTING TO; when a
+--   pump is not reacting to a verdict (verdict-pump, sim-pump), sha256 of the
+--   dispatch payload itself. Both spell the same invariant: "the body that,
+--   unchanged twice in a row, proves the loop is not progressing."
+--
+-- WHAT READS IT
+-- `omniagentos.swarm.scheduler.retry_cap_exceeded`, consulted both by the
+-- scheduler's own `_consume_retry` and by every pump's pre-dispatch gate. The
+-- count is deliberately restricted to rows WHERE verdict_hash IS NOT NULL —
+-- i.e. rows a PUMP wrote. The scheduler's own executor never sets the column,
+-- so pre-109 retry accounting (free mechanical retry, rate-limit re-enqueues
+-- that consume no retry) is byte-for-byte unchanged. A widened cap that
+-- counted every attempt row would have silently tightened the cap on the
+-- executor's own paths, which is a regression dressed as a fix.
+--
+-- NULLABLE ON PURPOSE: every historical row, and every row the scheduler's
+-- executor writes, legitimately has no verdict body. NULL means "this attempt
+-- was not pump-driven", which is information; a default of '' would collapse
+-- that into "the empty verdict", and two rows with an empty verdict would then
+-- read as a non-progress proof and quarantine a healthy lane.
+
+ALTER TABLE swarm_attempts ADD COLUMN verdict_hash TEXT;
+
+-- The one question the gate asks, on every single dispatch: "for this lane's
+-- card, how many pump attempts are on file and what was the last verdict
+-- fingerprint?" Partial index — the executor's (NULL) rows are the large
+-- majority and are never part of this answer.
+CREATE INDEX IF NOT EXISTS idx_swarm_attempts_verdict_hash
+    ON swarm_attempts(board_task_id, seq)
+    WHERE verdict_hash IS NOT NULL;

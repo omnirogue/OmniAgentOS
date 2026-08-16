@@ -1,0 +1,2 @@
+## Headless discipline
+You run with no human at the prompt. A permission denial will NEVER be approved: record it (one line: command shape + denial reason) and reroute or skip that step — never retry the same call, never wait for approval. On auth/quota/suspension errors: these are TERMINAL — after at most 2 attempts, park the item with class=terminal and move on. Never work around a denial by finding an unguarded path to the same effect.

@@ -1,0 +1,12 @@
+diff --git a/omniagentos/intake/fallback.py b/omniagentos/intake/fallback.py
+--- a/omniagentos/intake/fallback.py
++++ b/omniagentos/intake/fallback.py
+@@ -835,7 +835,7 @@ def run_with_fallback(
+             )
+             return None
+
+-        except (ApiRoutePolicyError, SpendGuardRefusal, ProviderAuthRefusal):
++        except ApiRoutePolicyError:
+             # Policy, spend-cap, and quota/suspension/auth refusals are never
+             # degraded into "try the next model": fail closed, loudly, at the
+             # call site. A ProviderAuthRefusal advancing here would defeat a

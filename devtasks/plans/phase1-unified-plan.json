@@ -1,0 +1,384 @@
+{
+  "lanes": {
+    "A": {
+      "tasks": [
+        {
+          "id": "A1",
+          "title": "Route quick intake and reuse registered project roots",
+          "description": "Update `/intake/quick` so `omniagentos/intake/planner.py:484` `route_project()` runs against the project registry before workspace resolution, dispatches through the matched project's `root_dirs[0]`, and creates a scratch project only on a genuine miss. Reconnect the existing clarify endpoint for one low-confidence turn and run `build_preflight` on quick work. Fix `provision_plan` at `omniagentos/intake/planner.py:628` so decision `existing` reuses matched roots and newly planned projects receive `root_dirs`; gate the behavior with `OMNIAGENTOS_QUICK_PROJECT_ROUTING_MODE`, default `off`, then `shadow`, then `enforce`.",
+          "owned_paths": [
+            "omniagentos/api/routes/intake.py",
+            "omniagentos/intake/service.py",
+            "omniagentos/intake/planner.py",
+            "tests/intake/test_phase1_project_routing.py"
+          ],
+          "est_minutes": 180,
+          "verify_command": "uv run pytest -q tests/intake/test_phase1_project_routing.py tests/intake/test_quick_endpoint.py tests/intake/test_planner.py tests/intake/test_preflight.py",
+          "depends_on": []
+        },
+        {
+          "id": "A2",
+          "title": "Add content dispatch and duration-aware fast-lane rules",
+          "description": "Add `content_creation` utterances to both `routes` and `category_routes` in `configs/dispatch.yaml`, plus a content-aware band rule that prevents multi-phase or 30-minute creative deliverables from receiving `solo_fast` or `simple`. Correct the numeric heuristic at `omniagentos/intake/fastlane.py:135-137` so durations and dimensions such as `30 second` and `1080` do not trigger batch routing, consistent with `configs/dispatch.yaml:110`. Gate the new classification with `OMNIAGENTOS_CONTENT_DISPATCH_MODE`, default `off`, then `shadow`, then `enforce`, and replay \u201c30 second webinar for globex\u201d as a regression case.",
+          "owned_paths": [
+            "omniagentos/intake/fastlane.py",
+            "configs/dispatch.yaml",
+            "tests/intake/test_phase1_content_dispatch.py"
+          ],
+          "est_minutes": 120,
+          "verify_command": "uv run pytest -q tests/intake/test_phase1_content_dispatch.py tests/intake/test_fastlane.py",
+          "depends_on": [
+            "A1"
+          ]
+        }
+      ]
+    },
+    "B": {
+      "tasks": [
+        {
+          "id": "B1",
+          "title": "Load promoted champion prompts through a runtime accessor",
+          "description": "Create `omniagentos/lab/runtime.py` as a read-only wrapper around `omniagentos/lab/db/store.py:get_champion`, without changing existing lab internals. Replace the inline first-attempt prompt assembly at `omniagentos/swarm/spawn.py:802-815` with role-specific promoted champion resolution while retaining the scheduler brief fallback from `omniagentos/swarm/scheduler.py:1079`. Emit a shadow diff proving which prompt would be selected, and gate selection with `OMNIAGENTOS_CHAMPION_PROMPT_MODE`, default `off`, then `shadow`, then `enforce`; this flag wiring requires a second cross-lineage review note.",
+          "owned_paths": [
+            "omniagentos/lab/runtime.py",
+            "omniagentos/swarm/spawn.py",
+            "tests/swarm/test_phase1_champion_prompt.py"
+          ],
+          "est_minutes": 150,
+          "verify_command": "uv run pytest -q tests/swarm/test_phase1_champion_prompt.py tests/swarm/test_spawn.py",
+          "depends_on": []
+        },
+        {
+          "id": "B2",
+          "title": "Provision bounded CORAL context into worker worktrees",
+          "description": "Extend the symlink convention at `omniagentos/swarm/worktrees.py:72` to place a bounded shared CORAL hub containing skill bodies, playbook excerpts, and recent run notes in each provisioned worktree. Replace the bare `name@version` context currently injected at `omniagentos/swarm/spawn.py:667-668` with hub references and a safe fallback excerpt capped at 800 tokens. Gate this with `OMNIAGENTOS_CORAL_CONTEXT_MODE`, default `off`, then `shadow`, then `enforce`, and reject links that escape the approved shared root.",
+          "owned_paths": [
+            "omniagentos/swarm/worktrees.py",
+            "omniagentos/swarm/metacog_context.py",
+            "tests/swarm/test_phase1_coral_context.py"
+          ],
+          "est_minutes": 180,
+          "verify_command": "uv run pytest -q tests/swarm/test_phase1_coral_context.py tests/swarm/test_spawn_integrations.py",
+          "depends_on": [
+            "B1"
+          ]
+        },
+        {
+          "id": "B3",
+          "title": "Assemble project-aware brand and deliverable contracts",
+          "description": "Resolve each task's project from registry roots, bind its pack through `omniagentos/brandpacks/pack.py`, and remove reliance on the global `OMNIAGENTOS_BRAND_PACK` environment value. Fix the invalid project fallback at `omniagentos/swarm/scheduler.py:1263`, inject capped `MEMORY.md` content rather than its path, and add project facts plus objective, audience, format, and deliverable-spec sections to planner input and worker briefs. Stamp the existing migration-058 `task_mode` column without adding a migration, and gate the assembled context with `OMNIAGENTOS_PROJECT_CONTRACT_MODE`, default `off`, then `shadow`, then `enforce`.",
+          "owned_paths": [
+            "omniagentos/swarm/scheduler.py",
+            "omniagentos/brandpacks/pack.py",
+            "omniagentos/intake/brand_context.py",
+            "tests/swarm/test_phase1_project_contract.py"
+          ],
+          "est_minutes": 240,
+          "verify_command": "uv run pytest -q tests/swarm/test_phase1_project_contract.py tests/intake/test_brand_context.py tests/swarm/test_scheduler.py",
+          "depends_on": [
+            "B2"
+          ]
+        }
+      ]
+    },
+    "C": {
+      "tasks": [
+        {
+          "id": "C1",
+          "title": "Introduce task-shaped creative parallel topology",
+          "description": "Add a creative-only `parallel_sections` topology whose generators follow disjoint DAG width with floor 2 and cap 8 plus one critic, replacing the creative `generator_critic` mapping at `omniagentos/formation/selector.py:34-35`. Move the coordinated caps at `omniagentos/allocation/fanout.py:79` and `omniagentos/swarm/planner.py:825-828`, while preserving the rejected policy of increasing global default agent counts. Add task-shape defaults so open-ended and research work target about five workers within floor 2/cap 8, while well-specified coding uses plan-then-implement and never sample-and-vote; gate these independently with `OMNIAGENTOS_CREATIVE_TOPOLOGY_MODE` and `OMNIAGENTOS_TASK_SHAPE_FANOUT_MODE`, both default `off`, then `shadow`, then `enforce`. Promotion requires shadow rows showing width greater than two with disjoint owned paths, and the cap change requires a second cross-lineage review note.",
+          "owned_paths": [
+            "omniagentos/allocation/fanout.py",
+            "omniagentos/swarm/planner.py",
+            "omniagentos/formation/selector.py",
+            "tests/allocation/test_phase1_task_shape_topology.py"
+          ],
+          "est_minutes": 240,
+          "verify_command": "uv run pytest -q tests/allocation/test_phase1_task_shape_topology.py tests/allocation/test_fanout.py tests/swarm/test_planner.py tests/formation/test_formation_binding.py",
+          "depends_on": []
+        },
+        {
+          "id": "C2",
+          "title": "Harden merge escalation and size-based synthesis",
+          "description": "Replace the rank-ordered shallow dictionary merge at `omniagentos/fanin/adjudicate.py:77-104`, which silently loses conflicting output, with conflict-preserving synthesis evidence. Add a bounded merge retry and escalation budget plus a second synthesis layer triggered when fan-in content reaches roughly 3000 words, based on size rather than agent count. Gate the path with `OMNIAGENTOS_FANIN_SYNTHESIS_MODE`, default `off`, then `shadow`, then `enforce`, and prove exhausted merge failures escalate rather than serialize silently.",
+          "owned_paths": [
+            "omniagentos/fanin/adjudicate.py",
+            "tests/fanin/test_phase1_merge_escalation.py"
+          ],
+          "est_minutes": 180,
+          "verify_command": "uv run pytest -q tests/fanin/test_phase1_merge_escalation.py tests/fanin/test_adjudicate.py",
+          "depends_on": [
+            "C1"
+          ]
+        }
+      ]
+    },
+    "D": {
+      "tasks": [
+        {
+          "id": "D1",
+          "title": "Consume champion model assignments in CBM routing",
+          "description": "Teach CBM and routing to read promoted `model_assignment` champions, which currently have no reader beyond the enum at `omniagentos/lab/contracts.py:34`. Consume Lane B's read-only `omniagentos.lab.runtime` accessor through a lazy optional import, retain current routing when it is unavailable, and record shadow comparisons before enforcement. Gate the override with `OMNIAGENTOS_CHAMPION_ROUTING_MODE`, default `off`, then `shadow`, then `enforce`, and demonstrate that promoting a champion changes a subsequent routing recommendation.",
+          "owned_paths": [
+            "omniagentos/cbm/service.py",
+            "omniagentos/routing/decision_center.py",
+            "configs/modelintel.yaml",
+            "tests/cbm/test_phase1_champion_routing.py"
+          ],
+          "est_minutes": 180,
+          "verify_command": "uv run pytest -q tests/cbm/test_phase1_champion_routing.py tests/cbm/test_cbm.py tests/routing/test_api_policy.py",
+          "depends_on": []
+        },
+        {
+          "id": "D2",
+          "title": "Schedule observe-first experiment curation",
+          "description": "Add a launchd runner, installer/render helper, and plist template that invokes `propose_experiments` at `omniagentos/lab/campaign/__init__.py:201`, which currently has no non-test caller. The job must start in observe-only mode, log proposed experiments without promotion side effects, and use the canonical launch environment. Gate activation with `OMNIAGENTOS_LAB_CURATION_MODE`, default `off`, then `shadow`, then `enforce`.",
+          "owned_paths": [
+            "scripts/lab/propose-experiments.sh",
+            "scripts/lab/com.omniagentos.lab-curation.plist.template",
+            "scripts/lab/launchd.py",
+            "tests/lab/test_phase1_curation_launchd.py"
+          ],
+          "est_minutes": 150,
+          "verify_command": "uv run pytest -q tests/lab/test_phase1_curation_launchd.py",
+          "depends_on": [
+            "D1"
+          ]
+        },
+        {
+          "id": "D3",
+          "title": "Repair and re-arm reflection launchd jobs in observe mode",
+          "description": "Diagnose exit 126 for `com.omniagentos.reflection-nightly` and `com.omniagentos.reflection-watchdog` by validating rendered program paths, executable modes, working directories, and interpreter resolution against their templates. Correct the templates, installer, or scripts as required and re-arm both jobs in observe-only mode; do not modify generated files under `var/launchd`. Gate re-arming with `OMNIAGENTOS_REFLECTION_REARM_MODE`, default `off`, then `shadow`, then `enforce`, require one shadow week before any `observe_only=False` discussion, and obtain the required second cross-lineage review note.",
+          "owned_paths": [
+            "scripts/reflection/com.omniagentos.reflection-nightly.plist.template",
+            "scripts/reflection/com.omniagentos.reflection-watchdog.plist.template",
+            "scripts/reflection/install-reflection.sh",
+            "scripts/reflection/launchd.py",
+            "scripts/reflection/reflect-nightly.sh",
+            "scripts/reflection/reflect-watchdog.sh",
+            "tests/reflection/test_phase1_launchd_rearm.py"
+          ],
+          "est_minutes": 180,
+          "verify_command": "uv run pytest -q tests/reflection/test_phase1_launchd_rearm.py tests/reflection/test_watchdog.py",
+          "depends_on": [
+            "D2"
+          ]
+        },
+        {
+          "id": "D4",
+          "title": "Record the signed AUTO consequential-action stance",
+          "description": "Record the signed AUTO/CONSEQUENTIAL decision using the implemented policy at `omniagentos/policy/__init__.py:218-226` and residual risk H0.3 as the authoritative sources. Reconcile and mark superseded the contradictory guidance at `IMPROVE.md:82-92` and `HANDOFF/README.md:183-188` without changing policy code. Preserve the money and HARD_HUMAN broker gates explicitly in the decision text.",
+          "owned_paths": [
+            "DECISIONS.md",
+            "IMPROVE.md",
+            "HANDOFF/README.md"
+          ],
+          "est_minutes": 60,
+          "verify_command": "uv run python -c \"from pathlib import Path; text='\\n'.join(Path(p).read_text() for p in ('DECISIONS.md','IMPROVE.md','HANDOFF/README.md')); assert 'CONSEQUENTIAL' in text and 'HARD_HUMAN' in text\"",
+          "depends_on": [
+            "D3"
+          ]
+        },
+        {
+          "id": "D5",
+          "title": "Enforce per-run provider allowlists end to end",
+          "description": "Add `allowed_providers` to swarm dispatch parameters and carry it into worker candidate rotation and planner fallback selection in `omniagentos/intake/fallback.py`. Filter every fallback rung before invocation so a run pinned to `codex`, `grok`, and `gemini` cannot execute a Claude CLI at any planning or worker stage. Gate enforcement with `OMNIAGENTOS_ALLOWED_PROVIDERS_MODE`, default `off`, then `shadow`, then `enforce`; log shadow violations and require the specified second cross-lineage review note.",
+          "owned_paths": [
+            "omniagentos/api/routes/swarm.py",
+            "omniagentos/swarm/router.py",
+            "omniagentos/intake/fallback.py",
+            "tests/intake/test_phase1_allowed_providers.py"
+          ],
+          "est_minutes": 240,
+          "verify_command": "uv run pytest -q tests/intake/test_phase1_allowed_providers.py tests/intake/test_fallback.py tests/routing/test_workers.py",
+          "depends_on": [
+            "D4"
+          ]
+        }
+      ]
+    },
+    "E": {
+      "tasks": [
+        {
+          "id": "E1",
+          "title": "Centralize trustworthy statistical primitives",
+          "description": "Create `omniagentos/lab/stats.py` with pure sign-test, exact-binomial, McNemar, Wilson-confidence-interval, MDE, and power functions plus boundary-case tests. Replace the sample-stdev interval at `omniagentos/lab/eval/scorecard.py:145-155` with the shared implementation and make fewer than two observations explicitly unstable rather than returning a passing degenerate interval. This is the mandatory first task because every later measurement gate consumes its definitions.",
+          "owned_paths": [
+            "omniagentos/lab/stats.py",
+            "omniagentos/lab/eval/scorecard.py",
+            "tests/lab/test_phase1_stats.py"
+          ],
+          "est_minutes": 210,
+          "verify_command": "uv run pytest -q tests/lab/test_phase1_stats.py tests/lab/eval/test_scoring.py",
+          "depends_on": []
+        },
+        {
+          "id": "E2",
+          "title": "Persist complete verdict and blind-seed provenance",
+          "description": "Create append-only migration `omniagentos/db/migrations/082_lab_verdict_provenance.sql`; do not renumber any existing migration or fill permanent gap 075. Store panel composition, replicate count, agreement, MDE, invalidation status, and the blind presentation seed that `omniagentos/lab/campaign/__init__.py:370-391` currently only logs, and expose an invalidation query through the lab store. Keep this task limited to schema and persistence primitives so later campaign logic can consume them.",
+          "owned_paths": [
+            "omniagentos/db/migrations/082_lab_verdict_provenance.sql",
+            "omniagentos/lab/db/store.py",
+            "tests/lab/db/test_phase1_verdict_provenance.py"
+          ],
+          "est_minutes": 210,
+          "verify_command": "uv run pytest -q tests/lab/db/test_phase1_verdict_provenance.py tests/lab/db/test_store.py",
+          "depends_on": [
+            "E1"
+          ]
+        },
+        {
+          "id": "E3",
+          "title": "Populate rubric dimensions and reject length-correlated judges",
+          "description": "Populate `JudgeRecord.rubric_dimension` at its sole omitted constructor in `omniagentos/lab/eval/evaluator.py:143-151`. Compute per-dimension correlation against output length and automatically disqualify any dimension with absolute correlation greater than 0.3 while retaining audit evidence. Gate disqualification with `OMNIAGENTOS_RUBRIC_VALIDITY_MODE`, default `off`, then `shadow`, then `enforce`.",
+          "owned_paths": [
+            "omniagentos/lab/eval/evaluator.py",
+            "omniagentos/lab/eval/validity.py",
+            "tests/lab/eval/test_phase1_rubric_validity.py"
+          ],
+          "est_minutes": 180,
+          "verify_command": "uv run pytest -q tests/lab/eval/test_phase1_rubric_validity.py tests/lab/eval/test_evaluator.py",
+          "depends_on": [
+            "E1"
+          ]
+        },
+        {
+          "id": "E4",
+          "title": "Enforce valid methodology and model-backed blind judging",
+          "description": "Collapse the population-stdev interval at `omniagentos/lab/campaign/__init__.py:504-509` onto `lab/stats.py`, then enforce judge agreement and a validity floor in `_meets_numeric_gate` at `campaign/__init__.py:563-575` so low-agreement experiments cannot promote. Add a methodology reviewer feeding the existing `audit_flags` to `HUMAN_REVIEW` seam at `campaign/__init__.py:547`, with regression cases vetoing no-control, blinding-leak, and underpowered designs. Thread a real cross-lineage, forced-pairwise `JudgeFn` through `_record_blind_judgments`, validate anchored quotes, persist the seed through E2, and replace the unconditional `blind-judging-used-offline-heuristic-judge` flag with one based on the judge actually used. Gate these behaviors with unique flags `OMNIAGENTOS_LAB_VALIDITY_MODE`, `OMNIAGENTOS_METHODOLOGY_REVIEW_MODE`, and `OMNIAGENTOS_MODEL_JUDGE_MODE`, each default `off`, then `shadow`, then `enforce`; M4 and M7 require second cross-lineage review notes.",
+          "owned_paths": [
+            "omniagentos/lab/campaign/__init__.py",
+            "omniagentos/lab/methodology.py",
+            "tests/lab/campaign/test_phase1_measurement_gates.py"
+          ],
+          "est_minutes": 300,
+          "verify_command": "uv run pytest -q tests/lab/campaign/test_phase1_measurement_gates.py tests/lab/campaign/test_campaign.py tests/lab/campaign/test_e2e_loop.py",
+          "depends_on": [
+            "E1",
+            "E2",
+            "E3"
+          ]
+        },
+        {
+          "id": "E5",
+          "title": "Add scorecard guardrails and optional hypothesis falsifiers",
+          "description": "If capacity remains after M1-M4, M7, and M8b, add guardrail thresholds and `repair_iterations` to `Scorecard`, and carry explicit falsifiers and verdicts on hypotheses by reusing the dormant fields in `omniagentos/novel/mode.py`. Keep this optional work backward-compatible with existing serialized scorecards and experiments; otherwise roll the whole combined M5/M6 task to Phase 2. Gate activation with `OMNIAGENTOS_HYPOTHESIS_GUARDRAIL_MODE`, default `off`, then `shadow`, then `enforce`.",
+          "owned_paths": [
+            "omniagentos/lab/contracts.py",
+            "omniagentos/novel/mode.py",
+            "tests/lab/test_phase1_hypothesis_guardrails.py"
+          ],
+          "est_minutes": 150,
+          "verify_command": "uv run pytest -q tests/lab/test_phase1_hypothesis_guardrails.py",
+          "depends_on": [
+            "E1",
+            "E4"
+          ]
+        }
+      ]
+    },
+    "F": {
+      "tasks": [
+        {
+          "id": "F1",
+          "title": "Bridge MCP through exposure and register media validators",
+          "description": "Implement an MCP client shim in toolplane that uses the existing `omniagentos/toolplane/exposure.py` authorization surface without modifying or bypassing it, then expose skills and memory through an MCP server on the same policy path. Register existing Globex image/video generation, voice TTS, and workmode validators such as `validate_ad_copy` for agent list/call reach, and extend the partial verification hook at `omniagentos/execution/assess.py:97`. Gate the bridge with `OMNIAGENTOS_MCP_BRIDGE_MODE`, default `off`, then `shadow`, then `enforce`, and test one exposed MCP tool call plus media validation through verify.",
+          "owned_paths": [
+            "omniagentos/toolplane/mcp_client.py",
+            "omniagentos/toolplane/mcp_server.py",
+            "omniagentos/toolplane/catalog.py",
+            "omniagentos/toolplane/tools.py",
+            "omniagentos/execution/assess.py",
+            "tests/toolplane/test_phase1_mcp_bridge.py"
+          ],
+          "est_minutes": 300,
+          "verify_command": "uv run pytest -q tests/toolplane/test_phase1_mcp_bridge.py tests/toolplane/test_exposure.py tests/toolplane/test_media.py",
+          "depends_on": []
+        },
+        {
+          "id": "F2",
+          "title": "Capture lifecycle tool experience into memory",
+          "description": "Extend the PreToolUse allow/deny path in `omniagentos/sessions/hook_client.py` to capture bounded prompts, tool calls, results, decisions, timestamps, and source-session provenance after redaction. Define a versioned experience envelope in the sessions capture layer and write it through the existing memory-store interface, preserving the current approvals/events behavior and never storing secrets. Gate capture with `OMNIAGENTOS_SESSION_MEMORY_CAPTURE_MODE`, default `off`, then `shadow`, then `enforce`; Phase-2 query schema remains deferred rather than creating a migration here.",
+          "owned_paths": [
+            "omniagentos/sessions/hook_client.py",
+            "omniagentos/sessions/memory_capture.py",
+            "tests/sessions/test_phase1_memory_capture.py"
+          ],
+          "est_minutes": 210,
+          "verify_command": "uv run pytest -q tests/sessions/test_phase1_memory_capture.py tests/sessions/api/test_hook_and_install.py",
+          "depends_on": [
+            "F1"
+          ]
+        },
+        {
+          "id": "F3",
+          "title": "Reconcile terminal runs, dead sessions, and notifications",
+          "description": "Add completed-run reconciliation that clears or completes every associated blocked card, plus dead-session detection that flips its card within 60 seconds. Extend notification persistence with a per-event emission cap and retention sweep, without rebuilding the existing stale-card or approval-hang fixes in `omniagentos/intake/board_sweep.py`. Gate the new reconciliation with `OMNIAGENTOS_LIFECYCLE_RECONCILE_MODE`, default `off`, then `shadow`, then `enforce`, and test zero blocked cards after run completion.",
+          "owned_paths": [
+            "omniagentos/intake/board_sweep.py",
+            "omniagentos/sessions/lifecycle.py",
+            "omniagentos/notifications/dal.py",
+            "omniagentos/notifications/service.py",
+            "tests/intake/test_phase1_run_reconcile.py"
+          ],
+          "est_minutes": 240,
+          "verify_command": "uv run pytest -q tests/intake/test_phase1_run_reconcile.py tests/intake/test_board_sweep.py tests/notifications/test_service.py",
+          "depends_on": [
+            "F2"
+          ]
+        },
+        {
+          "id": "F4",
+          "title": "Unify launch environment and document the three databases",
+          "description": "Create one sourceable launch environment include that canonically resolves `OMNIAGENTOS_DB` and related runtime paths, and make active shell, Makefile, and supervisor entry points consume it. Document the control-plane, sessions, and auxiliary/lab database map, including ownership and intended callers; physical database consolidation is explicitly out of scope. Preserve the OmniAgentOS workspace root and do not edit or launch the separate `~/OmniAgentOS` product.",
+          "owned_paths": [
+            "scripts/launch-env.sh",
+            "scripts/launch-omniagentos.sh",
+            "scripts/process_supervisor.py",
+            "Makefile",
+            "docs/operations/three-db-map.md",
+            "tests/ops/test_phase1_launch_env.py"
+          ],
+          "est_minutes": 180,
+          "verify_command": "uv run pytest -q tests/ops/test_phase1_launch_env.py",
+          "depends_on": [
+            "F3"
+          ]
+        },
+        {
+          "id": "F5",
+          "title": "Normalize GitHub events back to originating sessions",
+          "description": "Add a pure GitHub source adapter to `omniagentos/comms/normalize.py` for pull-request comments and CI failures while preserving the frozen normalized-message shape. Route normalized repository, PR, commit, and check identifiers back to the originating session through a dedicated correlation module. Gate ingestion with `OMNIAGENTOS_GITHUB_COMMS_MODE`, default `off`, then `shadow`, then `enforce`; responsive approvals-page CSS remains Phase-1 filler only and is omitted unless core lane work finishes early.",
+          "owned_paths": [
+            "omniagentos/comms/normalize.py",
+            "omniagentos/comms/github_route.py",
+            "tests/comms/test_phase1_github_source.py"
+          ],
+          "est_minutes": 150,
+          "verify_command": "uv run pytest -q tests/comms/test_phase1_github_source.py tests/comms/test_normalize.py",
+          "depends_on": [
+            "F4"
+          ]
+        }
+      ]
+    }
+  },
+  "contradictions_resolved": [
+    "Migration 082 is owned only by E2 as `omniagentos/db/migrations/082_lab_verdict_provenance.sql`; no other lane creates, fills, or renumbers a migration.",
+    "Lane B1 exclusively creates and owns `omniagentos/lab/runtime.py`; Lane D only imports it read-only, and Lane E enumerates individual lab files rather than claiming the `omniagentos/lab/` prefix.",
+    "Lane B2 exclusively owns `omniagentos/swarm/worktrees.py` for N6; Lane C owns only `omniagentos/swarm/planner.py`, so the adjacent swarm files do not collide.",
+    "Every new feature flag key is unique across the plan and each runtime-affecting flag starts `off`, proceeds through `shadow`, and reaches `enforce` only after evidence review.",
+    "No owned path targets `configs/accounts.yaml`, `vault/sources/connections-bundle.enc`, `SEPARATE-PRODUCT.md`, `ARCHI.md`, `ARCHI.json`, `~/OmniAgentOS`, or a prohibited rebuild surface; F1 consumes but does not modify `toolplane/exposure.py`.",
+    "All production and test owned paths are assigned once at file granularity; no listed directory prefix contains another task's owned path."
+  ],
+  "notes": [
+    "All paths are workspace-relative to `/OmniAgentOS`; verified anchors include planner `route_project` near line 484, provisioning near line 628, fastlane numeric handling near lines 135-137, spawn prompt assembly near lines 802-815, scheduler context near line 1263, fanout and topology caps, campaign numeric gates, and assess's manifest hook.",
+    "The brief's `lab/scorecard.py` and `lab/evaluator.py` paths are stale; verified current files are `omniagentos/lab/eval/scorecard.py` and `omniagentos/lab/eval/evaluator.py`, which the plan uses.",
+    "Each implementer must run the task's `verify_command`, then `uv run ruff check` and `uv run mypy` on every touched Python file before completion.",
+    "Lane D must lazy-import Lane B's runtime accessor and preserve baseline behavior when it is absent, allowing lanes B and D to develop and test in parallel without a cross-lane dependency.",
+    "Lane F's lifecycle capture uses a versioned envelope and existing memory storage in Phase 1; any dedicated Phase-2 experience-memory query schema is a deferred schema request and must not become a second migration in this wave.",
+    "Architecture-level work in C1, F1, F2, and F4 must record `archdocs update needed` in the task workbook; teams must use `omniagentos.archdocs.update.apply_update` later and never edit architecture truth files directly.",
+    "Safety-sensitive B1, C1, D3, D5, E4 methodology review, and E4 model-backed judging require a second cross-lineage review note before merge.",
+    "M5 and M6 are deliberately combined in optional trailing task E5; if capacity is insufficient, defer the entire task to Phase 2 rather than partially landing it."
+  ]
+}

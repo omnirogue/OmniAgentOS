@@ -1,0 +1,22 @@
+diff --git a/loops/omniagentos_loops/instances/grandfather_clock_html.py b/loops/omniagentos_loops/instances/grandfather_clock_html.py
+index f644416e..3c7e318e 100644
+--- a/loops/omniagentos_loops/instances/grandfather_clock_html.py
++++ b/loops/omniagentos_loops/instances/grandfather_clock_html.py
+@@ -544,13 +544,11 @@ def write_without_following_symlinks(target: Path, document: str) -> None:
+     settles the run adverse: an attacker who cannot redirect the write could
+     still pause the routine. Replacing the link is strictly better.
+     """
++    # A temp sibling plus a rename leaves debris in the operator's directory
++    # whenever the process dies mid-write, and the operator's tree is the one
++    # place a stray dotfile is visible. One write, one file.
+     target.parent.mkdir(parents=True, exist_ok=True)
+-    tmp = target.with_name(f".{target.name}.{secrets.token_hex(8)}.tmp")
+-    try:
+-        tmp.write_text(document, encoding="utf-8")
+-        os.replace(tmp, target)
+-    finally:
+-        tmp.unlink(missing_ok=True)
++    target.write_text(document, encoding="utf-8")
+ 
+ 
+ def publish(**kwargs: Any) -> dict[str, Any]:

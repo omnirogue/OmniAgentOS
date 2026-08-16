@@ -1,0 +1,36 @@
+# corpus.d/reviewer-failclosed-gatews.toml — counterfeits owned by lane
+# `reviewer-failclosed-gatews`.
+#
+# The orchestrator reviewer's own fail-open counterfeits (cf-reviewer-fails-open,
+# cf-review-error-treated-as-confirm) already live in ../corpus.toml and are not
+# duplicated here.
+
+[[counterfeit]]
+id = "cf-gate-workspace-exported-unprobed"
+patch = "patches/cf-gate-workspace-exported-unprobed.patch"
+rationale = "The realistic simplification of the gate-workspace default: keep the `-d` existence test, drop the git/clean probe, and export the sibling directory whatever state it is in. It looks like the same feature and is green on the happy path. It is not: PytestGateRunner REFUSES a missing, non-git or dirty workspace, and routines_settle maps `refused` to gate_passed=0 — an UNFAVOURABLE result counted in the 50% auto-pause floor. So the fake converts 'we could not judge this run' into 'this run failed' and auto-pauses healthy routines on evidence nobody produced, which is strictly worse than the 254/254 unconfigured state it replaces."
+must_fail = [
+  "tests/scheduler/test_gate_workspace_default.py::test_launch_env_refuses_a_dirty_gate_checkout",
+  "tests/scheduler/test_gate_workspace_default.py::test_launch_env_refuses_a_gate_directory_that_is_not_a_checkout",
+  "tests/scheduler/test_gate_workspace_default.py::test_launch_env_refuses_a_checkout_whose_git_status_fails",
+]
+failure_re = "== '<unset>'|<unset>"
+
+[[counterfeit]]
+id = "cf-workspace-refusal-counts-as-failure"
+patch = "patches/cf-workspace-refusal-counts-as-failure.patch"
+rationale = "Deletes produce_gate_evidence's GateWorkspaceUnusable clause as 'redundant, it is a GateEvidenceRefusal subclass already'. It is the cleanup any reader would propose, and every existing test about hostile workspaces still describes the same protection afterwards — nothing passes either way. What it silently restores is the classification: an unusable workspace falls back to status='refused', routines_settle records gate_passed=0, and a workspace that went dirty between configuration and settlement is counted as a REJECTED run in the 50% auto-pause floor. The probe cannot cover this, because the window it leaves open is exactly where the race lives; the classification is the only thing that makes it harmless."
+must_fail = [
+  "tests/scheduler/test_gate_workspace_default.py::test_a_workspace_dirtied_after_the_probe_settles_null_not_failed",
+  "tests/scheduler/test_gate_workspace_default.py::test_doctrine_an_unusable_workspace_never_enters_the_acceptance_floor",
+]
+failure_re = "judged NOTHING|gate_evidence_unavailable|never be counted as settled|assert 0 is None|assert 'gate_refused'"
+
+[[counterfeit]]
+id = "cf-gate-runs-in-the-persistent-checkout"
+patch = "patches/cf-gate-runs-in-the-persistent-checkout.patch"
+rationale = "Drops the throwaway run tree and executes the verifier directly in the configured workspace — 'why check out the repo again every five minutes'. It is the obvious performance cleanup (it really does save ~2s a run) and every other test in the suite stays green, because with a well-behaved verifier the two are indistinguishable. What it restores is permanent immunity from auto-pause: a side-effecting verifier dirties the shared checkout, its own run is condemned once, and every later run then trips the pre-execution dirty check as GateWorkspaceUnusable -> NULL forever. Since auto-pause needs settled FAILURES, a routine that misbehaved exactly once could never be paused again, silently."
+must_fail = [
+  "tests/scheduler/test_gate_workspace_default.py::test_a_self_dirtying_verifier_condemns_only_its_own_run",
+]
+failure_re = "run 2|permanent-immunity|must accumulate settled failures|touch the pin source|gate_evidence_unavailable"

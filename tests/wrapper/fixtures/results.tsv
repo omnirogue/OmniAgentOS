@@ -1,0 +1,3 @@
+wave	exp_id	model	commit	metric	baseline	delta	status	description
+1	exp-fast	gpt-5	abc123	pass_rate	0.70	0.10	completed	Faster prompt
+2	exp-bad	claude-3-5	def456	latency_ms	1000	-20	failed	Regression check

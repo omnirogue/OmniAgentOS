@@ -1,0 +1,13 @@
+diff --git a/omniagentos/scheduler/routines_settle.py b/omniagentos/scheduler/routines_settle.py
+index 97a7214e..9c3cc6b5 100644
+--- a/omniagentos/scheduler/routines_settle.py
++++ b/omniagentos/scheduler/routines_settle.py
+@@ -378,7 +378,7 @@ def settle_routine_run(
+     # gate found. For a dispatched run they are the same fact. For a
+     # self-reported run they are two, and the composition only runs downhill.
+     accepted: bool | None = gate_passed
+-    if claim == OUTCOME_NEUTRAL and gate_passed is not False:
++    if claim == OUTCOME_NEUTRAL:
+         # The tick BEHAVED but produced no judgeable result (parked on a human,
+         # nothing to do). Keep whatever the gate actually found — deleting real
+         # evidence would blind the sentinel's evidence-free streak alarm — but

@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  Redeploy live services when the serving checkout advances.
+
+  scripts/ops/serving_deploy_watch.py compares HEAD to the last deployed SHA
+  every 2 minutes. On an advance it kickstarts the API service when
+  omniagentos/ or contracts/ changed, and rebuilds dashboard/.next-remote
+  (staging dir + atomic swap) then kickstarts the dashboard service when
+  dashboard/ changed. Docs-only advances just move the stamp. Failed builds
+  park their SHA after 2 attempts (a new head clears the park); builds are
+  load-guarded at 0.8 of cores.
+
+  Motivation (2026-08-14): /testing 404'd for hours after its merge — the
+  dashboard service serves a prebuilt .next-remote and KeepAlive faithfully
+  respawned the stale build. Nothing rebuilt it post-merge until this job.
+
+  launchd hands a job a STRIPPED environment: no shell profile, no PATH from
+  .zshrc, no cwd. So every path here is absolute and the interpreter is the
+  repo's own .venv python invoked directly; never python3, never a PATH
+  lookup. (npm is resolved inside the script the same way.)
+-->
+<plist version="1.0">
+<dict>
+	<key>Label</key>
+	<string>com.omniagentos.serving-deploy-watch</string>
+	<key>EnvironmentVariables</key>
+	<dict>
+		<key>PATH</key>
+		<string>/usr/local/bin:/opt/homebrew/bin:/usr/bin:/bin:/usr/sbin:/sbin</string>
+	</dict>
+	<key>ProgramArguments</key>
+	<array>
+		<string>/Users/youruser/OmniAgentOS/.venv/bin/python</string>
+		<string>/Users/youruser/OmniAgentOS/scripts/ops/serving_deploy_watch.py</string>
+	</array>
+	<key>WorkingDirectory</key>
+	<string>/Users/youruser/OmniAgentOS</string>
+	<key>StartInterval</key>
+	<integer>120</integer>
+	<key>RunAtLoad</key>
+	<false/>
+	<key>KeepAlive</key>
+	<false/>
+	<key>StandardOutPath</key>
+	<string>/Users/youruser/OmniAgentOS/var/log/serving-deploy-watch.log</string>
+	<key>StandardErrorPath</key>
+	<string>/Users/youruser/OmniAgentOS/var/log/serving-deploy-watch.log</string>
+</dict>
+</plist>

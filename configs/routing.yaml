@@ -1,0 +1,6 @@
+# Task-shape router configuration. See FEATURE-FLAGS.md.
+# mode: off | shadow | enforce   (off = inert; shadow = compute+record only)
+task_shape_router:
+  mode: "off"
+  min_confidence: 0.5
+  version: v1

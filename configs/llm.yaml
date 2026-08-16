@@ -1,0 +1,32 @@
+# LLM Short Call and Spend Guard configuration
+# This file is used by the ShortCallClient and its budget guard to cap spend
+# and estimate cost on short-call LLM lanes.
+
+# Daily spend cap in USD (UTC day)
+daily_usd_cap: 10.0
+
+# Fallback cost in USD per 1,000,000 tokens for unknown models
+fallback_rate_per_million_input: 0.15
+fallback_rate_per_million_output: 0.60
+
+# Proxy base URL (defaults to localhost LiteLLM proxy)
+proxy_base_url: "http://localhost:4000/v1"
+
+# Default model used for short structured calls
+default_model: "gemini-3.6-flash"
+
+# Per-model rates (USD per 1,000,000 tokens)
+# Pinned to the expected models utilized in short-call lanes.
+rates:
+  gemini-3.6-flash:
+    input: 0.075
+    output: 0.30
+  gemini-2.5-flash:
+    input: 0.075
+    output: 0.30
+  gpt-4o-mini:
+    input: 0.150
+    output: 0.600
+  claude-3-5-haiku:
+    input: 0.800
+    output: 4.000

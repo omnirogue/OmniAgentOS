@@ -1,0 +1,2580 @@
+/**
+ * OmniAgentOS theme — the CSS custom-property layer every component inherits from.
+ *
+ * PALETTE (warm paper): ported from the ratified redesign prototype
+ * (~/Desktop/omniagentos-redesign.html). The canvas is warm paper (#f5f4f1 light /
+ * #171613 dark), cards are plain white/near-black with a hairline warm border, and
+ * there is exactly ONE accent (iris indigo). Token NAMES are unchanged — only their
+ * values moved — so every existing component picks the new look up for free.
+ *
+ * tokens.ts stays FROZEN (repo convention: new/changed values go through this file
+ * only). Two deliberate consequences of that rule:
+ *   • tokens.ts `color.*` is re-exported but never read at runtime — theme.css is the
+ *     effective source of truth for surfaces/text/accent/domain colors.
+ *   • the dataviz ramps (--dv-*, --ds-chart-*) are NOT re-tinted here: charts read the
+ *     frozen TS ramp (utils.chartSeriesColors/sequentialColor), so re-tinting only the
+ *     CSS half would split one chart's colors across two palettes.
+ *
+ * Light is the palette's home; dark is a first-class sibling. Dark is still :root's
+ * default (the boot script stamps data-theme before first paint).
+ *
+ * WCAG AA contrast validation (approx, text on surface/canvas):
+ * Dark (canvas #171613, surface #201f1b):
+ *   --text (#eceae4) on --canvas ≈ 15.4:1 ✓   on --surface ≈ 13.6:1 ✓
+ *   --text-muted (#a7a395) on --surface ≈ 6.5:1 ✓
+ *   --text-faint (#8a8577) on --surface ≈ 5.0:1 ✓  (prototype's #757164 was 3.8:1)
+ *   --accent (#8b86f7) on --canvas ≈ 6.6:1 ✓ · --accent-text (#171613) on it ≈ 7.1:1 ✓
+ * Light (canvas #f5f4f1, surface #ffffff):
+ *   --text (#1c1b18) on --canvas ≈ 14.9:1 ✓   on --surface ≈ 16.2:1 ✓
+ *   --text-muted (#5c594f) on --surface ≈ 7.0:1 ✓
+ *   --text-faint (#7a7768) on --surface ≈ 4.5:1 ✓  (prototype's #93907f was 3.2:1)
+ *   --accent (#4f46e5) on --surface ≈ 7.4:1 ✓ · --accent-text (#ffffff) on it ≈ 7.4:1 ✓
+ *   --ok #17804a ≈ 5.0:1 · --warn #b45309 ≈ 5.0:1 · --danger #d92d20 ≈ 4.8:1 ·
+ *   --awaiting #c2410c ≈ 5.2:1 (prototype's #e8590c was 3.6:1) — all ✓ on white.
+ * The three raised text tiers are the only prototype values adjusted, each because the
+ * prototype's own value missed AA for small text; every other hex is the prototype's.
+ *
+ * Elevation in light theme is a warm off-white (--surface-raised #faf9f7, --overlay
+ * #ffffff) rather than a distinct fill: floating layers separate by shadow + a whisper
+ * of tone, so body-text contrast on them matches the --surface figures above.
+ */
+
+/* ── Dark (default) ─────────────────────────────────────────── */
+:root,
+[data-theme="dark"] {
+  color-scheme: dark;
+
+  /* surfaces */
+  --canvas: #171613;
+  /* Sunken fill (progress tracks, kbd, count pills) — the prototype's --bg-2. */
+  --canvas-sunken: #131210;
+  --surface: #201f1b;
+  --surface-raised: #262521;
+  /* One step above raised, so floating layers (dropdown/tooltip/palette/toast) still
+     read as floating in dark theme rather than merging with resting cards. */
+  --overlay: #2b2a25;
+  /* Resting hover wash for nav rows / list rows — the prototype's --hover. */
+  --hover: #2b2a25;
+  --border: #302f29;
+  --border-strong: #3d3b33;
+
+  /* text */
+  --text: #eceae4;
+  --text-muted: #a7a395;
+  --text-faint: #8a8577;
+
+  /* accent */
+  --accent: #8b86f7;
+  --accent-text: #171613;
+  --accent-ring: rgba(139, 134, 247, 0.35);
+  --accent-glow: #8b86f7;
+  /* Tinted accent pair (soft fill + hairline) — chips, active sub-nav, badges. */
+  --accent-soft: rgba(120, 113, 245, 0.16);
+  --accent-border: rgba(139, 134, 247, 0.35);
+
+  /* domain semantics */
+  --champion: #f0b44a;
+  --challenger: #5cd0bc;
+  --promote: #4cc38a;
+  --reject: #f27168;
+  --running: #6ca6f8;
+  /* Paused is amber, not red: a deliberate hold is a caution state, not a failure. */
+  --paused: #f0b44a;
+  --awaiting: #f58f5d;
+  --validating: #b195f7;
+  --ok: #4cc38a;
+  --warn: #f0b44a;
+  --danger: #f27168;
+
+  /* Tinted status pairs (soft fill + hairline border) for pills/banners/chips. */
+  --ok-soft: rgba(76, 195, 138, 0.13);
+  --ok-border: rgba(76, 195, 138, 0.35);
+  --warn-soft: rgba(240, 180, 74, 0.13);
+  --warn-border: rgba(240, 180, 74, 0.35);
+  --danger-soft: rgba(242, 113, 104, 0.14);
+  --danger-border: rgba(242, 113, 104, 0.35);
+
+  /* V2 reliability semantics (aliases — no new hex) */
+  --risk-l1: var(--ok);
+  --risk-l2: var(--challenger);
+  --risk-l3: var(--warn);
+  --risk-l4: var(--danger);
+  --health-healthy: var(--ok);
+  --health-degraded: var(--warn);
+  --health-critical: var(--danger);
+  --health-recovering: var(--running);
+
+  /* layout (from tokens.layout; nav/header widened to the prototype's 256px/60px).
+     --content-max is deliberately left at the wide value: the prototype's 1160px page
+     is a reading-width choice for its own mock pages, and clamping it globally would
+     squeeze the board/table surfaces this lane does not own. */
+  --nav-width: 16rem;
+  --content-max: 112rem;
+  --header-height: 3.75rem;
+  /* Phone bottom nav (see .ds-bottom-nav) — 0 above the 768px breakpoint. */
+  --bottom-nav-height: 0px;
+
+  /* space (4px base) */
+  --space-0: 0;
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.5rem;
+  --space-6: 2rem;
+  --space-8: 3rem;
+  --space-10: 4rem;
+  --space-12: 6rem;
+
+  /* radius (prototype scale: 8/10/14/18) */
+  --radius-sm: 8px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-xl: 18px;
+  --radius-pill: 999px;
+
+  /* shadow (dark-canvas tuned) */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 1px 2px rgba(0, 0, 0, 0.3), 0 8px 24px -8px rgba(0, 0, 0, 0.5);
+  --shadow-lg: 0 2px 6px rgba(0, 0, 0, 0.4), 0 24px 60px -12px rgba(0, 0, 0, 0.65);
+  --shadow-glow: 0 0 0 1px var(--accent-ring), 0 0 24px -6px var(--accent-glow);
+
+  /* motion */
+  --motion-fast: 120ms;
+  --motion-base: 200ms;
+  --motion-slow: 360ms;
+  --ease: cubic-bezier(0.2, 0.7, 0.2, 1);
+  --ease-out: cubic-bezier(0, 0.6, 0.3, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+
+  /* fonts — self-hosted via next/font/google (layout.tsx sets --font-inter/--font-jbmono
+     on <html>, preloaded + non-render-blocking); these compose the same families with
+     the same system fallbacks as before. */
+  --font-sans: var(--font-inter, "Inter"), -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-mono: var(--font-jbmono, "JetBrains Mono"), "SF Mono", ui-monospace, monospace;
+
+  /* type scale — tightened to the prototype's denser rhythm (14px body, 26px page
+     title, 18px section title). Same seven semantic steps, same ordering. */
+  --text-display: 2rem;
+  --text-h1: 1.625rem;
+  --text-h2: 1.125rem;
+  --text-h3: 1rem;
+  --text-body: 0.875rem;
+  --text-small: 0.8125rem;
+  --text-micro: 0.6875rem;
+
+  /* z-index */
+  --z-base: 0;
+  --z-sticky: 20;
+  --z-dropdown: 40;
+  --z-dialog: 60;
+  --z-toast: 80;
+  --z-palette: 100;
+
+  /* dataviz categorical (for charts reading CSS when needed) */
+  --dv-0: #6ea8fe;
+  --dv-1: #7ee0c0;
+  --dv-2: #f5c451;
+  --dv-3: #b48ef0;
+  --dv-4: #f0888e;
+  --dv-5: #5ecbdd;
+  --dv-6: #e6a15e;
+  --dv-7: #9aa4b6;
+
+  /* Text-on-dataviz-fill pair. The dataviz ramps (tokens.ts) are intentionally the SAME
+     in both themes (a rating must render identically regardless of UI theme), so the
+     on-fill text color must be fixed too — it cannot reference --text, which flips per
+     theme. Verified AA (≥4.5:1) against every dataviz.sequential stop, including the
+     mid-ramp #2f6bd8 stop (4.98:1 with pure white; the previous off-white was ~4.1:1). */
+  --on-dataviz-dark: #ffffff;
+  --on-dataviz-light: #141821;
+
+  /* Pulse accent — used by Observatory tile live indicators; subtle enough to read as
+     "breathing", not "warning". Verified AA (≥4.5:1) on both canvas and surface. */
+  --ds-accent-pulse: #3fb9a8;
+  --ds-accent-pulse-glow: color-mix(in srgb, var(--ds-accent-pulse) 35%, transparent);
+
+  /* 6-color chart palette — categorical, perceptually balanced for dark-first use.
+     Each color is ≥3:1 against --surface (for chart fills / strokes) and the hues
+     are chosen to remain distinguishable under deuteranopia simulation (verified
+     via Okabe-Ito family). Tokens.ts is FROZEN; these live as CSS-only vars. */
+  --ds-chart-0: #6ea8fe;
+  --ds-chart-1: #3fb9a8;
+  --ds-chart-2: #f5c451;
+  --ds-chart-3: #b48ef0;
+  --ds-chart-4: #f0888e;
+  --ds-chart-5: #5ecbdd;
+
+  /* Chat folder identity colors (088) — the 8 named palette tokens the API
+     stores (gray|red|orange|yellow|green|teal|blue|violet). Aliases — no new
+     hex: each rides an existing theme color, so the dark and light values
+     flip with the vars they reference. */
+  --ds-folder-gray: var(--text-muted);
+  --ds-folder-red: var(--danger);
+  --ds-folder-orange: var(--awaiting);
+  --ds-folder-yellow: var(--champion);
+  --ds-folder-green: var(--promote);
+  --ds-folder-teal: var(--ds-accent-pulse);
+  --ds-folder-blue: var(--accent);
+  --ds-folder-violet: var(--validating);
+}
+
+/* ── Light ──────────────────────────────────────────────────────────────────────────
+   NOTE: the identical value list is repeated in the @media (prefers-color-scheme:
+   light) block below, which paints the first frame before the boot script stamps
+   data-theme. Any edit here must be mirrored there. ─────────────────────────────── */
+[data-theme="light"] {
+  color-scheme: light;
+
+  --canvas: #f5f4f1;
+  --canvas-sunken: #edece7;
+  --surface: #ffffff;
+  /* Raised/overlay surfaces are a warm off-white rather than flat #fff so the elevation
+     hierarchy that makes dark theme feel layered also reads on paper — dropdowns,
+     tooltips, the command palette and toasts are no longer white-on-white. Floating
+     layers (--overlay) go pure white so their shadow does the separating. */
+  --surface-raised: #faf9f7;
+  --overlay: #ffffff;
+  --hover: #f1efea;
+  --border: #e6e4dd;
+  --border-strong: #d8d5cb;
+
+  --text: #1c1b18;
+  --text-muted: #5c594f;
+  --text-faint: #7a7768;
+
+  --accent: #4f46e5;
+  --accent-text: #ffffff;
+  --accent-ring: #d6d3f8;
+  --accent-glow: #4f46e5;
+  --accent-soft: #edecfc;
+  --accent-border: #d6d3f8;
+
+  --champion: #b45309;
+  --challenger: #0f766e;
+  --promote: #17804a;
+  --reject: #d92d20;
+  --running: #2563eb;
+  --paused: #b45309;
+  --awaiting: #c2410c;
+  --validating: #7c3aed;
+  --ok: #17804a;
+  --warn: #b45309;
+  --danger: #d92d20;
+
+  --ok-soft: #e7f5ec;
+  --ok-border: #c4e8d1;
+  --warn-soft: #fbf1de;
+  --warn-border: #f0ddb4;
+  --danger-soft: #fcebe9;
+  --danger-border: #f5cbc5;
+
+  /* V2 reliability semantics (aliases — no new hex) */
+  --risk-l1: var(--ok);
+  --risk-l2: var(--challenger);
+  --risk-l3: var(--warn);
+  --risk-l4: var(--danger);
+  --health-healthy: var(--ok);
+  --health-degraded: var(--warn);
+  --health-critical: var(--danger);
+  --health-recovering: var(--running);
+
+  /* Pulse accent (light variant — darker teal for ≥4.5:1 on --surface #fff). */
+  --ds-accent-pulse: #0f7b6a;
+  --ds-accent-pulse-glow: color-mix(in srgb, var(--ds-accent-pulse) 35%, transparent);
+
+  /* 6-color chart palette — darker variants for ≥3:1 on white --surface. */
+  --ds-chart-0: #2f6bd8;
+  --ds-chart-1: #0f7b6a;
+  --ds-chart-2: #b8860b;
+  --ds-chart-3: #7a4fc0;
+  --ds-chart-4: #c8404d;
+  --ds-chart-5: #1a8a8f;
+
+  /* Chat folder identity colors (088) — same aliases; the referenced vars
+     carry the light values above, so each token resolves light here. */
+  --ds-folder-gray: var(--text-muted);
+  --ds-folder-red: var(--danger);
+  --ds-folder-orange: var(--awaiting);
+  --ds-folder-yellow: var(--champion);
+  --ds-folder-green: var(--promote);
+  --ds-folder-teal: var(--ds-accent-pulse);
+  --ds-folder-blue: var(--accent);
+  --ds-folder-violet: var(--validating);
+
+  /* Warm-tinted, ink-coloured shadows (rgba of --text, not blue-grey) so cards sit on
+     paper instead of floating over it. Floating layers (dropdown, tooltip, command
+     palette, toast) keep a stronger md/lg: a soft shadow alone reads flat on paper. */
+  --shadow-sm: 0 1px 2px rgba(28, 27, 24, 0.05);
+  --shadow-md: 0 1px 2px rgba(28, 27, 24, 0.04), 0 6px 20px -6px rgba(28, 27, 24, 0.1);
+  --shadow-lg: 0 2px 4px rgba(28, 27, 24, 0.06), 0 20px 50px -12px rgba(28, 27, 24, 0.22);
+  --shadow-glow: 0 0 0 1px var(--accent-ring), 0 0 24px -6px color-mix(in srgb, var(--accent-glow) 40%, transparent);
+}
+
+/* Prefer system dark when no explicit theme is stamped (first paint before script).
+   Mirror of [data-theme="light"] above — keep the two lists in sync. */
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme]) {
+    color-scheme: light;
+    --canvas: #f5f4f1;
+    --canvas-sunken: #edece7;
+    --surface: #ffffff;
+    --surface-raised: #faf9f7;
+    --overlay: #ffffff;
+    --hover: #f1efea;
+    --border: #e6e4dd;
+    --border-strong: #d8d5cb;
+    --text: #1c1b18;
+    --text-muted: #5c594f;
+    --text-faint: #7a7768;
+    --accent: #4f46e5;
+    --accent-text: #ffffff;
+    --accent-ring: #d6d3f8;
+    --accent-glow: #4f46e5;
+    --accent-soft: #edecfc;
+    --accent-border: #d6d3f8;
+    --champion: #b45309;
+    --challenger: #0f766e;
+    --promote: #17804a;
+    --reject: #d92d20;
+    --running: #2563eb;
+    --paused: #b45309;
+    --awaiting: #c2410c;
+    --validating: #7c3aed;
+    --ok: #17804a;
+    --warn: #b45309;
+    --danger: #d92d20;
+    --ok-soft: #e7f5ec;
+    --ok-border: #c4e8d1;
+    --warn-soft: #fbf1de;
+    --warn-border: #f0ddb4;
+    --danger-soft: #fcebe9;
+    --danger-border: #f5cbc5;
+    --risk-l1: var(--ok);
+    --risk-l2: var(--challenger);
+    --risk-l3: var(--warn);
+    --risk-l4: var(--danger);
+    --health-healthy: var(--ok);
+    --health-degraded: var(--warn);
+    --health-critical: var(--danger);
+    --health-recovering: var(--running);
+    --ds-accent-pulse: #0f7b6a;
+    --ds-accent-pulse-glow: color-mix(in srgb, var(--ds-accent-pulse) 35%, transparent);
+    --ds-chart-0: #2f6bd8;
+    --ds-chart-1: #0f7b6a;
+    --ds-chart-2: #b8860b;
+    --ds-chart-3: #7a4fc0;
+    --ds-chart-4: #c8404d;
+    --ds-chart-5: #1a8a8f;
+    --ds-folder-gray: var(--text-muted);
+    --ds-folder-red: var(--danger);
+    --ds-folder-orange: var(--awaiting);
+    --ds-folder-yellow: var(--champion);
+    --ds-folder-green: var(--promote);
+    --ds-folder-teal: var(--ds-accent-pulse);
+    --ds-folder-blue: var(--accent);
+    --ds-folder-violet: var(--validating);
+    --shadow-sm: 0 1px 2px rgba(28, 27, 24, 0.05);
+    --shadow-md: 0 1px 2px rgba(28, 27, 24, 0.04), 0 6px 20px -6px rgba(28, 27, 24, 0.1);
+    --shadow-lg: 0 2px 4px rgba(28, 27, 24, 0.06), 0 20px 50px -12px rgba(28, 27, 24, 0.22);
+  }
+}
+
+/* Theme-switch fade only — scoped to the root, not a universal `html *` selector.
+   World-class consoles scope transitions to specific interactive elements (below), not
+   every element on every state change; a global wildcard reads laggy rather than
+   decisive and can smear chart colors on data refresh. */
+html {
+  transition:
+    color var(--motion-base) var(--ease),
+    background-color var(--motion-base) var(--ease);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html,
+  html *,
+  html *::before,
+  html *::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}
+
+/* ── Primitive base styles ──────────────────────────────────── */
+
+.ds-btn {
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  font-family: var(--font-sans);
+  font-weight: 600;
+  line-height: 1.2;
+  border-radius: var(--radius-md);
+  border: 1px solid transparent;
+  cursor: pointer;
+  text-decoration: none;
+  white-space: nowrap;
+  user-select: none;
+  transition:
+    background-color var(--motion-fast) var(--ease),
+    border-color var(--motion-fast) var(--ease),
+    color var(--motion-fast) var(--ease),
+    box-shadow var(--motion-fast) var(--ease),
+    filter var(--motion-fast) var(--ease);
+}
+
+.ds-btn:disabled,
+.ds-btn[aria-disabled="true"] {
+  opacity: 0.45;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.ds-btn:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.ds-btn--sm {
+  font-size: var(--text-small);
+  padding: var(--space-1) var(--space-3);
+  min-height: 1.75rem;
+}
+
+.ds-btn--md {
+  font-size: var(--text-body);
+  padding: var(--space-2) var(--space-4);
+  min-height: 2.25rem;
+}
+
+.ds-btn--lg {
+  font-size: var(--text-h3);
+  padding: var(--space-3) var(--space-5);
+  min-height: 2.75rem;
+}
+
+.ds-btn--primary {
+  background: var(--accent);
+  color: var(--accent-text);
+  border-color: var(--accent);
+}
+
+.ds-btn--primary:hover:not(:disabled) {
+  filter: brightness(1.08);
+  box-shadow: var(--shadow-glow);
+}
+
+.ds-btn--secondary {
+  background: var(--surface-raised);
+  color: var(--text);
+  border-color: var(--border-strong);
+}
+
+.ds-btn--secondary:hover:not(:disabled) {
+  background: var(--overlay);
+  border-color: var(--border-strong);
+}
+
+.ds-btn--ghost {
+  background: transparent;
+  color: var(--text-muted);
+  border-color: transparent;
+}
+
+.ds-btn--ghost:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--text) 6%, transparent);
+  color: var(--text);
+}
+
+.ds-btn--danger {
+  background: var(--danger);
+  color: var(--accent-text);
+  border-color: var(--danger);
+}
+
+[data-theme="dark"] .ds-btn--danger {
+  /* dark danger is mid-saturation; force high-contrast label */
+  color: #fff;
+}
+
+.ds-btn--danger:hover:not(:disabled) {
+  filter: brightness(1.08);
+}
+
+.ds-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  padding: var(--space-5);
+  color: var(--text);
+}
+
+.ds-card--raised {
+  background: var(--surface-raised);
+  box-shadow: var(--shadow-md);
+}
+
+.ds-card--flush {
+  padding: 0;
+}
+
+.ds-card--pad-sm {
+  padding: var(--space-3);
+}
+
+.ds-card--pad-lg {
+  padding: var(--space-6);
+}
+
+.ds-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  font-family: var(--font-sans);
+  font-size: var(--text-micro);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  line-height: 1;
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-pill);
+  border: 1px solid transparent;
+  white-space: nowrap;
+}
+
+.ds-badge--neutral {
+  color: var(--text-muted);
+  background: color-mix(in srgb, var(--text-muted) 12%, transparent);
+  border-color: color-mix(in srgb, var(--text-muted) 22%, transparent);
+}
+
+.ds-badge--champion {
+  color: var(--champion);
+  background: color-mix(in srgb, var(--champion) 14%, transparent);
+  border-color: color-mix(in srgb, var(--champion) 28%, transparent);
+}
+
+.ds-badge--challenger {
+  color: var(--challenger);
+  background: color-mix(in srgb, var(--challenger) 14%, transparent);
+  border-color: color-mix(in srgb, var(--challenger) 28%, transparent);
+}
+
+.ds-badge--promote,
+.ds-badge--win,
+.ds-badge--completed,
+.ds-badge--ok {
+  color: var(--promote);
+  background: color-mix(in srgb, var(--promote) 14%, transparent);
+  border-color: color-mix(in srgb, var(--promote) 28%, transparent);
+}
+
+.ds-badge--reject,
+.ds-badge--loss,
+.ds-badge--failed,
+.ds-badge--danger {
+  color: var(--reject);
+  background: color-mix(in srgb, var(--reject) 14%, transparent);
+  border-color: color-mix(in srgb, var(--reject) 28%, transparent);
+}
+
+.ds-badge--running {
+  color: var(--running);
+  background: color-mix(in srgb, var(--running) 14%, transparent);
+  border-color: color-mix(in srgb, var(--running) 28%, transparent);
+}
+
+.ds-badge--paused {
+  color: var(--paused);
+  background: color-mix(in srgb, var(--paused) 14%, transparent);
+  border-color: color-mix(in srgb, var(--paused) 28%, transparent);
+}
+
+.ds-badge--awaiting,
+.ds-badge--awaiting_approval,
+.ds-badge--human_review,
+.ds-badge--warn {
+  color: var(--awaiting);
+  background: color-mix(in srgb, var(--awaiting) 14%, transparent);
+  border-color: color-mix(in srgb, var(--awaiting) 28%, transparent);
+}
+
+.ds-badge--validating {
+  color: var(--validating);
+  background: color-mix(in srgb, var(--validating) 14%, transparent);
+  border-color: color-mix(in srgb, var(--validating) 28%, transparent);
+}
+
+.ds-badge--queued,
+.ds-badge--draw,
+.ds-badge--invalid,
+.ds-badge--cancelled {
+  color: var(--text-muted);
+  background: color-mix(in srgb, var(--text-muted) 12%, transparent);
+  border-color: color-mix(in srgb, var(--text-muted) 22%, transparent);
+}
+
+/* Table */
+.ds-table-wrap {
+  width: 100%;
+  overflow-x: auto;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+}
+
+.ds-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--text-small);
+  font-family: var(--font-sans);
+  color: var(--text);
+}
+
+.ds-table th,
+.ds-table td {
+  text-align: left;
+  padding: var(--space-2) var(--space-3);
+  border-bottom: 1px solid var(--border);
+  vertical-align: middle;
+  transition: background-color var(--motion-fast) var(--ease);
+}
+
+.ds-table th {
+  font-weight: 600;
+  font-size: var(--text-micro);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  background: var(--surface-raised);
+  white-space: nowrap;
+  user-select: none;
+}
+
+.ds-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.ds-table tbody tr:hover td {
+  background: color-mix(in srgb, var(--text) 3%, transparent);
+}
+
+.ds-table__sort {
+  appearance: none;
+  background: none;
+  border: none;
+  color: inherit;
+  font: inherit;
+  font-weight: inherit;
+  letter-spacing: inherit;
+  text-transform: inherit;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: 0;
+}
+
+.ds-table__sort:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
+}
+
+.ds-table__sort-icon {
+  display: inline-flex;
+  opacity: 0.55;
+  transition: opacity var(--motion-fast) var(--ease), color var(--motion-fast) var(--ease);
+}
+
+.ds-table__sort[aria-sort="ascending"] .ds-table__sort-icon,
+.ds-table__sort[aria-sort="descending"] .ds-table__sort-icon {
+  opacity: 1;
+  color: var(--accent);
+}
+
+/* Stat KPI */
+.ds-stat {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  padding: var(--space-4);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  min-width: 8rem;
+}
+
+.ds-stat__label {
+  font-size: var(--text-micro);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.ds-stat__value {
+  font-family: var(--font-mono);
+  font-size: var(--text-h1);
+  font-weight: 600;
+  line-height: 1.15;
+  color: var(--text);
+  letter-spacing: -0.02em;
+}
+
+.ds-stat__delta {
+  font-family: var(--font-mono);
+  font-size: var(--text-small);
+  font-weight: 500;
+}
+
+.ds-stat__delta--up {
+  color: var(--promote);
+}
+
+.ds-stat__delta--down {
+  color: var(--reject);
+}
+
+.ds-stat__delta--neutral {
+  color: var(--text-muted);
+}
+
+.ds-stat--ok .ds-stat__value {
+  color: var(--ok);
+}
+
+.ds-stat--warn .ds-stat__value {
+  color: var(--warn);
+}
+
+.ds-stat--danger .ds-stat__value {
+  color: var(--danger);
+}
+
+.ds-stat--accent .ds-stat__value {
+  color: var(--accent);
+}
+
+.ds-stat--promote .ds-stat__value {
+  color: var(--promote);
+}
+
+.ds-stat--reject .ds-stat__value {
+  color: var(--reject);
+}
+
+.ds-stat__hint {
+  font-size: var(--text-micro);
+  color: var(--text-faint);
+}
+
+/* Tabs */
+.ds-tabs {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.ds-tabs__list {
+  display: flex;
+  gap: var(--space-1);
+  border-bottom: 1px solid var(--border);
+  overflow-x: auto;
+}
+
+.ds-tabs__tab {
+  appearance: none;
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  padding: var(--space-2) var(--space-3);
+  font-family: var(--font-sans);
+  font-size: var(--text-small);
+  font-weight: 500;
+  color: var(--text-muted);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: color var(--motion-fast) var(--ease), border-color var(--motion-fast) var(--ease);
+}
+
+.ds-tabs__tab:hover {
+  color: var(--text);
+}
+
+.ds-tabs__tab[aria-selected="true"] {
+  color: var(--text);
+  border-bottom-color: var(--accent);
+}
+
+.ds-tabs__tab:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+}
+
+.ds-tabs__panel:focus {
+  outline: none;
+}
+
+/* Dialog */
+.ds-dialog-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-dialog);
+  background: color-mix(in srgb, #000 55%, transparent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-5);
+  animation: ds-fade-in var(--motion-fast) var(--ease);
+}
+
+.ds-dialog {
+  background: var(--surface-raised);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-lg);
+  max-width: 32rem;
+  width: 100%;
+  max-height: min(85vh, 40rem);
+  overflow: auto;
+  padding: var(--space-6);
+  color: var(--text);
+  animation: ds-scale-in var(--motion-base) var(--ease);
+}
+
+.ds-dialog__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-4);
+  margin-bottom: var(--space-4);
+}
+
+.ds-dialog__title {
+  margin: 0;
+  font-size: var(--text-h2);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+.ds-dialog__close {
+  appearance: none;
+  display: inline-flex;
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: var(--space-1);
+  border-radius: var(--radius-sm);
+  line-height: 1;
+  transition: color var(--motion-fast) var(--ease), background-color var(--motion-fast) var(--ease);
+}
+
+.ds-dialog__close:hover {
+  color: var(--text);
+  background: color-mix(in srgb, var(--text) 6%, transparent);
+}
+
+.ds-dialog__close:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.ds-dialog__body {
+  font-size: var(--text-small);
+  color: var(--text-muted);
+  line-height: 1.5;
+}
+
+.ds-dialog__footer {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--space-2);
+  margin-top: var(--space-5);
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--border);
+}
+
+/* Toast */
+.ds-toast-viewport {
+  position: fixed;
+  bottom: var(--space-5);
+  right: var(--space-5);
+  z-index: var(--z-toast);
+  display: flex;
+  flex-direction: column-reverse;
+  gap: var(--space-2);
+  max-width: 24rem;
+  width: calc(100vw - 2rem);
+  pointer-events: none;
+}
+
+.ds-toast {
+  pointer-events: auto;
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  background: var(--surface-raised);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-md);
+  color: var(--text);
+  font-size: var(--text-small);
+  animation: ds-slide-up var(--motion-base) var(--ease);
+}
+
+.ds-toast--success {
+  border-left: 3px solid var(--ok);
+}
+
+.ds-toast--error {
+  border-left: 3px solid var(--danger);
+}
+
+.ds-toast--warn {
+  border-left: 3px solid var(--warn);
+}
+
+.ds-toast--info {
+  border-left: 3px solid var(--accent);
+}
+
+.ds-toast__body {
+  flex: 1;
+  min-width: 0;
+}
+
+.ds-toast__title {
+  font-weight: 600;
+  margin: 0 0 var(--space-1);
+}
+
+.ds-toast__message {
+  margin: 0;
+  color: var(--text-muted);
+}
+
+.ds-toast__dismiss {
+  appearance: none;
+  display: inline-flex;
+  flex-shrink: 0;
+  background: none;
+  border: none;
+  color: var(--text-faint);
+  cursor: pointer;
+  padding: 0;
+  line-height: 1;
+  transition: color var(--motion-fast) var(--ease);
+}
+
+.ds-toast__dismiss:hover {
+  color: var(--text);
+}
+
+.ds-toast__dismiss:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
+}
+
+/* Tooltip */
+.ds-tooltip-wrap {
+  position: relative;
+  display: inline-flex;
+}
+
+.ds-tooltip {
+  position: absolute;
+  z-index: var(--z-dropdown);
+  padding: var(--space-1) var(--space-2);
+  background: var(--overlay);
+  color: var(--text);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-md);
+  font-size: var(--text-micro);
+  font-weight: 500;
+  white-space: nowrap;
+  pointer-events: none;
+  max-width: 16rem;
+  white-space: normal;
+  line-height: 1.4;
+}
+
+.ds-tooltip--top {
+  bottom: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.ds-tooltip--bottom {
+  top: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.ds-tooltip--left {
+  right: calc(100% + 6px);
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.ds-tooltip--right {
+  left: calc(100% + 6px);
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.ds-tooltip__arrow {
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  background: var(--overlay);
+  border: 1px solid var(--border-strong);
+  transform: rotate(45deg);
+}
+
+.ds-tooltip--top .ds-tooltip__arrow {
+  bottom: -5px;
+  left: 50%;
+  margin-left: -4px;
+  border-top: none;
+  border-left: none;
+}
+
+.ds-tooltip--bottom .ds-tooltip__arrow {
+  top: -5px;
+  left: 50%;
+  margin-left: -4px;
+  border-bottom: none;
+  border-right: none;
+}
+
+/* Input */
+.ds-input-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  width: 100%;
+}
+
+.ds-input-label {
+  font-size: var(--text-small);
+  font-weight: 500;
+  color: var(--text-muted);
+}
+
+.ds-input-field {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 0 var(--space-3);
+  min-height: 2.25rem;
+  transition: border-color var(--motion-fast) var(--ease), box-shadow var(--motion-fast) var(--ease);
+}
+
+.ds-input-field:focus-within {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 22%, transparent);
+}
+
+.ds-input-field--error {
+  border-color: var(--danger);
+}
+
+.ds-input-field--error:focus-within {
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--danger) 22%, transparent);
+}
+
+.ds-input-field--disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  background: var(--canvas);
+}
+
+.ds-input {
+  flex: 1;
+  min-width: 0;
+  appearance: none;
+  border: none;
+  background: transparent;
+  color: var(--text);
+  font-family: var(--font-sans);
+  font-size: var(--text-body);
+  padding: var(--space-2) 0;
+  outline: none;
+}
+
+.ds-input::placeholder {
+  color: var(--text-faint);
+}
+
+.ds-input:disabled {
+  cursor: not-allowed;
+}
+
+.ds-input__icon {
+  color: var(--text-faint);
+  display: flex;
+  flex-shrink: 0;
+}
+
+.ds-input__clear {
+  appearance: none;
+  background: none;
+  border: none;
+  color: var(--text-faint);
+  cursor: pointer;
+  padding: var(--space-1);
+  border-radius: var(--radius-sm);
+  line-height: 1;
+  display: flex;
+  transition: color var(--motion-fast) var(--ease);
+}
+
+.ds-input__clear:hover {
+  color: var(--text);
+}
+
+.ds-input__clear:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.ds-input__hint {
+  font-size: var(--text-micro);
+  color: var(--text-faint);
+}
+
+.ds-input__hint--error {
+  color: var(--danger);
+}
+
+/* Select */
+.ds-select {
+  position: relative;
+  width: 100%;
+}
+
+.ds-select__trigger {
+  appearance: none;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: var(--space-2) var(--space-3);
+  min-height: 2.25rem;
+  font-family: var(--font-sans);
+  font-size: var(--text-body);
+  color: var(--text);
+  cursor: pointer;
+  text-align: left;
+  transition: border-color var(--motion-fast) var(--ease), box-shadow var(--motion-fast) var(--ease);
+}
+
+.ds-select__trigger:hover:not(:disabled) {
+  border-color: var(--border-strong);
+}
+
+.ds-select__trigger:focus-visible,
+.ds-select__trigger[aria-expanded="true"] {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 22%, transparent);
+}
+
+.ds-select__trigger:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.ds-select__value {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ds-select__value--placeholder {
+  color: var(--text-faint);
+}
+
+.ds-select__chevron {
+  display: inline-flex;
+  color: var(--text-faint);
+  flex-shrink: 0;
+  transition: transform var(--motion-fast) var(--ease);
+}
+
+.ds-select__trigger[aria-expanded="true"] .ds-select__chevron {
+  transform: rotate(180deg);
+}
+
+.ds-select__list {
+  position: absolute;
+  z-index: var(--z-dropdown);
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  margin: 0;
+  padding: var(--space-1);
+  list-style: none;
+  background: var(--surface-raised);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-md);
+  max-height: 16rem;
+  overflow-y: auto;
+}
+
+.ds-select__option {
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-sm);
+  font-size: var(--text-small);
+  color: var(--text);
+  cursor: pointer;
+}
+
+.ds-select__option[data-highlighted="true"],
+.ds-select__option:hover {
+  background: color-mix(in srgb, var(--accent) 14%, transparent);
+}
+
+.ds-select__option[aria-selected="true"] {
+  color: var(--accent);
+  font-weight: 600;
+}
+
+/* Pill */
+.ds-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  font-size: var(--text-small);
+  font-weight: 500;
+  color: var(--text);
+  background: var(--overlay);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-pill);
+  padding: var(--space-1) var(--space-3);
+  line-height: 1.3;
+  max-width: 100%;
+}
+
+.ds-pill--neutral {
+  color: var(--text-muted);
+  background: color-mix(in srgb, var(--text-muted) 10%, transparent);
+  border-color: color-mix(in srgb, var(--text-muted) 22%, transparent);
+}
+
+.ds-pill--accent {
+  color: var(--accent);
+  border-color: color-mix(in srgb, var(--accent) 35%, var(--border));
+  background: color-mix(in srgb, var(--accent) 10%, var(--surface));
+}
+
+.ds-pill--ok,
+.ds-pill--promote {
+  color: var(--ok);
+  border-color: color-mix(in srgb, var(--ok) 35%, var(--border));
+  background: color-mix(in srgb, var(--ok) 10%, var(--surface));
+}
+
+.ds-pill--warn {
+  color: var(--warn);
+  border-color: color-mix(in srgb, var(--warn) 35%, var(--border));
+  background: color-mix(in srgb, var(--warn) 10%, var(--surface));
+}
+
+.ds-pill--danger,
+.ds-pill--reject {
+  color: var(--danger);
+  border-color: color-mix(in srgb, var(--danger) 35%, var(--border));
+  background: color-mix(in srgb, var(--danger) 10%, var(--surface));
+}
+
+.ds-pill__label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ds-pill__dismiss {
+  appearance: none;
+  background: none;
+  border: none;
+  color: var(--text-faint);
+  cursor: pointer;
+  padding: 0;
+  margin-left: var(--space-1);
+  line-height: 1;
+  font-size: 0.9em;
+  border-radius: var(--radius-pill);
+  display: flex;
+  transition: color var(--motion-fast) var(--ease);
+}
+
+.ds-pill__dismiss:hover {
+  color: var(--text);
+}
+
+.ds-pill__dismiss:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.ds-sparkline {
+  display: inline-block;
+  vertical-align: middle;
+}
+
+.ds-sparkline-empty {
+  display: inline-block;
+  background: color-mix(in srgb, var(--text) 5%, transparent);
+  border-radius: var(--radius-sm);
+}
+
+/* Avatar */
+.ds-avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-pill);
+  overflow: hidden;
+  background: var(--overlay);
+  color: var(--text-muted);
+  font-weight: 600;
+  font-family: var(--font-sans);
+  flex-shrink: 0;
+  border: 1px solid var(--border);
+  user-select: none;
+}
+
+.ds-avatar--sm {
+  width: 1.5rem;
+  height: 1.5rem;
+  font-size: var(--text-micro);
+}
+
+.ds-avatar--md {
+  width: 2rem;
+  height: 2rem;
+  font-size: var(--text-small);
+}
+
+.ds-avatar--lg {
+  width: 2.75rem;
+  height: 2.75rem;
+  font-size: var(--text-body);
+}
+
+.ds-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* StatusDot */
+.ds-status-dot {
+  display: inline-block;
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+  background: var(--text-muted);
+  flex-shrink: 0;
+}
+
+.ds-status-dot--running {
+  background: var(--running);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--running) 25%, transparent);
+}
+
+.ds-status-dot--paused {
+  background: var(--paused);
+}
+
+.ds-status-dot--completed,
+.ds-status-dot--ok {
+  background: var(--ok);
+}
+
+.ds-status-dot--failed,
+.ds-status-dot--danger {
+  background: var(--danger);
+}
+
+.ds-status-dot--awaiting,
+.ds-status-dot--awaiting_approval,
+.ds-status-dot--warn {
+  background: var(--awaiting);
+}
+
+.ds-status-dot--validating {
+  background: var(--validating);
+}
+
+.ds-status-dot--queued,
+.ds-status-dot--cancelled {
+  background: var(--text-muted);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .ds-status-dot--running {
+    animation: ds-pulse 1.6s var(--ease) infinite;
+  }
+}
+
+/* ── Topbar system pill (StatusPill) ─────────────────────────────────────────────
+   The prototype's `.sys-status`: one tinted capsule carrying run state + API health +
+   how fresh the readout is, with the heartbeat as the single piece of motion. */
+.ds-status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 0.375rem 0.75rem;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--border);
+  background: var(--surface-raised);
+  color: var(--text-muted);
+  font-size: var(--text-small);
+  font-weight: 600;
+  white-space: nowrap;
+  min-width: 0;
+}
+
+.ds-status-pill__dot {
+  position: relative;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: currentColor;
+  flex-shrink: 0;
+}
+
+.ds-status-pill__sep {
+  width: 1px;
+  height: 0.75rem;
+  background: currentColor;
+  opacity: 0.35;
+  flex-shrink: 0;
+}
+
+.ds-status-pill__detail {
+  color: var(--text-muted);
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ds-status-pill--ok {
+  border-color: var(--ok-border);
+  background: var(--ok-soft);
+  color: var(--ok);
+}
+
+.ds-status-pill--warn {
+  border-color: var(--warn-border);
+  background: var(--warn-soft);
+  color: var(--warn);
+}
+
+.ds-status-pill--danger {
+  border-color: var(--danger-border);
+  background: var(--danger-soft);
+  color: var(--danger);
+}
+
+/* The heartbeat: a halo breathing out of the dot. One motion idea, healthy state only —
+   a stalled or paused system deliberately stops moving. */
+@media (prefers-reduced-motion: no-preference) {
+  .ds-status-pill__dot--live::after {
+    content: "";
+    position: absolute;
+    inset: -3px;
+    border-radius: 50%;
+    background: currentColor;
+    opacity: 0.4;
+    animation: ds-heartbeat 2.2s var(--ease-out) infinite;
+  }
+}
+
+/* Empty / Loading / Error states */
+.ds-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: var(--space-3);
+  padding: var(--space-8) var(--space-5);
+  color: var(--text-muted);
+}
+
+.ds-state__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-faint);
+  opacity: 0.85;
+}
+
+.ds-state__title {
+  margin: 0;
+  font-size: var(--text-h3);
+  font-weight: 600;
+  color: var(--text);
+}
+
+.ds-state__message {
+  margin: 0;
+  font-size: var(--text-small);
+  max-width: 24rem;
+  line-height: 1.5;
+}
+
+.ds-skeleton {
+  background: linear-gradient(
+    90deg,
+    var(--border) 0%,
+    var(--overlay) 50%,
+    var(--border) 100%
+  );
+  background-size: 200% 100%;
+  border-radius: var(--radius-sm);
+  animation: ds-shimmer 1.4s ease infinite;
+}
+
+.ds-spinner {
+  width: 1.5rem;
+  height: 1.5rem;
+  border: 2px solid var(--border-strong);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: ds-spin 0.7s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ds-skeleton {
+    animation: none;
+    background: var(--border);
+  }
+  .ds-spinner {
+    animation: none;
+    border-top-color: var(--accent);
+  }
+}
+
+/* Command palette */
+.ds-cmd-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-palette);
+  background: color-mix(in srgb, #000 50%, transparent);
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: min(20vh, 8rem) var(--space-4) var(--space-4);
+  animation: ds-fade-in var(--motion-fast) var(--ease);
+}
+
+.ds-cmd {
+  width: min(36rem, 100%);
+  background: var(--surface-raised);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-lg);
+  overflow: hidden;
+  animation: ds-scale-in var(--motion-base) var(--ease);
+}
+
+.ds-cmd__search {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  border-bottom: 1px solid var(--border);
+}
+
+.ds-cmd__input {
+  flex: 1;
+  appearance: none;
+  border: none;
+  background: transparent;
+  color: var(--text);
+  font-family: var(--font-sans);
+  font-size: var(--text-body);
+  outline: none;
+}
+
+.ds-cmd__input::placeholder {
+  color: var(--text-faint);
+}
+
+.ds-cmd__kbd {
+  font-family: var(--font-mono);
+  font-size: var(--text-micro);
+  color: var(--text-faint);
+  background: var(--canvas);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 0.1rem 0.35rem;
+}
+
+.ds-cmd__list {
+  list-style: none;
+  margin: 0;
+  padding: var(--space-2);
+  max-height: 20rem;
+  overflow-y: auto;
+}
+
+.ds-cmd__group-label {
+  font-size: var(--text-micro);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+  padding: var(--space-2) var(--space-3) var(--space-1);
+}
+
+.ds-cmd__item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  width: 100%;
+  appearance: none;
+  background: none;
+  border: none;
+  border-radius: var(--radius-md);
+  padding: var(--space-2) var(--space-3);
+  font-family: var(--font-sans);
+  font-size: var(--text-small);
+  color: var(--text);
+  cursor: pointer;
+  text-align: left;
+}
+
+.ds-cmd__item[data-highlighted="true"],
+.ds-cmd__item:hover {
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+}
+
+.ds-cmd__item:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+
+.ds-cmd__empty {
+  padding: var(--space-5);
+  text-align: center;
+  color: var(--text-muted);
+  font-size: var(--text-small);
+}
+
+/* Page / PageHeader / Section — the shared layout primitives every route composes onto,
+   so title size, eyebrow treatment and content rhythm are the same on every screen. */
+.ds-page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+  width: 100%;
+  min-width: 0;
+}
+
+.ds-page-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--space-4);
+  flex-wrap: wrap;
+}
+
+.ds-page-header__text {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  min-width: 0;
+}
+
+.ds-page-header__before {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin-bottom: var(--space-1);
+}
+
+.ds-page-header__eyebrow {
+  margin: 0;
+  color: var(--accent);
+  font-size: var(--text-micro);
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.ds-page-header__title-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+}
+
+.ds-page-header__title {
+  margin: 0;
+  font-size: var(--text-h1);
+  font-weight: 700;
+  letter-spacing: -0.025em;
+  line-height: 1.15;
+  color: var(--text);
+  overflow-wrap: anywhere;
+}
+
+.ds-page-header__lead {
+  margin: var(--space-2) 0 0;
+  max-width: 46rem;
+  color: var(--text-muted);
+  font-size: var(--text-body);
+  line-height: 1.6;
+}
+
+.ds-page-header__meta {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+  margin-top: var(--space-2);
+  color: var(--text-muted);
+  font-size: var(--text-small);
+}
+
+.ds-page-header__actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+  flex-shrink: 0;
+}
+
+@media (max-width: 56rem) {
+  .ds-page-header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}
+
+.ds-section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.ds-section__head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+}
+
+.ds-section__text {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  min-width: 0;
+}
+
+.ds-section__eyebrow {
+  margin: 0;
+  color: var(--text-faint);
+  font-size: var(--text-micro);
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.ds-section__title {
+  margin: 0;
+  font-size: var(--text-h2);
+  font-weight: 700;
+  letter-spacing: -0.015em;
+  color: var(--text);
+}
+
+.ds-section__description {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: var(--text-small);
+}
+
+.ds-section__actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+
+/* CodeBlock — padded, scrollable mono output (run output/input, manifests) instead of a
+   bare browser-default <pre>. Matches the Experiment cockpit diff panes. */
+.ds-code-block {
+  margin: 0;
+  padding: var(--space-4);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+  background: color-mix(in srgb, var(--canvas) 58%, var(--surface));
+  color: var(--text);
+  font-family: var(--font-mono);
+  font-size: var(--text-small);
+  line-height: 1.7;
+  tab-size: 2;
+  white-space: pre-wrap;
+  overflow: auto;
+  overflow-wrap: anywhere;
+  max-height: 28rem;
+}
+
+/* DefinitionList — styled key/value rows instead of a bare <dl> (browser-default 40px
+   indent, no rhythm). */
+.ds-deflist {
+  margin: 0;
+  display: grid;
+  gap: var(--space-3);
+}
+
+.ds-deflist__row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-4);
+  padding-bottom: var(--space-2);
+  border-bottom: 1px solid var(--border);
+}
+
+.ds-deflist__row:last-child {
+  border-bottom: 0;
+  padding-bottom: 0;
+}
+
+.ds-deflist__label {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: var(--text-small);
+  flex-shrink: 0;
+}
+
+.ds-deflist__value {
+  margin: 0;
+  color: var(--text);
+  font-size: var(--text-small);
+  font-weight: 500;
+  text-align: right;
+  overflow-wrap: anywhere;
+}
+
+.ds-deflist--2col {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-3) var(--space-6);
+}
+
+.ds-deflist--2col .ds-deflist__row {
+  flex-direction: column;
+  align-items: flex-start;
+  border-bottom: 0;
+  padding-bottom: 0;
+}
+
+.ds-deflist--2col .ds-deflist__value {
+  text-align: left;
+}
+
+@media (max-width: 40rem) {
+  .ds-deflist--2col {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Generic inline row utility (topbar status widgets — PauseControl/HealthBadge — the
+   only remaining consumers outside /design; every route page uses Page/Section instead). */
+.ds-inline-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+/* App shell */
+.ds-shell {
+  display: flex;
+  min-height: 100vh;
+  background: var(--canvas);
+  color: var(--text);
+}
+
+.ds-sidebar {
+  width: var(--nav-width);
+  flex-shrink: 0;
+  position: fixed;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  z-index: var(--z-sticky);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  padding: var(--space-4) var(--space-3);
+  /* Paper, not a panel: the rail shares the canvas and is separated by one hairline —
+     the active row is what lifts off it (see --active below), matching the prototype. */
+  background: var(--canvas);
+  border-right: 1px solid var(--border);
+  overflow-y: auto;
+}
+
+.ds-sidebar__brand {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-1) var(--space-2);
+  text-decoration: none;
+  color: var(--text);
+  font-weight: 650;
+  font-size: var(--text-body);
+  letter-spacing: -0.01em;
+}
+
+/* The iris mark: a gradient tile with a white pupil and a quarter-arc iris. Same
+   geometry as the PWA icons in public/ so the installed app and the rail agree. */
+.ds-sidebar__brand-mark {
+  position: relative;
+  width: 1.875rem;
+  height: 1.875rem;
+  border-radius: 9px;
+  background: linear-gradient(135deg, #6366f1, #4338ca);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.25),
+    0 2px 6px rgba(79, 70, 229, 0.35);
+  flex-shrink: 0;
+}
+
+.ds-sidebar__brand-mark::before {
+  content: "";
+  position: absolute;
+  inset: 5px;
+  border-radius: 50%;
+  border: 1.5px solid rgba(255, 255, 255, 0.4);
+  border-left-color: transparent;
+  border-bottom-color: transparent;
+}
+
+.ds-sidebar__brand-mark::after {
+  content: "";
+  position: absolute;
+  top: 7px;
+  left: 7px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #fff;
+  opacity: 0.95;
+}
+
+.ds-sidebar__nav {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  flex: 1;
+}
+
+.ds-sidebar__group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.ds-sidebar__group-label {
+  font-size: var(--text-micro);
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+  padding: 0 var(--space-2);
+  margin-bottom: var(--space-1);
+}
+
+/* Collapsible "Tools" header — demotes every non-cockpit route behind one toggle. */
+.ds-sidebar__group-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  width: 100%;
+  margin-top: var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  border: 0;
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--text-muted);
+  font-size: var(--text-micro);
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: color var(--motion-fast) var(--ease), background var(--motion-fast) var(--ease);
+}
+
+.ds-sidebar__group-toggle:hover {
+  color: var(--text);
+  background: color-mix(in srgb, var(--text) 5%, transparent);
+}
+
+.ds-sidebar__group-toggle:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.ds-sidebar__group-toggle--active {
+  color: var(--text);
+  background: color-mix(in srgb, var(--accent) 10%, transparent);
+}
+
+.ds-sidebar__link {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-md);
+  text-decoration: none;
+  font-size: var(--text-small);
+  font-weight: 500;
+  color: var(--text-muted);
+  /* Transparent hairline reserved so the active state can draw its card border
+     without shifting the row by a pixel. */
+  border: 1px solid transparent;
+  transition: color var(--motion-fast) var(--ease), background var(--motion-fast) var(--ease);
+}
+
+.ds-sidebar__link:hover {
+  color: var(--text);
+  background: var(--hover);
+}
+
+/* Active row = a card lifted off the paper (prototype), not a tinted stripe. */
+.ds-sidebar__link[aria-current="page"],
+.ds-sidebar__link--active {
+  color: var(--text);
+  font-weight: 600;
+  background: var(--surface);
+  border-color: var(--border);
+  box-shadow: var(--shadow-sm);
+}
+
+.ds-sidebar__link[aria-current="page"] svg,
+.ds-sidebar__link--active svg {
+  color: var(--accent);
+}
+
+.ds-sidebar__link:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* Sidebar section heading row — landing link + collapse toggle (S7 nav rewire). */
+.ds-sidebar__section-row {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.ds-sidebar__section-row .ds-sidebar__link {
+  flex: 1;
+  min-width: 0;
+}
+
+.ds-sidebar__toggle-btn {
+  width: 1.75rem;
+  height: 1.75rem;
+  flex-shrink: 0;
+}
+
+/* Nested group indent under a collapsed section. */
+.ds-sidebar__sub-group {
+  margin-left: var(--space-2);
+}
+
+/* Sidebar footer (design system link). */
+.ds-sidebar__footer {
+  margin-top: auto;
+  padding: var(--space-2);
+}
+
+.ds-sidebar__footer-link {
+  font-size: var(--text-micro);
+  color: var(--text-faint);
+}
+
+/* Settings gear section (bottom of sidebar, visually distinct from nav). */
+.ds-sidebar__settings {
+  border-top: 1px solid var(--border);
+  padding-top: var(--space-2);
+  margin-top: var(--space-2);
+}
+
+.ds-sidebar__settings-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+/* Breadcrumb row (above main content). */
+.ds-breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: var(--space-2) var(--space-6) 0;
+  max-width: var(--content-max);
+  margin: 0 auto;
+  width: 100%;
+  font-size: var(--text-micro);
+  color: var(--text-faint);
+}
+
+.ds-breadcrumb__leaf {
+  color: var(--text-muted);
+}
+
+.ds-main-col {
+  flex: 1;
+  min-width: 0;
+  margin-left: var(--nav-width);
+  display: flex;
+  flex-direction: column;
+}
+
+.ds-topbar {
+  position: sticky;
+  top: 0;
+  z-index: var(--z-sticky);
+  height: var(--header-height);
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--space-3);
+  padding: 0 var(--space-5);
+  background: color-mix(in srgb, var(--canvas) 88%, transparent);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border);
+}
+
+.ds-topbar__slots {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-width: 0;
+  flex: 1;
+}
+
+.ds-topbar__actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-shrink: 0;
+}
+
+.ds-icon-btn {
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  width: 2rem;
+  height: 2rem;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: var(--text-small);
+  transition:
+    color var(--motion-fast) var(--ease),
+    background-color var(--motion-fast) var(--ease),
+    border-color var(--motion-fast) var(--ease);
+}
+
+.ds-icon-btn:hover {
+  color: var(--text);
+  border-color: var(--border-strong);
+  background: var(--surface-raised);
+}
+
+.ds-icon-btn:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.ds-icon-btn--wide {
+  width: auto;
+  padding: 0 var(--space-3);
+  font-family: var(--font-mono);
+  font-size: var(--text-micro);
+  color: var(--text-faint);
+}
+
+.ds-icon-btn--recording {
+  color: var(--danger);
+  border-color: var(--danger);
+  background: color-mix(in srgb, var(--danger) 12%, var(--surface));
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .ds-icon-btn--recording {
+    animation: ds-pulse 1.6s var(--ease) infinite;
+  }
+}
+
+.ds-content {
+  flex: 1;
+  width: 100%;
+  max-width: var(--content-max);
+  margin: 0 auto;
+  padding: var(--space-5) var(--space-6) var(--space-8);
+  min-width: 0;
+}
+
+.ds-menu-btn {
+  display: none;
+}
+
+/* ── Phone bottom nav ───────────────────────────────────────────────────────────────
+   Hidden by default (desktop is untouched); the 768px block below turns it on, gives
+   --bottom-nav-height a real value and pays the content back in bottom padding. It
+   sits BELOW the drawer backdrop on purpose, so opening "More" dims it like everything
+   else instead of floating a live bar over the scrim. */
+.ds-bottom-nav {
+  display: none;
+}
+
+.ds-bottom-nav__item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  min-width: 0;
+  padding: var(--space-2) var(--space-1);
+  border: 0;
+  background: none;
+  color: var(--text-muted);
+  font-family: inherit;
+  font-size: var(--text-micro);
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: color var(--motion-fast) var(--ease);
+}
+
+.ds-bottom-nav__item:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+  border-radius: var(--radius-sm);
+}
+
+.ds-bottom-nav__icon {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.75rem;
+  height: 1.75rem;
+  border-radius: var(--radius-pill);
+  transition: background var(--motion-fast) var(--ease);
+}
+
+.ds-bottom-nav__label {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  letter-spacing: 0.01em;
+}
+
+.ds-bottom-nav__item--active {
+  color: var(--accent);
+}
+
+.ds-bottom-nav__item--active .ds-bottom-nav__icon {
+  background: var(--accent-soft);
+}
+
+.ds-bottom-nav__count {
+  position: absolute;
+  top: -2px;
+  right: 2px;
+  min-width: 1rem;
+  height: 1rem;
+  padding: 0 0.25rem;
+  border-radius: var(--radius-pill);
+  border: 1.5px solid var(--surface);
+  background: var(--danger);
+  color: #fff;
+  font-size: 0.625rem;
+  font-weight: 700;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Mobile nav */
+@media (max-width: 768px) {
+  /* Declared on the root (not on the bar) so .ds-content — a sibling subtree — can
+     read it and reserve the matching bottom padding. */
+  :root {
+    --bottom-nav-height: 3.25rem;
+  }
+
+  .ds-bottom-nav {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: calc(var(--z-sticky) - 2);
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    align-items: stretch;
+    height: calc(var(--bottom-nav-height) + env(safe-area-inset-bottom, 0px));
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+    padding-left: env(safe-area-inset-left, 0px);
+    padding-right: env(safe-area-inset-right, 0px);
+    background: color-mix(in srgb, var(--surface) 92%, transparent);
+    backdrop-filter: blur(12px);
+    border-top: 1px solid var(--border);
+  }
+
+  .ds-sidebar {
+    transform: translateX(-100%);
+    transition: transform var(--motion-base) var(--ease);
+  }
+
+  .ds-sidebar--open {
+    transform: translateX(0);
+    box-shadow: var(--shadow-lg);
+  }
+
+  .ds-main-col {
+    margin-left: 0;
+  }
+
+  .ds-menu-btn {
+    display: inline-flex;
+  }
+
+  .ds-sidebar-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: calc(var(--z-sticky) - 1);
+    background: color-mix(in srgb, #000 45%, transparent);
+  }
+
+  .ds-content {
+    /* Bottom padding clears the fixed bar AND the home indicator, so the last row of
+       any page is reachable instead of sitting under the nav. */
+    padding: var(--space-4) var(--space-4)
+      calc(var(--bottom-nav-height) + env(safe-area-inset-bottom, 0px) + var(--space-5));
+  }
+
+  .ds-topbar {
+    padding: 0 var(--space-4);
+    justify-content: space-between;
+  }
+
+  /* The phone topbar is crowded: the pill keeps state + health and drops the
+     freshness clause, which stays in its title and aria-label. */
+  .ds-status-pill__sep--wide,
+  .ds-status-pill__detail--wide {
+    display: none;
+  }
+
+  /* The drawer is the phone's "More" surface: it must clear the bar it opened from. */
+  .ds-sidebar {
+    padding-bottom: calc(var(--bottom-nav-height) + env(safe-area-inset-bottom, 0px) + var(--space-4));
+  }
+}
+
+/* Animations */
+@keyframes ds-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes ds-scale-in {
+  from {
+    opacity: 0;
+    transform: scale(0.97) translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+@keyframes ds-slide-up {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes ds-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes ds-shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+@keyframes ds-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.45;
+  }
+}
+
+/* Halo expanding out of a status dot (StatusPill) — the prototype's `pulse`. */
+@keyframes ds-heartbeat {
+  0% {
+    transform: scale(0.6);
+    opacity: 0.5;
+  }
+  70%,
+  100% {
+    transform: scale(1.9);
+    opacity: 0;
+  }
+}
+
+/* Chart shared */
+.ds-chart {
+  width: 100%;
+  color: var(--text);
+  font-family: var(--font-sans);
+}
+
+.ds-chart__svg {
+  width: 100%;
+  height: auto;
+  display: block;
+  overflow: visible;
+}
+
+.ds-chart__axis {
+  stroke: var(--border);
+  stroke-width: 1;
+}
+
+.ds-chart__grid {
+  stroke: var(--border);
+  stroke-width: 1;
+  stroke-dasharray: 2 4;
+  opacity: 0.7;
+}
+
+.ds-chart__tick {
+  fill: var(--text-faint);
+  font-size: 10px;
+  font-family: var(--font-mono);
+}
+
+.ds-chart__legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  margin-top: var(--space-3);
+  font-size: var(--text-micro);
+  color: var(--text-muted);
+}
+
+.ds-chart__legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.ds-chart__legend-swatch {
+  width: 0.6rem;
+  height: 0.6rem;
+  border-radius: 2px;
+}
+
+.ds-chart-tooltip {
+  position: absolute;
+  z-index: var(--z-dropdown);
+  pointer-events: none;
+  padding: var(--space-2) var(--space-3);
+  background: var(--overlay);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-md);
+  font-size: var(--text-micro);
+  color: var(--text);
+  white-space: nowrap;
+  max-width: 16rem;
+}
+
+.ds-chart-tooltip__title {
+  font-weight: 600;
+  margin-bottom: 2px;
+}
+
+.ds-chart-tooltip__row {
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+}
+
+/* Screen-reader only */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+

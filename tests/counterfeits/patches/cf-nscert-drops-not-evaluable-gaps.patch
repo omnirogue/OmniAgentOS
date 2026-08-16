@@ -1,0 +1,16 @@
+diff --git a/scripts/northstar_cert/emit_gaps.py b/scripts/northstar_cert/emit_gaps.py
+--- a/scripts/northstar_cert/emit_gaps.py
++++ b/scripts/northstar_cert/emit_gaps.py
+@@ -321,11 +321,7 @@ def _read_failed_evals(
+     decoded = _read_evals(db_path, run_id)
+     voided_items = [item for item in decoded if item.verdict is CheckVerdict.VOID]
+     voided_rows = tuple(f"{item.check_id}:{item.reason}" for item in voided_items)
+-    emittable = [
+-        item
+-        for item in decoded
+-        if item.verdict is not CheckVerdict.PASS and item.verdict is not CheckVerdict.VOID
+-    ]
++    emittable = [item for item in decoded if item.verdict is CheckVerdict.FAIL]
+     return emittable, len(voided_items), voided_rows, getattr(decoded, "skipped", ())
+ 
+ 

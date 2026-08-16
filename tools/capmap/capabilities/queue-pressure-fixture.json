@@ -1,0 +1,18 @@
+{
+  "id": "queue-pressure-fixture",
+  "company": "estate",
+  "kind": "mechanical-automation",
+  "host": "owner-mac",
+  "repo": "/Users/youruser/Work/Ops",
+  "what_it_does": "Fixture that exits 3 to demonstrate a degraded result without claiming the capability is down.",
+  "why_it_matters": "A warning-level queue-pressure condition needs attention but should remain distinct from a stopped service or an unevaluable check.",
+  "blast_radius": "Capmap exit-semantics demonstration only; this is not a live queue-pressure check.",
+  "verification": {"type": "command", "argv": ["/bin/sh", "-c", "exit 3"], "fixture": true, "note": "Deterministic fixture proving a mapped degraded exit is neither OK nor DOWN."},
+  "exit_semantics": {"3": "degraded"},
+  "cadence_seconds": 900,
+  "staleness_slo_seconds": 2700,
+  "escalation_tier": "medium",
+  "owner": "estate-ops",
+  "last_verified": null,
+  "last_status": "UNVERIFIED"
+}

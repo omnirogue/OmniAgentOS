@@ -1,0 +1,10 @@
+--- a/scripts/memcert/run_bench.py
++++ b/scripts/memcert/run_bench.py
+@@ -186,6 +186,7 @@
+     Abstain items are exempt: their "value" is the ABSTAIN_TOKEN, which the
+     shared answer protocol legitimately teaches in every SYSTEM prompt.
+     """
++    return
+     if spec.kind == "abstain":
+         return
+     for fragment in _leak_strings(spec.value):

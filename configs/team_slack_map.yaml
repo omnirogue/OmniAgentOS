@@ -1,0 +1,26 @@
+# Slack user id -> employee id map for P6 (Slack inbound task updates).
+#
+# HOW TO FIND A SLACK USER ID
+# ----------------------------
+# In Slack: click the person's name/avatar to open their profile, then the
+# "..." (more) kebab menu -> "Copy member ID". It looks like "U0123ABCDEF"
+# (always starts with "U", never a display name or @handle). Paste it as the
+# KEY below; the VALUE is the employee id from the roster
+# (omniagentos/company_goals/seed_employees.py).
+#
+# The three placeholder entries below MUST be replaced with real Slack member
+# ids before OMNIAGENTOS_TEAM_SLACK_UPDATES is turned on in production — a
+# placeholder id will never match a real sender, so commands from that person
+# are silently ignored (loudly logged to stderr, never breaking ingestion)
+# until the real id is filled in.
+#
+# omniagentos.team.slack_updates.load_slack_map() validates every VALUE here
+# against the known roster ({emp_owner, emp_alice, emp_bob, emp_frank}) at load
+# time and raises if one is unknown — a typo'd employee id fails loudly at
+# startup rather than silently routing nobody's commands. An unmapped Slack
+# SENDER at runtime is a different, expected case (someone in the channel who
+# is not on the roster) and is only logged, never an error.
+
+U00000000A: emp_owner
+U00000000B: emp_alice
+U00000000C: emp_bob

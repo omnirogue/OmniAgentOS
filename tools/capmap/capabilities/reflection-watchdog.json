@@ -1,0 +1,18 @@
+{
+  "id": "reflection-watchdog",
+  "company": "estate",
+  "kind": "llm-loop",
+  "host": "owner-mac",
+  "repo": "/Users/youruser/Work/Ops",
+  "what_it_does": "Fixture standing in for reflection-watchdog; it exits 2 to represent its deliberate could-not-run outcome.",
+  "why_it_matters": "Exit 2 means could not evaluate, not broken: rendering it as DOWN would create a false outage.",
+  "blast_radius": "Capmap exit-semantics demonstration only; this is not a live watchdog check.",
+  "verification": {"type": "command", "argv": ["/bin/sh", "-c", "exit 2"], "fixture": true, "note": "Deterministic fixture proving exit 2 maps to cannot_evaluate, not DOWN."},
+  "exit_semantics": {"2": "cannot_evaluate"},
+  "cadence_seconds": 900,
+  "staleness_slo_seconds": 2700,
+  "escalation_tier": "medium",
+  "owner": "estate-ops",
+  "last_verified": null,
+  "last_status": "UNVERIFIED"
+}

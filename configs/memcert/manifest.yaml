@@ -1,0 +1,61 @@
+# memcert result-binding catalog (DESIGN devtasks/memcert/DESIGN.md §3, §9).
+# Schema follows configs/northstar-cert/manifest.yaml: every check carries its
+# own explicit binding; the defaults anchor NEVER carries a binding (vacuous-
+# binding class forbidden). `version` is the SUITE version (evs_memcert_v<N>);
+# any content change to this file MUST bump it or subsequent recorder runs VOID.
+#
+# Binder census rule: at most 2 checks may bind one pytest target, and when 2
+# do, BOTH carry `shared: true`. Wiring checks (MEM-W-*) bind the existing
+# hermetic decisive tests; axis checks (MEM-A-01..MEM-H-01) bind the
+# `live`-marked carriers in tests/memcert/test_live_bench.py; MEM-I/MEM-J are
+# honest pending carriers (capacity curve, retention — DESIGN §3 roadmap).
+# configs/memcert/writers.yaml (v3, tokens:{}) is the sticky writer index —
+# no writer: tokens are claimed yet.
+# RECORDER RAIL STATUS (deliberate deferral, Sol review MC-004 made loud):
+# this manifest is the CHECK CATALOG; in v1 its carriers run via the cadence's
+# pytest+junit path (hermetic t1 daily; t2 live via `-m live` selection) and
+# run_bench's bars gate. It is NOT yet selectable by the northstar recorder
+# (record_results.py pins northstar suite identity; parametrization =
+# follow-up Class A lane, devtasks/memcert/LANE.md "Recorder unification"),
+# so no signed LabStore receipts / pulse series exist until that lane lands.
+# Nothing reads this file expecting recorder semantics today.
+version: 2
+defaults: &mc_defaults
+  capability: memcert
+  tier: t1
+  gate: false
+  requires: []
+  scope: scenario
+  provenance: [memcert-v1]
+checks:
+  # --- wiring: decisive hermetic tests over the harness itself (tier t1) ---
+  - {<<: *mc_defaults, id: MEM-W-01, binding: {type: pytest, target: tests/memcert/test_gen.py::test_same_seed_scale_split_is_byte_identical}}
+  - {<<: *mc_defaults, id: MEM-W-02, gate: true, binding: {type: pytest, target: tests/memcert/test_gen.py::test_items_jsonl_leaks_no_answers}}
+  - {<<: *mc_defaults, id: MEM-W-03, gate: true, binding: {type: pytest, target: tests/memcert/test_gen.py::test_cert_split_ids_never_carry_the_raw_seed}}
+  - {<<: *mc_defaults, id: MEM-W-04, binding: {type: pytest, target: tests/memcert/test_grade.py::test_grade_rows_every_verdict_path}}
+  - {<<: *mc_defaults, id: MEM-W-05, binding: {type: pytest, target: tests/memcert/test_grade.py::test_paired_delta_b_beats_a_and_mcnemar_exact}}
+  - {<<: *mc_defaults, id: MEM-W-06, gate: true, binding: {type: pytest, target: tests/memcert/test_runner_offline.py::test_leak_guard_raises_on_direct_system_prompt_leak}}
+  - {<<: *mc_defaults, id: MEM-W-07, gate: true, binding: {type: pytest, target: tests/memcert/test_runner_offline.py::test_unchanged_input_refuses_same_out_dir}}
+  - {<<: *mc_defaults, id: MEM-W-08, gate: true, binding: {type: pytest, target: tests/memcert/test_seed_holdout.py::test_in_checkout_state_dir_is_refused_exit_2}}
+  - {<<: *mc_defaults, id: MEM-W-09, binding: {type: pytest, target: tests/memcert/test_system_arm.py::test_system_arm_builds_and_respects_budget}}
+  # --- axes A-H: live certification carriers (tier t2, fs:var/memcert) ---
+  - {<<: *mc_defaults, id: MEM-A-01, tier: t2, binding: {type: pytest, target: tests/memcert/test_live_bench.py::test_axis_a_meets_bar}, requires: ['fs:var/memcert']}
+  - {<<: *mc_defaults, id: MEM-B-01, tier: t2, binding: {type: pytest, target: tests/memcert/test_live_bench.py::test_axis_b_meets_bar}, requires: ['fs:var/memcert']}
+  - {<<: *mc_defaults, id: MEM-C-01, tier: t2, binding: {type: pytest, target: tests/memcert/test_live_bench.py::test_axis_c_meets_bar}, requires: ['fs:var/memcert']}
+  - {<<: *mc_defaults, id: MEM-D-01, tier: t2, binding: {type: pytest, target: tests/memcert/test_live_bench.py::test_axis_d_meets_bar}, requires: ['fs:var/memcert']}
+  - {<<: *mc_defaults, id: MEM-E-01, tier: t2, binding: {type: pytest, target: tests/memcert/test_live_bench.py::test_axis_e_meets_bar}, requires: ['fs:var/memcert']}
+  - {<<: *mc_defaults, id: MEM-F-01, tier: t2, binding: {type: pytest, target: tests/memcert/test_live_bench.py::test_axis_f_meets_bar}, requires: ['fs:var/memcert']}
+  - {<<: *mc_defaults, id: MEM-G-01, tier: t2, binding: {type: pytest, target: tests/memcert/test_live_bench.py::test_axis_g_meets_bar}, requires: ['fs:var/memcert']}
+  - {<<: *mc_defaults, id: MEM-H-01, tier: t2, binding: {type: pytest, target: tests/memcert/test_live_bench.py::test_axis_h_meets_bar}, requires: ['fs:var/memcert']}
+  # --- v2 deterministic retrieval-sufficiency certification (tier t1) ---
+  # Grades the CONTEXT the production stack builds (evidence containment, no
+  # LLM): the merge-lane proof of the hybrid assembler. DESIGN-v2.md §4.
+  - {<<: *mc_defaults, id: MEM-S-01, gate: true, binding: {type: pytest, target: tests/memcert/test_sufficiency.py::test_system_dominates_legacy_on_every_axis}}
+  - {<<: *mc_defaults, id: MEM-S-02, gate: true, binding: {type: pytest, target: tests/memcert/test_sufficiency.py::test_system_strictly_improves_the_measured_gap_axes}}
+  - {<<: *mc_defaults, id: MEM-S-03, gate: true, binding: {type: pytest, target: tests/memcert/test_sufficiency.py::test_axis_d_crown_jewel_is_protected}}
+  - {<<: *mc_defaults, id: MEM-S-04, gate: true, binding: {type: pytest, target: tests/memcert/test_sufficiency.py::test_configured_sufficiency_bars_are_met}}
+  # --- v2 capacity + retention carriers (formerly pending; DESIGN-v2.md §5) ---
+  - {<<: *mc_defaults, id: MEM-I-01, binding: {type: pytest, target: tests/memcert/test_capacity.py::test_hybrid_capacity_floors}}
+  - {<<: *mc_defaults, id: MEM-I-02, binding: {type: pytest, target: tests/memcert/test_capacity.py::test_hybrid_beats_legacy_at_every_scale}}
+  - {<<: *mc_defaults, id: MEM-J-01, binding: {type: pytest, target: tests/memcert/test_retention.py::test_axis_drop_is_flagged_and_localized}}
+  - {<<: *mc_defaults, id: MEM-J-02, binding: {type: pytest, target: tests/memcert/test_retention.py::test_stable_run_reports_no_regression}}

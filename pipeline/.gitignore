@@ -1,0 +1,11 @@
+.env*
+*.pem
+*.key
+credentials*.json
+secrets*
+service-account*.json
+.DS_Store
+__pycache__/
+
+# review scratch — repro scripts + critic logs, never part of the package
+.fusion/

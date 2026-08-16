@@ -1,0 +1,47 @@
+# Reliability system knobs (cosmetic only, §6)
+# Tier-P protected: changes require L4 (unanimous judges + human approval)
+# No governance knobs here; those belong in configs/governance.yaml
+
+# Paths
+sandbox:
+  base_dir: var/sandbox
+  max_worktrees: 50
+  cleanup_stale_after_hours: 24
+
+judges:
+  # Timeout per judge invocation (hard deadline + process-group kill)
+  timeout_seconds: 120
+  # Retry policy for unparseable JSON
+  json_parse_retries: 1
+
+# Token budgets (fallback caps if governance.yaml not present)
+token_budgets:
+  judge_per_improvement: 8000  # Per-judge input prompt token budget
+  analyzer_per_event: 6000     # Per analyzer invocation
+
+# Pytest execution
+pytest:
+  timeout_seconds: 300
+  max_workers: 3  # Parallel sandboxes
+  # Environment variables to strip (in addition to programmatic checks)
+  env_strip_patterns:
+    - ".*SECRET.*"
+    - ".*CONNECTIONS.*"
+    - ".*var/secrets.*"
+
+# Batch sizes
+batches:
+  events_per_watch_cycle: 100
+  audit_improvements_batch: 20
+
+# Logging
+logging:
+  sandbox_result_detail: "full"  # full|summary
+  judge_output_retain: true      # Keep full judge outputs in logs
+  log_dir: var/log/reliability
+
+# Feature flags (for gradual rollout)
+features:
+  auto_apply_l1: false           # Auto-apply L1 improvements in auto mode
+  judge_panel_required: true     # Require complete panel before awaiting_human
+  monitor_window_enabled: true   # Run KPI comparison during observation window

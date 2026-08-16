@@ -1,0 +1,144 @@
+# GATE REGISTRY — mechanical checks, selected by surface, promoted from observed defects.
+#
+# WHERE THIS CAME FROM
+# --------------------
+# On 2026-07-29, five Anthropic aggregate reviews refused nine blocking defects. Every one
+# had already been APPROVED by the per-lane reviewer. Three of the nine were the SAME defect
+# class, found three separate times, each costing a full ~20-minute review cycle.
+#
+# The third repeat is the signal. A defect an expensive reviewer finds repeatedly is not a
+# judgement — it is a MEASUREMENT nobody has written down yet. `reachability-gate.py` was
+# written from that observation and reproduced both known instances in seconds, at the same
+# file:line the reviewer named.
+#
+# THE FOUR RULES
+#
+# 1. PROMOTION. A gate earns a place here when an expensive reviewer finds the same defect
+#    class >= 3 times. Not on suspicion, not on principle — on a count. `promoted_from`
+#    records the instances, so anyone can check the gate was warranted.
+#
+# 2. VALIDATION BEFORE WIRING. A candidate gate runs against the EXISTING corpus first and
+#    must reproduce the known instances with no false positives. `validated_against` records
+#    that run. A gate that cannot show this does not wire — an unvalidated gate that cries
+#    wolf teaches people to ignore refusals, which is how merge-gate.sh became bypassable.
+#
+# 3. RETIREMENT. The rule people skip, and the one that keeps the library honest. A gate
+#    that has not fired in `retire_after_clean_runs` runs, or whose false positives exceed
+#    its true ones, gets retired. An unbounded gate library becomes slow and noisy, and a
+#    noisy gate is routed around exactly like a refusing one.
+#
+# 4. REFUSE ON UNKNOWN. Every gate must exit non-zero when it CANNOT run. A probe that
+#    cannot execute is not a pass. This is the doctrine the whole repo is built on and the
+#    single most common way a gate silently stops gating.
+#
+# WHAT A GATE LIBRARY DOES NOT DO
+# It does not replace the Anthropic tier. Of the nine defects, four were mechanizable and
+# five were not — "the docstring claims a property the code does not deliver" is a judgement
+# no grep makes. The library removes the REPEAT work so the expensive reviewer spends its
+# budget on novel judgement instead of re-finding what we already know how to measure.
+
+version: 1
+
+# OWN MECHANISM-REGISTRY ENTRY — W0.5 provider-health gate v0.
+# This is a runtime call gate, not a merge-gate script, so it is registered as
+# a mechanism and deliberately does not appear in ``surfaces``.
+mechanisms:
+  - id: provider-health-gate-v0
+    module: omniagentos.adapters.provider_health_gate
+    seam: scheduled paid-provider adapter calls
+    status: registered_unwired
+    down_behavior: skip_with_receipt
+    terminal_rule: 5_consecutive_failed_health_consultations
+    terminal_behavior: terminally_parked
+    distinct_from: daily_provider_spend_guard
+
+# Which gates run for which kind of change. Selection keeps runtime bounded; running every
+# gate on every lane is how a gate suite becomes something people skip.
+# Only ACTIVE gates may appear here. A candidate is by definition not wired, and listing one
+# makes the runner refuse every lane on that surface — which it did, immediately, the first
+# time this file was written. That refusal was correct: a surface naming a gate that does not
+# run is a suite claiming coverage it does not have.
+surfaces:
+  default:      [reachability, forbidden-paths]
+  security:     [reachability, forbidden-paths]
+  verification: [reachability, forbidden-paths]
+  data:         [reachability, forbidden-paths]
+  docs:         [forbidden-paths]
+
+# Where each candidate WILL be attached once it is promoted. Kept separate from `surfaces`
+# so intent is recorded without pretending the coverage already exists.
+pending_surfaces:
+  security:     [fail-open-scan]
+  verification: [self-witnessing-test]
+  data:         [unknown-as-value]
+
+# Paths that select a surface. First match wins; anything unmatched gets `default`.
+surface_paths:
+  security:     ["omniagentos/policy/", "omniagentos/accounts/", "omniagentos/auth", "scripts/merge-gate.sh"]
+  verification: ["omniagentos/scheduler/gate_evidence", "tests/doctrine/", "omniagentos/audit/"]
+  data:         ["omniagentos/banking/", "omniagentos/db/", "omniagentos/orgdims/"]
+  docs:         ["devtasks/", "docs/", "HANDOFF/"]
+
+gates:
+
+  - id: reachability
+    script: scripts/reachability-gate.py
+    args: "{branch} {base}"
+    defect_class: "built, tested, never wired"
+    status: active
+    promoted_from:
+      - "sw-notifications — build_approval_lookup/build_board_lookup/serialize_notification, ~700 lines of tests, zero production callers; the real route still called its private fail-open duplicates"
+      - "sw-audit — run_trace_audit_over_events reachable only via an action nothing emits, with a source comment asserting it was the real production call path"
+      - "prior art: this repo has found the same class twelve times lifetime"
+    validated_against:
+      corpus: "24 queued lanes, 2026-07-29"
+      result: "22 clean, 2 refused"
+      false_positives: 0
+      note: "the 2 refused were exactly the lanes the Opus aggregate reviewer had already rejected, at the same file:line"
+    retire_after_clean_runs: 200
+
+  - id: forbidden-paths
+    script: scripts/gates/forbidden-paths.sh
+    args: "{branch} {base}"
+    defect_class: "generated or secret-bearing file travels in a merge"
+    status: active
+    promoted_from:
+      - "ARCHI.md/ARCHI.json arrived via a lane merge three times; they are archdocs-generated and two automated regenerations collided on them"
+      - "configs/accounts.yaml and vault/sources/connections-bundle.enc reached main via swarm snapshot commits that never went through the gate"
+    validated_against:
+      corpus: "integration batches v1-v5, 2026-07-29"
+      result: "caught ARCHI.* on v1 and PLAN.md on b1"
+      false_positives: 0
+    retire_after_clean_runs: 500
+
+  # ---- CANDIDATES: observed but NOT yet at the promotion threshold. Not wired. ----------
+  # Listed so the count is tracked rather than remembered. Each needs a third instance and a
+  # corpus validation before `status: active`.
+
+  - id: unknown-as-value
+    script: null
+    defect_class: "an undeterminable quantity reported as a specific favourable number"
+    status: candidate
+    promoted_from:
+      - "sw-banking — status-less rows skipped silently, producing a fact row byte-identical to a genuine quiet day; sums into MTD as measured $0.00"
+      - "sw-orgdims — unrecognised workstream + risk=None returns LOOP_TEMPLATES[0] as 'recommended', behind a guard that is unreachable"
+    blocked_on: "needs a third instance, and a design. Partially mechanizable at best: detecting 'this zero means unknown' generally is not a grep. A narrower version — a numeric field written on a path that `continue`d without incrementing a quality counter — may be tractable."
+
+  - id: self-witnessing-test
+    script: null
+    defect_class: "a test that supplies its own producer, moving the witness to the near side of the boundary it was written to cross"
+    status: candidate
+    promoted_from:
+      - "tests/notifications — test_list_lookup_failure_is_not_resolved monkeypatches the BUGGY factory then asserts pre-existing behaviour; passes unchanged with the whole fix deleted"
+      - "tests/audit/test_trace.py:1479 — framed as 'calls the real producer so a magic-action-only branch cannot green this test', but the test IS the producer"
+    blocked_on: "needs a third instance. Plausibly mechanizable: a test that both imports a producer AND monkeypatches the symbol under test is a strong signal."
+
+  - id: fail-open-scan
+    script: null
+    defect_class: "an exception handler that converts a failure into a permissive default"
+    status: candidate
+    promoted_from:
+      - "orchestrator/review.py:112 — reviewer failure returns verdict='confirm'"
+      - "api/routes/notifications.py:61,81 — store-open exception swallowed, returns a lambda yielding None, so a downed DB reads as a lookup that measured absence"
+      - "scope/observe.py:586 — _emit swallows every exception under 'telemetry that can fail a run is worse than no telemetry'; defensible for telemetry, not for a trace audit"
+    blocked_on: "AT THRESHOLD (3 instances) — needs corpus validation before wiring. Risk of false positives is high: many `except: pass` are legitimate. Likely needs to be scoped to handlers that return a value used in an authorization or completeness decision."

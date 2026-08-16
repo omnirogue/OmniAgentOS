@@ -1,0 +1,3 @@
+id: "task_007"
+prompt: "Write a Python function extract_numbers(text: str) -> list[int] that returns all integers found in text (including negatives). Provide a test case."
+discipline: "code-changes"

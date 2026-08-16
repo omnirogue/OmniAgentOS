@@ -1,0 +1,21 @@
+diff --git a/omniagentos/scheduler/loop_effects.py b/omniagentos/scheduler/loop_effects.py
+index 601ef0cf..465bb80a 100644
+--- a/omniagentos/scheduler/loop_effects.py
++++ b/omniagentos/scheduler/loop_effects.py
+@@ -566,13 +566,9 @@ def _billable_scope() -> Iterator[None]:
+     It converts absence and nothing else: an UNKNOWN stays unknown and a
+     REFUSAL stays a refusal, both of which already fail closed.
+     """
+-    try:
+-        yield
+-    except SeamError as exc:
+-        converted = _after_billable_work(exc)
+-        if converted is exc:
+-            raise
+-        raise converted from exc
++    # _download_artifact already calls _after_billable_work on its own transport
++    # failures, so converting again here would only repeat that work.
++    yield
+ 
+ 
+ def _from_llm_transport(exc: BaseException, detail: str) -> SeamError:

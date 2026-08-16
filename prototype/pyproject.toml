@@ -1,0 +1,48 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "selfloop"
+version = "0.1.0"
+description = "One durable, unattended, self-improving loop tick per process invocation."
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "MIT" }
+keywords = ["agents", "durable-execution", "idempotency", "approvals", "learning-loop"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+]
+
+# Empty, and it is a design commitment rather than an accident. A loop that runs
+# unattended on somebody else's machine should not be able to break because a
+# transitive dependency published a new minor version overnight. Python 3.11 is
+# the floor because the package uses StrEnum and tomllib from the standard
+# library rather than taking dependencies for them.
+dependencies = []
+
+[project.optional-dependencies]
+# Test tooling only. Nothing here is imported by the package itself; `python -m
+# selfloop tick ...` runs with the standard library alone.
+dev = ["pytest>=7.4"]
+
+[project.scripts]
+selfloop = "selfloop.cli:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["selfloop"]
+
+[tool.hatch.build.targets.sdist]
+include = ["selfloop", "tests", "examples", "README.md", "pyproject.toml"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+# An xfail that starts passing is a guard whose reason has changed, and for this
+# package that is news rather than a convenience. Strict mode turns it into a
+# failure instead of a green tick nobody reads.
+xfail_strict = true
+addopts = "-q"

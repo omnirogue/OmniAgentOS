@@ -1,0 +1,312 @@
+/* Connections feature — Stripe-like restraint on the panel.
+
+Uses design tokens only: var(--surface), var(--canvas), var(--border),
+var(--text), var(--text-muted), var(--text-faint), var(--space-*), var(--radius-*).
+Zero inline styles on components. */
+
+/* ── hero + search bar ────────────────────────────────────────────────── */
+
+.hero {
+  display: grid;
+  gap: var(--space-3);
+  margin-bottom: var(--space-6);
+  align-items: start;
+}
+
+.summaryRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+}
+
+.summaryChip {
+  font-variant-numeric: tabular-nums;
+}
+
+.lead {
+  color: var(--text-muted);
+  margin: 0;
+  max-width: 72ch;
+}
+
+.searchWrap {
+  max-width: 32rem;
+}
+
+/* ── category sections ────────────────────────────────────────────────── */
+
+.categoryGroup {
+  display: grid;
+  gap: var(--space-3);
+  margin-bottom: var(--space-6);
+}
+
+.categoryHeader {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-2);
+  margin: 0;
+}
+
+.categoryLabel {
+  font-size: var(--text-h3);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--text);
+  margin: 0;
+}
+
+.categoryCount {
+  color: var(--text-faint);
+  font-size: var(--text-small);
+  font-variant-numeric: tabular-nums;
+}
+
+.tileGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr));
+  gap: var(--space-3);
+}
+
+@media (max-width: 40rem) {
+  .tileGrid { grid-template-columns: 1fr; }
+}
+
+/* ── tile (Stripe-card look) ──────────────────────────────────────────── */
+
+.tile {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  cursor: pointer;
+  transition: border-color var(--motion-dur-120, 120ms)
+    var(--motion-ease-out, cubic-bezier(0.33, 1, 0.68, 1));
+  outline: none;
+  min-height: 9.5rem;
+}
+
+.tile:hover {
+  border-color: var(--border-strong);
+}
+
+.tile:focus-visible {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px var(--accent-ring);
+}
+
+.tileHead {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+}
+
+.logoWrap {
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: var(--radius-md, 8px);
+  background: var(--surface-raised);
+  border: 1px solid var(--border);
+  color: var(--text);
+}
+
+.tileCopy {
+  flex: 1;
+  min-width: 0;
+  display: grid;
+  gap: 2px;
+}
+
+.tileName {
+  font-size: var(--text-body);
+  font-weight: 600;
+  color: var(--text);
+  margin: 0;
+  line-height: 1.35;
+}
+
+.tileMeta {
+  color: var(--text-faint);
+  font-size: var(--text-micro);
+  font-variant-numeric: tabular-nums;
+  margin: 0;
+}
+
+.tileFoot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  margin-top: auto;
+}
+
+.tileFootRight {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.docsLink {
+  color: var(--text-muted);
+  font-size: var(--text-micro);
+  text-decoration: none;
+  padding: 2px 4px;
+  border-radius: var(--radius-sm, 4px);
+  transition: color var(--motion-dur-120, 120ms)
+    var(--motion-ease-out, cubic-bezier(0.33, 1, 0.68, 1));
+}
+.docsLink:hover { color: var(--accent); }
+.docsLink:focus-visible {
+  outline: 2px solid var(--accent-ring);
+  outline-offset: 2px;
+}
+
+/* ── instance chips (multi-instance rollup) ──────────────────────────── */
+
+.instancesRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+  margin: 0;
+  padding: 0;
+}
+
+.instanceChip {
+  font-size: var(--text-micro);
+  padding: 1px 6px;
+  border-radius: var(--radius-sm, 4px);
+  border: 1px solid var(--border);
+  background: var(--surface-raised);
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.instanceChipConnected {
+  border-color: color-mix(in srgb, var(--ok) 45%, var(--border));
+  color: var(--ok);
+}
+
+/* ── detail dialog ───────────────────────────────────────────────────── */
+
+.detailHeader {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin-bottom: var(--space-3);
+}
+
+.detailName {
+  margin: 0;
+  font-size: var(--text-h2);
+  font-weight: 600;
+}
+
+.detailUnlocks {
+  color: var(--text-muted);
+  margin: 0 0 var(--space-4);
+  line-height: 1.5;
+}
+
+.detailSection {
+  display: grid;
+  gap: var(--space-2);
+  margin-bottom: var(--space-4);
+}
+
+.detailSectionTitle {
+  color: var(--text-faint);
+  font-size: var(--text-micro);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-weight: 600;
+  margin: 0;
+}
+
+.detailRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: 6px 0;
+  border-bottom: 1px solid var(--border);
+  font-size: var(--text-small);
+}
+
+.detailRow:last-child { border-bottom: none; }
+
+.detailRowLabel {
+  color: var(--text-muted);
+}
+
+.detailRowValue {
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+
+.docsFooter {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--space-2);
+  margin-top: var(--space-2);
+}
+
+/* ── empty / skeleton states ─────────────────────────────────────────── */
+
+.skeletonGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr));
+  gap: var(--space-3);
+}
+
+.skeletonTile {
+  height: 9.5rem;
+  background: linear-gradient(
+    90deg,
+    var(--surface-raised) 0%,
+    var(--overlay) 50%,
+    var(--surface-raised) 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.2s infinite;
+  border-radius: var(--radius-md, 8px);
+  border: 1px solid var(--border);
+}
+
+@keyframes shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* ── vault-error banner ──────────────────────────────────────────────── */
+
+.vaultBanner {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  border: 1px solid color-mix(in srgb, var(--warn) 40%, var(--border));
+  background: color-mix(in srgb, var(--warn) 8%, var(--surface));
+  border-radius: var(--radius-md, 8px);
+  color: var(--text);
+  margin-bottom: var(--space-4);
+}
+
+.vaultBannerCopy {
+  display: grid;
+  gap: 2px;
+}
+
+.vaultBannerTitle {
+  font-weight: 600;
+  margin: 0;
+}
+.vaultBannerDetail {
+  color: var(--text-muted);
+  margin: 0;
+  font-size: var(--text-small);
+}

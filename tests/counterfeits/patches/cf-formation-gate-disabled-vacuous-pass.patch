@@ -1,0 +1,16 @@
+diff --git a/omniagentos/swarm/scheduler.py b/omniagentos/swarm/scheduler.py
+--- a/omniagentos/swarm/scheduler.py
++++ b/omniagentos/swarm/scheduler.py
+@@ -1894,10 +1894,8 @@ def default_verifier(
+ 
+     if not commands:
+         if gate_is_false:
+-            return (
+-                False,
+-                "mechanical gate disabled and no verify_command — refusing vacuous pass.",
+-            )
++            # gate is false and no explicit verify_command: skip entirely
++            return True, "mechanical gate skipped (formation_mechanical_gate=false)"
+         else:
+             # Fail closed when gate is on: empty workspace must not vacuous-pass
+             # (Opus c4ddea9 P1). Planner should set verify_command or drop gate.

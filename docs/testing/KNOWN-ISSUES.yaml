@@ -1,0 +1,46 @@
+# Known product defects documented by red-by-design feature-health tests.
+# Keyed by issue id; referenced from tests via @pytest.mark.fh_known_issue(id="FH-###").
+# When a fix lands: flip status to fixed — the lane will then flag the still-red test
+# (or a now-green expected-red test) for promotion/removal via fh.py issues.
+schema: feature-health-known-issues.v1
+issues:
+  FH-000:
+    title: autonomous routines suppressed every tick while the API reports them active
+    feature: routines
+    status: fixed
+    resolution: >
+      fixed 2026-07-31: un-gateable settlements are a third bucket and settle_run re-checks the floor on every settlement (commit 87947508, with the sibling no-gate-settlement fix 8c1b7bd1). Live tick 18:37:19Z fired both routines.
+    opened: 2026-07-31
+    evidence: >
+      lab-jobs-drain (rtn_7ce023cc8efb471abe9e) and improve-lane-dispatcher
+      (rtn_cd01d8e43e0d41f48ab2) appear in routines.log skipped[] on every 5-minute tick from
+      16:34Z onward with "acceptance rate below the 50% auto-pause floor", while GET
+      /api/routines returns status='active' with an empty auto_pause_reason for both.
+      Two composed defects: (1) settlements return gate_evidence_unavailable — routines have
+      no gate workspace, so acceptance can never clear the floor and the floor counts
+      un-gateable settlements as rejections; (2) settle_run re-checks the floor only on
+      accepted transitions (omniagentos/scheduler/store.py:775), so a routine suppressed by
+      should_fire never flips to auto_paused, which is what makes the outage silent.
+  FH-001:
+    title: graph_runtime.complete_node status read outside write txn (duplicate-artifact race)
+    feature: dag
+    status: fixed
+    resolution: >
+      fixed 2026-07-31: complete_node claims the node by CAS before publishing artifacts (commit d78ad4e8).
+    opened: 2026-07-31
+    evidence: >
+      5/5 racing-thread reproductions produced duplicate artifacts per (node,port) with
+      divergent content hashes; fix shape is WHERE status IN ('ready','running') + rowcount CAS
+      (2026-07-31 security+stability review, var/memories MEMORY.md).
+  FH-002:
+    title: dashboard calls phantom endpoints /api/judges/*
+    feature: api_ui
+    status: fixed
+    resolution: >
+      fixed 2026-07-31: the dashboard no longer calls the four phantom /api/judges/* endpoints (commit 35456249).
+    opened: 2026-07-31
+    evidence: >
+      dashboard/src/features/reliability/api.ts:547-594 calls /api/judges/panel|reseat|stats|votes;
+      none exist in the backend route tree (src/app/judges/page.tsx:58 TODO admits it).
+      NOTE: /api/updates was initially suspected phantom but IS real — mounted via
+      omniagentos/skills/router.py under the /api prefix (verified by the drift test 2026-07-31).

@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  Hourly size-based rotation of var/loopqueue/logs/*.log.
+
+  Several gate-loop daemons (bridge, governor, advice, claim-reaper, ...)
+  write to these logs for their entire process lifetime with no rotation —
+  left alone they grow unbounded. scripts/ops/rotate_loop_logs.py rotates any
+  .log over 512MB with copytruncate (gzip-copy, then truncate the SAME file
+  in place) so already-open writer fds keep working with no signal or
+  restart, and keeps the newest 3 archives per log.
+
+  launchd hands a job a STRIPPED environment: no shell profile, no PATH from
+  .zshrc, no cwd. So every path here is absolute and the interpreter is the
+  repo's own .venv python invoked directly; never python3, never a PATH
+  lookup.
+-->
+<plist version="1.0">
+<dict>
+	<key>Label</key>
+	<string>com.omniagentos.log-rotate</string>
+	<key>EnvironmentVariables</key>
+	<dict>
+		<key>PATH</key>
+		<string>/usr/local/bin:/opt/homebrew/bin:/usr/bin:/bin:/usr/sbin:/sbin</string>
+	</dict>
+	<key>ProgramArguments</key>
+	<array>
+		<string>/Users/youruser/OmniAgentOS/.venv/bin/python</string>
+		<string>/Users/youruser/OmniAgentOS/scripts/ops/rotate_loop_logs.py</string>
+	</array>
+	<key>WorkingDirectory</key>
+	<string>/Users/youruser/OmniAgentOS</string>
+	<key>StartInterval</key>
+	<integer>3600</integer>
+	<key>RunAtLoad</key>
+	<false/>
+	<key>KeepAlive</key>
+	<false/>
+	<key>StandardOutPath</key>
+	<string>/Users/youruser/OmniAgentOS/var/log/log-rotate.log</string>
+	<key>StandardErrorPath</key>
+	<string>/Users/youruser/OmniAgentOS/var/log/log-rotate.log</string>
+</dict>
+</plist>

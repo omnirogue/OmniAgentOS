@@ -1,0 +1,298 @@
+[
+  {
+    "id": "cnt_complete",
+    "variant": "complete",
+    "execution_ref": {
+      "request_id": "req_mission_1",
+      "execution_id": "exec_ready_1",
+      "company_id": "comp_alpha",
+      "project_id": "proj_mission_rail",
+      "campaign_id": null,
+      "idempotency_key_hash": "hash_complete_1",
+      "created_at": "2026-07-30T12:00:00Z"
+    },
+    "plan_decision": {
+      "disposition": "ready",
+      "plans": [
+        {
+          "goal": "Ship mission fixture semantic corpus",
+          "tasks": [
+            {
+              "id": "task_impl",
+              "title": "Implement production-shaped fixtures",
+              "description": "Replace label-first records with authorities",
+              "depends_on": [],
+              "complexity": "standard",
+              "risk_class": "none",
+              "est_manual_minutes": 30,
+              "est_agent_minutes": 45,
+              "owned_paths": ["contracts/fixtures/mission/v1/", "tests/api/test_mission_fixture_parity.py"],
+              "tier_hint": null,
+              "acceptance": "fixture parity tests pass",
+              "verify_command": "uv run pytest -q tests/api/test_mission_fixture_parity.py",
+              "category": "engineering"
+            }
+          ],
+          "assumptions": ["OpenAPI mission routes remain P2"],
+          "parallelism_ratio": 1.0,
+          "integration_task_id": null,
+          "mode": "solo",
+          "version": 1,
+          "target_n": 1,
+          "category": "engineering",
+          "formation": {
+            "id": "coding",
+            "implementers": ["grok"],
+            "reviewer": "opus",
+            "planner": "opus",
+            "mechanical_gate": true,
+            "confidence": 0.9,
+            "topology": "hierarchical",
+            "reason": "standard code task",
+            "low_confidence": false
+          }
+        }
+      ],
+      "issues": [],
+      "questions": [],
+      "reason": "",
+      "assumptions": []
+    },
+    "task_contract": {
+      "objective": "Land truthful mission-v1 semantic corpus",
+      "acceptance_criteria": [
+        {
+          "id": "ac_parity",
+          "condition": "All production-model validations pass",
+          "evidence_required": true
+        }
+      ],
+      "read_set": ["omniagentos/contracts.py", "omniagentos/swarm/contracts.py"],
+      "write_set": ["contracts/fixtures/mission/v1/", "tests/api/test_mission_fixture_parity.py"],
+      "risk_class": "R1",
+      "budgets": {
+        "max_tokens": 200000,
+        "max_cost_usd": 5.0,
+        "max_wall_seconds": 1800,
+        "max_tool_calls": 200
+      },
+      "lease": {
+        "lease_id": "lease_complete",
+        "holder": "worker-1",
+        "expires_at": "2026-07-30T13:00:00Z",
+        "generation": 1
+      },
+      "task_id": "task_impl",
+      "lineage_id": "lin_mission_1",
+      "version": 1,
+      "metadata": {"variant": "complete"}
+    }
+  },
+  {
+    "id": "cnt_incomplete",
+    "variant": "incomplete",
+    "execution_ref": {
+      "request_id": "req_mission_2",
+      "execution_id": "exec_incomplete_1",
+      "company_id": "comp_alpha",
+      "project_id": "proj_mission_rail",
+      "campaign_id": null,
+      "idempotency_key_hash": null,
+      "created_at": "2026-07-30T12:01:00Z"
+    },
+    "plan_decision": {
+      "disposition": "ready",
+      "plans": [
+        {
+          "goal": "Partial plan still missing acceptance wiring",
+          "tasks": [
+            {
+              "id": "task_partial",
+              "title": "Draft incomplete body",
+              "depends_on": [],
+              "complexity": "simple",
+              "risk_class": "none",
+              "owned_paths": ["contracts/fixtures/mission/v1/"],
+              "acceptance": "",
+              "verify_command": ""
+            }
+          ],
+          "mode": "solo",
+          "version": 1,
+          "target_n": 1
+        }
+      ],
+      "issues": [
+        {
+          "code": "incomplete_acceptance",
+          "message": "Acceptance criteria empty on primary task",
+          "path": "tasks[0].acceptance",
+          "detail": {}
+        }
+      ],
+      "questions": [],
+      "reason": "plan accepted with known incompleteness markers",
+      "assumptions": []
+    },
+    "task_contract": {
+      "objective": "Draft incomplete contract body",
+      "acceptance_criteria": [
+        {
+          "id": "ac_draft",
+          "condition": "Draft exists even if incomplete",
+          "evidence_required": false
+        }
+      ],
+      "read_set": ["contracts/fixtures/mission/v1/"],
+      "write_set": ["contracts/fixtures/mission/v1/execution-contracts.json"],
+      "risk_class": "R0",
+      "version": 1,
+      "metadata": {"variant": "incomplete", "complete": false}
+    }
+  },
+  {
+    "id": "cnt_refused",
+    "variant": "refused",
+    "execution_ref": {
+      "request_id": "req_mission_3",
+      "execution_id": "exec_refused_1",
+      "company_id": "comp_alpha",
+      "project_id": "proj_mission_rail",
+      "campaign_id": null,
+      "idempotency_key_hash": null,
+      "created_at": "2026-07-30T12:02:00Z"
+    },
+    "plan_decision": {
+      "disposition": "policy_denied",
+      "plans": [],
+      "issues": [
+        {
+          "code": "policy_denied",
+          "message": "Destructive write outside owned paths refused",
+          "path": null,
+          "detail": {"policy": "write_set_containment"}
+        }
+      ],
+      "questions": [],
+      "reason": "policy denied before provisioning",
+      "assumptions": []
+    },
+    "task_contract": null
+  },
+  {
+    "id": "cnt_clarify",
+    "variant": "clarification-required",
+    "execution_ref": {
+      "request_id": "req_mission_4",
+      "execution_id": "exec_clarify_1",
+      "company_id": "comp_alpha",
+      "project_id": "proj_routing",
+      "campaign_id": null,
+      "idempotency_key_hash": null,
+      "created_at": "2026-07-30T12:03:00Z"
+    },
+    "plan_decision": {
+      "disposition": "needs_clarification",
+      "plans": [],
+      "issues": [
+        {
+          "code": "ambiguous_target",
+          "message": "Target project is ambiguous",
+          "path": "organization_context.project_id",
+          "detail": {}
+        }
+      ],
+      "questions": ["Which project should own this execution?"],
+      "reason": "clarification required before planning",
+      "assumptions": []
+    },
+    "task_contract": null
+  },
+  {
+    "id": "cnt_approval",
+    "variant": "approval-required",
+    "execution_ref": {
+      "request_id": "req_mission_5",
+      "execution_id": "exec_approval_1",
+      "company_id": "comp_alpha",
+      "project_id": "proj_mission_rail",
+      "campaign_id": null,
+      "idempotency_key_hash": null,
+      "created_at": "2026-07-30T12:04:00Z"
+    },
+    "plan_decision": {
+      "disposition": "policy_denied",
+      "plans": [],
+      "issues": [
+        {
+          "code": "approval_required",
+          "message": "Human approval required before executable plan",
+          "path": null,
+          "detail": {"approval_class": "consequential"}
+        }
+      ],
+      "questions": [],
+      "reason": "awaiting human approval — no executable plan yet",
+      "assumptions": []
+    },
+    "task_contract": null
+  },
+  {
+    "id": "cnt_risk_high",
+    "variant": "risk-high",
+    "execution_ref": {
+      "request_id": "req_mission_6",
+      "execution_id": "exec_risk_1",
+      "company_id": "comp_alpha",
+      "project_id": "proj_mission_rail",
+      "campaign_id": null,
+      "idempotency_key_hash": null,
+      "created_at": "2026-07-30T12:05:00Z"
+    },
+    "plan_decision": {
+      "disposition": "impossible",
+      "plans": [],
+      "issues": [
+        {
+          "code": "risk_ceiling",
+          "message": "Requested risk class exceeds formation ceiling",
+          "path": "risk_class",
+          "detail": {"requested": "R3", "ceiling": "R1"}
+        }
+      ],
+      "questions": [],
+      "reason": "high-risk request cannot proceed without re-scope",
+      "assumptions": []
+    },
+    "task_contract": null
+  },
+  {
+    "id": "cnt_changed_preview",
+    "variant": "changed-after-preview",
+    "execution_ref": {
+      "request_id": "req_mission_7",
+      "execution_id": "exec_changed_1",
+      "company_id": "comp_alpha",
+      "project_id": "proj_mission_rail",
+      "campaign_id": null,
+      "idempotency_key_hash": "hash_preview_1",
+      "created_at": "2026-07-30T12:06:00Z"
+    },
+    "plan_decision": {
+      "disposition": "invalid_plan",
+      "plans": [],
+      "issues": [
+        {
+          "code": "changed_after_preview",
+          "message": "Plan hash diverged after preview; re-preview required",
+          "path": "plan.version",
+          "detail": {"preview_version": 1, "current_version": 2}
+        }
+      ],
+      "questions": [],
+      "reason": "preview/plan drift — non-ready until revalidated",
+      "assumptions": []
+    },
+    "task_contract": null
+  }
+]

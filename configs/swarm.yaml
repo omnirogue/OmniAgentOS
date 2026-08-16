@@ -1,0 +1,442 @@
+# Swarm fleet capacity + durable limit-state defaults (WP2 seam; WP5a consumes
+# the fleet budget, omniagentos/routing/limit_state.py consumes everything else).
+#
+# ### THIS FILE IS AUTHORITATIVE for the three fleet keys below. ###
+# configs/concurrency.yaml restates them for the ramp runbook (and owns two keys
+# of its own), but NO code reads concurrency.yaml — `limit_state.fleet_available()`
+# and `intake.service` both read THIS file. When the two disagree, this file wins;
+# tests/routing/test_fleet_scale.py asserts they never do.
+#
+# Fleet capacity model (target: 200 concurrent agents across 10-20 concurrent
+# projects/swarms -- e.g. 40 small tasks + 18 swarms at once; small/fast/longhaul
+# tasks always keep guaranteed headroom, swarms share the remainder):
+#
+#   max_concurrent_swarms     swarm run #21 (or any run arriving with the global
+#                             budget exhausted) enters swarm_runs.status='queued'
+#                             and starts oldest-first as capacity frees.
+#   max_sessions_global       fleet-wide concurrent-session hard cap across
+#                             fast-lane + longhaul + swarm. 260 = the 200-agent
+#                             target plus ~30% burst headroom for coordinators,
+#                             reviewers and attach/settle sessions that are live
+#                             but not "an agent doing work".
+#   reserved_small_task_slots sessions always held back for small/fast/longhaul
+#                             tasks; swarm sessions may only ever grow the fleet
+#                             to (max_sessions_global - reserved_small_task_slots),
+#                             i.e. 220 swarm sessions with 40 reserved.
+#
+# limit_state.fleet_available() turns these into the two numbers the WP5a
+# scheduler consumes: available_global (any task) and available_for_swarm.
+#
+# NOTE (fleet-scale-200): these numbers are the ADMISSION ceiling, not a promise
+# of capacity. The real binding constraint at this scale is per-account inflight
+# (accounts x max_inflight_per_account, below) and OS file descriptors -- run
+# `python -m omniagentos.routing.fleet_preflight` to see which one binds now.
+
+max_concurrent_swarms: 20
+max_sessions_global: 260
+reserved_small_task_slots: 40
+
+# Auto solo-vs-swarm decision (execute="auto"/"swarm", and the DEFAULT dispatch
+# path once OMNIAGENTOS_SWARM_EXECUTE is on and the dispatch resolves to a git
+# working dir). swarm.planner.swarm_headroom() classifies fleet headroom LOW
+# when fewer than low_headroom_slots swarm session slots are free OR the mean
+# provider_pressure across ENABLED providers is >= 0.75 (most providers
+# cooling/saturated). LOW headroom raises the planner's solo threshold from the
+# standard 1.5 to low_headroom_ratio: parallelism must pay ~2.5x before a swarm
+# spends scarce rate-limit budget. HIGH headroom keeps the 1.5 rule. The
+# decision + its inputs are recorded in plan_json.assumptions.
+auto:
+  low_headroom_slots: 5
+  low_headroom_ratio: 2.5
+
+# Swarm planner model (WP4 / O-4) -----------------------------------------
+#
+# Decomposes the brief into a DAG. DEFAULT is Qwen 3.7 via the local LiteLLM
+# proxy (OpenAI-compatible at http://localhost:4000/v1, model id qwen37-plus)
+# at low effort — concurrent simulations must not burn Anthropic rate limits
+# on the planner rung. Override with OMNIAGENTOS_SWARM_PLANNER_MODEL /
+# OMNIAGENTOS_SWARM_PLANNER_EFFORT, or set model: formation to let the
+# formation's declared planner drive selection (O-4). Unrecognised values
+# fall back to the module defaults (never half-apply).
+# 2026-08-02 operator policy repoint: the planner routes via Fable (Claude CLI).
+# Previous config value gpt-5.6-sol (2026-07-31) was not in the allow-list and
+# silently fell back to qwen37-flash. Fable remains at the top of model_ladder
+# and in the complex lane floor for escalation on merit.
+planner:
+  # "fable" is in SWARM_PLANNER_FABLE_ALIASES and runs via the claude CLI.
+  model: fable
+  effort: high
+
+# WP5b routing integration -----------------------------------------------
+#
+# router.lineage_providers maps a model LINEAGE (as reported by the fusion
+# capability digest, ~/.claude/fusion/model-intel.json) to the CLI provider
+# that executes it (SessionSupervisor for claude; provider_exec adapters for
+# the rest). Unknown lineages fall back to the lineage name itself.
+router:
+  lineage_providers:
+    claude: claude
+    codex: codex
+    grok: grok
+    gemini: gemini
+    kimi: kimi
+    # Available once ~/.qwen is authenticated. Qwen is not in the shipped
+    # floors, overflow, or extra-candidate list, so this mapping alone does not
+    # make it an automatic route.
+    qwen: qwen
+  # The capability digest is considered STALE past this age; the router then
+  # ranks candidates with the mechanical fallback (rankings file only).
+  digest_max_age_hours: 24
+
+  # Orchestrator-decided reasoning effort per tier rung (048). The router
+  # stamps the decided effort onto every RouteDecision; it is recorded on the
+  # swarm_attempts row at open_attempt, threaded to the CLIs that accept an
+  # effort knob (codex: `-c model_reasoning_effort="..."`; grok:
+  # `--reasoning-effort`), and surfaced in summary metrics + the optimizer's
+  # win-rate-by-effort playbook aggregation. Vocabulary: low | medium | high
+  # | xhigh. kimi/gemini/qwen have no CLI effort flag and the claude bridge runs
+  # at session default — the decided value is still recorded for learning.
+  effort_by_tier:
+    simple: low
+    standard: medium
+    complex: high
+
+  # Per-model overrides (exact model id, case-insensitive) — an entry here
+  # beats effort_by_tier for that model at ANY tier. Empty by default; the
+  # optimizer's playbook win-rate-by-effort table is the evidence a human (or a
+  # future learned adjustment behind SwarmRouter._decide_effort) uses to add
+  # one. Kept EMPTY on purpose: forcing a flat model override raised STANDARD
+  # routes to xhigh; use effort_overrides_by_tier below for tier-scoped bumps.
+  effort_overrides: {}
+
+  # Tier-scoped per-model overrides (defect #1 + finding #5) — ADDITIVE to effort_overrides,
+  # but applied ONLY when the decided tier matches. This gives the strongest
+  # models extra reasoning budget on hard (complex) work WITHOUT touching their
+  # standard-tier effort. Structure: tier -> {model -> effort}.
+  effort_overrides_by_tier:
+    standard:
+      gpt-5.6-sol: high      # policy: Sol at HIGH on standard coding work
+    complex:
+      gpt-5.6-sol: xhigh
+      claude-opus-5: xhigh
+
+  # Owner coder ladder (2026-07-27, corrected 2026-07-28). A repeated model is
+  # a RETRY; a changed model is an ESCALATION. Infra outcomes do not advance it.
+  model_ladder:
+    - gemini-3.6-flash
+    - gemini-3.6-flash
+    - grok-4.5
+    - gpt-5.6-sol
+    - fable
+
+  # Lane floors (R1.1): quality floors restricting tier→candidate models.
+  # A floor scope (tier name or risk class) maps to an ordered list of model
+  # keys that become the ONLY eligible candidates (intersected with
+  # healthy/available). complex tier candidates → complex floor; high_risk
+  # (risk_class external/deploy/destructive) → high_risk floor (takes
+  # precedence). Absent config → no restrictions (backward compatible).
+  # If NO floor candidate is routable (all cooling/saturated), return requeue
+  # (never downgrade to a non-floor model).
+  lane_floors:
+    complex: [gpt-5.6-sol, claude-opus-5, fable]
+    # high_risk MUST stay claude-lineage only (finding #7): external/deploy/
+    # destructive classes are hard-denied on non-claude CLIs by the risk pin +
+    # provider_exec's backstop, so a non-claude entry here (e.g. gpt-5.6-sol) is
+    # dead config — the pin strips it before floors run and it can never route.
+    high_risk: [claude-opus-5]
+
+  # Category pins (R1.2): discipline-to-model routing. A task's discipline
+  # field (from board_tasks.discipline) pins to a model if present in this
+  # map. Pins beat generic ranking but respect account availability: pinned
+  # model cooling → requeue not substitute. Pins do NOT override lane_floors
+  # for high_risk tasks.
+  category_pins: {}
+
+  # Price/quality tiers mapped to the decision boundary cost. The planner emits
+  # a `cost_category` label; the router rounds the plan's `estimated_cost_usd`
+  # to the nearest tier ceiling and uses it as a baseline for task sequencing
+  # and fleet admission. Each tier floor+ceiling + the corresponding model floor.
+  # 2026-07-14 measured policy (after Qwen/Gemma/DeepSeek OpenRouter matrix):
+  # simple/<$0.01/task base | standard/$0.01–$0.30 | complex/>$0.30.
+  # Tier assignment is soft ("likely cost"); a standard task that overruns
+  # $0.30 still finishes (not rejected). Tier floors are hard (a high_risk task
+  # cannot route to a model not in the high_risk floor, ever).
+  tier_cost_ceilings_usd:
+    simple: 0.01
+    standard: 0.30
+    complex: 2.0
+
+# Swarm execution entrypoint -----------------------------------------------
+# Trigger condition and dispatch config for swarm-mode task routing.
+
+execute: auto   # "auto" (default to swarm when cost estimate > ceiling),
+                # "swarm" (always), "fast" (never).
+
+# Manual model selection for swarm work (when the planner itself would not care,
+# but an operator wants to constrain the experiments). Expressed as a lineage or
+# model key (e.g., "claude", "gpt-5.6-sol", "gemini"). When empty or unset, the
+# router's ranking engine picks the winner among available/healthy models.
+# Set to constrain dev experiments; leave empty for production (the ranking
+# engine's choices feed the optimizer's win-rate tables).
+swarm_model_pin: ""
+
+# Failover strategy when a swarm's primary attempt fails. "ladder" (default: try
+# the next rung and keep escalating), "ranked" (use the router's full ranking; can
+# downgrade). Valid only when execute="swarm"; ignored otherwise.
+swarm_failover: ladder
+
+# Planner fallback chain (fable.py handles the lookup). Each rung is tried in
+# sequence; the first one to succeed or the first infrastructure error stops the
+# chain. Syntax: "model:model:…". Empty means DEFAULT_CHAIN (eight cross-provider
+# rungs, fable → opus → sol → grok → gemini-api → Fireworks K3 (with outage-only
+# Moonshot fallback) → gemini-lite-api → openrouter). "fable" alone is the
+# legacy single-call path (no fallback).
+# NOTE: this is planner fallback, not reviewer fallback (two separate chains).
+planner_fallbacks: ""
+
+# Swarm model-routed formations — six agent team structures each with a
+# designated leadership (planner) model. Formations are stable bindings:
+# matching a task to a formation is HARD (matches the task's use_for tags and
+# the formation's profile); the formation's model selections should not be
+# tweaked on a per-run basis. Configuration is authoritative; tests that mock
+# `get_formation()` pin a fixture formation only when testing formation-specific
+# logic. The swarm router's model_ladder is for coding-work escalations, not a
+# formation preference.
+#
+# Formation selection order (swarm.router.select_formation): task's use_for
+# tags, task's discipline, fallback to default_formation ('coding').
+
+# merges each branch --no-ff into the main workspace at CONFIRM time (topo
+# order falls out of task eligibility). A merge conflict routes the branch to
+# the integration task's feedback and PARKS dependents (reason
+# dep_merge_conflict, integration exempt). When this flag is off — or the
+# probe fails — the Phase-1 same-directory model runs byte-identical.
+#
+# OPT-IN first (lead decision D4): flip to true only after a clean live
+# drill. The OMNIAGENTOS_SWARM_WORKTREES env var overrides this flag in both
+# directions for drills.
+#
+# H-35: production collision safety ships with worktree isolation OFF while
+# concurrent autonomous lanes are active. Do not set enabled: true for
+# production until (1) L11 git fencing is integrated (collision_safety
+# fencing_ready) and (2) a shadow soak has been recorded. Drill-time opt-in
+# via OMNIAGENTOS_SWARM_WORKTREES=1 remains available for Phase-2 tests.
+# Worker-initiated fan-out (PKG-REQUEST-SUBTASKS). When a worker discovers its
+# task decomposes into 2-4 independent subtasks it cannot finish, it writes a
+# subtasks_request.json beside its workbook and ends the attempt; the
+# coordinator validates it (count/depth/once/risk/budget/ownership guards) and
+# registers the children as first-class graph nodes via the atomic split
+# machinery — workers never spawn anything themselves. ABSENT defaults ON; set
+# explicit false to disable detection entirely (the request file is ignored).
+# worker_subtask_requests: true
+
+# In-session fan-out (PKG-INSESSION-FANOUT). When enabled, a claude swarm
+# worker whose subtasks_request.json passes the SAME six guards may receive a
+# coordinator grant (subtasks_grant.<attempt>.json) to run its 2-4 children as
+# live subagents INSIDE its own session, instead of paying a fresh CLI process
+# per child. The Task tool is unlocked at the CLI only while this is true, and
+# every Task call still consumes a grant slot server-side via the PreToolUse
+# hook — no grant, no spawn; the scheduler stays the only parallelism
+# authority. The parent attempt remains the single verify/review/merge unit
+# either way. LIVE since 2026-07-27; kill switch: enabled: false (or env 0) —
+# new grants stop immediately, live grants drain at attempt close/TTL.
+# OMNIAGENTOS_INSESSION_FANOUT=1/0 overrides in both directions for drills.
+insession:
+  enabled: true
+  # Per-grant child budget (clamped to the request guard's 2-4).
+  max_children: 4
+  # A grant a crashed attempt never voided stops counting against agent
+  # capacity after this TTL. Attempt liveness is re-checked on EVERY consume
+  # regardless — the TTL only bounds the accounting shadow.
+  grant_ttl_seconds: 1800
+  # How long the worker is told to wait for a grant before proceeding alone or
+  # ending its attempt (today's split flow). The coordinator decides on its
+  # await-poll cadence, well inside this window.
+  grant_wait_seconds: 90
+
+worktrees:
+  # Collision isolation for concurrent swarm tasks. L11 git-fencing landed on
+  # main 2026-07-26 (reliability integration merge), so the gate is open.
+  enabled: true
+
+  # Gitignored dependency dirs are not carried by a worktree checkout; the
+  # names below are SYMLINKED from the main workspace into each worktree when
+  # present (read-mostly sharing — concurrent writers through a shared link
+  # can race, but the planner's shared-file/lockfile-to-integration ownership
+  # rule keeps workers from mutating manifests, which bounds it in practice).
+  # .venv/venv are deliberately NOT listed: python venvs embed absolute paths
+  # (script shebangs + pyvenv.cfg point at the venv's own root), so a symlink
+  # into another directory produces a broken interpreter — worktrees that
+  # need a venv are the install_per_worktree case instead.
+  dep_link_dirs: [node_modules, vendor, target]
+
+  # true = do NOT symlink-share dep dirs; each worktree installs its own
+  # dependencies (safe under concurrent builds, slower to start).
+  install_per_worktree: false
+
+# Per-tier attempt timeout minutes (the scheduler's escalation ladder rungs:
+# a first timeout escalates one rung; a second splits the task). Also passed
+# through to sessions.idle_minutes so the A2 reaper enforces the same policy.
+tier_timeout_minutes:
+  simple: 15
+  standard: 30
+  complex: 60
+
+limits:
+  # Sessions with no activity for this long stop counting as durable inflight
+  # (zombie safety margin -- the A2 reaper is the cleanup, this is the floor
+  # that keeps a stuck row from permanently inflating provider pressure).
+  inflight_fresh_minutes: 30
+
+  # reserve_account() slot claims expire after this TTL when the spawn never
+  # converts them into a real sessions.account_id attribution (crash between
+  # reserve and launch). Expired reservations are ignored and lazily reaped.
+  reservation_ttl_seconds: 120
+
+  # Per-account weekly usage protection. Automated work must leave this many
+  # attempts available for explicitly interactive human sessions.
+  interactive_reserve_attempts: 10
+  weekly_attempt_quota_default: 250
+
+  # Per-provider limit-state defaults, consumed by report_outcome() /
+  # provider_pressure() / reserve_account():
+  #
+  #   transient_cooldown_seconds     FALLBACK base for transient_rate_limit
+  #                                  cooldowns (jittered ±20%). The authoritative
+  #                                  base is configs/accounts.yaml's per-provider
+  #                                  cooldown_seconds when that provider is
+  #                                  declared there; this value only covers
+  #                                  providers absent from accounts.yaml.
+  #   overloaded_backoff_seconds_min ┐ 'overloaded' outcomes back off for a
+  #   overloaded_backoff_seconds_max ┘ uniform random duration in this window
+  #                                  (a backoff, NOT a rate_limited status change).
+  #   quota_fallback_seconds         cooldown for quota_exhausted when no window
+  #                                  reset time could be parsed from the output.
+  #   max_inflight_per_account       concurrency ceiling per account used by
+  #                                  reserve_account() and the saturation term of
+  #                                  provider_pressure(). Static default; the
+  #                                  plan's empirical per-account ceilings from
+  #                                  swarm_attempts history land later and will
+  #                                  override this, not replace the key.
+  #                                  These are OPTIMISTIC SCHEDULER ceilings, not
+  #                                  vendor limits: real 429s are absorbed by the
+  #                                  cooldown machinery (report_outcome() /
+  #                                  provider_pressure()), so the scheduler leans
+  #                                  wide and lets observed pressure pull it back.
+  providers:
+    claude:
+      transient_cooldown_seconds: 60
+      overloaded_backoff_seconds_min: 30
+      overloaded_backoff_seconds_max: 120
+      quota_fallback_seconds: 3600
+      max_inflight_per_account: 20
+      # PKG-INSESSION-FANOUT: AGENT ceiling = live sessions + committed live
+      # grant budgets. 3x the process ceiling: a single Max subscription has
+      # absorbed ~300 concurrent in-session agents empirically (ultracode), so
+      # 60 is conservative under the same optimistic-ceiling philosophy as
+      # max_inflight_per_account (real 429s are absorbed by cooldown). At 4
+      # enabled accounts, 4 x 60 = 240 fleet agents ≈ the 200-agent target
+      # plus burst headroom. Mirrored by _DEFAULT_MAX_AGENTS_PER_ACCOUNT.
+      max_agents_per_account: 60
+    codex:
+      transient_cooldown_seconds: 60
+      overloaded_backoff_seconds_min: 30
+      overloaded_backoff_seconds_max: 120
+      quota_fallback_seconds: 3600
+      max_inflight_per_account: 20
+    grok:
+      transient_cooldown_seconds: 60
+      overloaded_backoff_seconds_min: 30
+      overloaded_backoff_seconds_max: 120
+      quota_fallback_seconds: 3600
+      max_inflight_per_account: 20
+    gemini:
+      transient_cooldown_seconds: 60
+      overloaded_backoff_seconds_min: 30
+      overloaded_backoff_seconds_max: 120
+      # Gemini daily quotas reset at midnight PT; when the reset time cannot be
+      # parsed from output, fall back to one hour and let the next classify pass
+      # extend it.
+      quota_fallback_seconds: 3600
+      max_inflight_per_account: 20
+    kimi:
+      transient_cooldown_seconds: 60
+      overloaded_backoff_seconds_min: 30
+      overloaded_backoff_seconds_max: 120
+      quota_fallback_seconds: 3600
+      max_inflight_per_account: 20
+    qwen:
+      transient_cooldown_seconds: 60
+      overloaded_backoff_seconds_min: 30
+      overloaded_backoff_seconds_max: 120
+      quota_fallback_seconds: 3600
+      max_inflight_per_account: 20
+
+# API-tier last resort for the PLANNER fallback chain -----------------------
+#
+# The planner chain (omniagentos/intake/fallback.py) is subscription-CLI first:
+# fable -> opus -> sol -> grok -> gemini(api) -> fireworks-k3(api, outage-only
+# moonshot fallback) -> gemini-lite(api) -> openrouter. The paid K3 route and
+# the final API rungs leave the CLIs and speak OpenAI-compatible
+# HTTP, so a total CLI outage still cannot degrade a swarm dispatch to a flat
+# solo plan.
+#
+# EVERY api-path candidate is gated by omniagentos/routing/api_policy.py, which
+# is a HARD deny-list, not a preference:
+#   * claude/anthropic lineage NEVER routes via an API path (subscription
+#     `claude` CLI only);
+#   * gpt-* / codex lineage NEVER routes via a paid API path (subscription
+#     `codex` CLI only);
+#   * only grok, gemini, and the models listed below are allowed at all.
+# A violation raises at candidate-build time (fail closed) — adding an
+# anthropic/openai id to openrouter_models below does NOT enable it, it makes
+# the chain build raise.
+api_fallback:
+  # OpenAI-compatible base for the LiteLLM proxy that serves the gemini rungs.
+  # Mirrors configs/modelintel.yaml's router_gemini api_base; overridable with
+  # OMNIAGENTOS_LITELLM_API_BASE.
+  litellm_api_base: http://localhost:4000/v1
+
+  # Low-cost OpenRouter rung (needs OPENROUTER_API_KEY; absent key => the
+  # adapter reports unhealthy and the chain skips the rung, never raises).
+  # Ids are the OpenRouter-style aliases already declared in
+  # configs/modelintel.yaml for these lineages — nothing invented here.
+  openrouter_models:
+    - deepseek/deepseek-v4-pro
+    - qwen/qwen3.7-max
+    # Registered 2026-07-26 at the owner's request for the low-cost TEST profile:
+    # $0.20/M in, $0.97/M out, 1M ctx, coder-specialised — the best capability-
+    # per-dollar coder inside the <=$2/$8 bench budget. Its lineage (qwen) is
+    # declared in configs/modelintel.yaml, which the deny-list requires in
+    # addition to this listing before any API route is permitted.
+    - qwen/qwen3-coder-flash
+    - x-ai/grok-4.5
+    # Registered 2026-07-29: OpenRouter-verified READY (16-token probe). BOTH
+    # halves required — lineage in configs/modelintel.yaml (key glm-5.2,
+    # lineage glm) plus this allow-list entry. Allow-list alone raises
+    # "no authoritative lineage" because z-ai is not a known vendor namespace.
+    - z-ai/glm-5.2
+    # Registered 2026-07-29: OpenRouter-verified READY. Lineage kimi via its own
+    # modelintel entry (key kimi-k2.6; OpenRouter id is an alias, same pattern as
+    # x-ai/grok-4.5). Not aliased onto kimi-k3 — that would bleed allow-list
+    # membership to unlisted k3. (k2.7-code null; k3 reasoning-only — do not add.)
+    - moonshotai/kimi-k2.6
+    # Registered 2026-07-31: OpenRouter-verified READY. Lineage gemini via its
+    # modelintel entry (key gemini-3.5-flash-lite); OpenRouter alias matches
+    # the canonical alias in modelintel.yaml. Budget-tier / mechanical workload
+    # candidate for fallback chain (planner + low-cost API rung).
+    - google/gemini-3.5-flash-lite
+    # SI-loop revival (operator approval 2026-08-12). A FREE candidate; kept as a
+    # fallback option. Lineage gemini (google vendor namespace). Priced at $0/M in
+    # configs/spend-caps.yaml under the openrouter $50/day cap. Rate-limited on the
+    # free shared pool, so it is NOT the primary — see qwen3.7-flash below.
+    - google/gemma-4-31b-it:free
+    # SI-loop revival — "cheapest reliable models" directive (2026-08-12). These
+    # are ultra-cheap paid draft models, all live-probed READY. qwen/qwen3.7-flash
+    # is the reflection proposer PRIMARY (configs/loop_models.yaml). Each is priced
+    # in configs/spend-caps.yaml under the openrouter $50/day cap. inclusionai/ling
+    # ids carry lineage `ling` via configs/modelintel.yaml (both halves required).
+    - qwen/qwen3.7-flash
+    - deepseek/deepseek-v4-flash-0731
+    - inclusionai/ling-3.0-flash
+    - inclusionai/ling-2.6-flash

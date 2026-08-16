@@ -1,0 +1,66 @@
+{
+  "blast_radius": "Probe only, no writes to the queue.",
+  "cadence_seconds": 3600,
+  "company": "omniagentos",
+  "escalation_tier": "medium",
+  "exit_semantics": {
+    "DEGRADED": "degraded",
+    "DOWN": "down",
+    "OK": "ok",
+    "UNVERIFIED": "cannot_evaluate",
+    "default": "cannot_evaluate"
+  },
+  "host": "owner-mac",
+  "id": "loop-planner-canary",
+  "kind": "llm-loop",
+  "last_status": "OK",
+  "last_verified": null,
+  "owner": "estate-ops",
+  "repo": "/Users/youruser/OmniAgentOS",
+  "staleness_slo_seconds": 10800,
+  "throughput": {
+    "derivation": "loops.daily_counts() over planner-canary.jsonl ts field; error rate = ok=false / total.",
+    "floor": {
+      "floor": 7.5,
+      "fraction": 0.3,
+      "median": 25.0,
+      "min_sample_days": 7,
+      "reason": null,
+      "sample": {
+        "2024-01-01": 20,
+        "2024-01-02": 25,
+        "2024-01-03": 25,
+        "2024-01-04": 25,
+        "2024-01-05": 25,
+        "2024-01-06": 25,
+        "2024-01-07": 30
+      },
+      "sample_days": 7,
+      "sample_window": "2024-01-01..2024-01-07"
+    },
+    "max_error_rate": 0.2,
+    "metric": "canary_probes_24h",
+    "notes": [
+      "Occasional burst-test days are left in the sample on purpose: the median is robust to outliers where a mean would not be."
+    ],
+    "observed": {
+      "as_of": null,
+      "burn": null,
+      "error_rate": 0.0,
+      "last_success": null,
+      "process_state": "RUNNING",
+      "volume": 25
+    },
+    "signal_exists": true,
+    "signal_path": "/Users/youruser/OmniAgentOS/var/log/planner-canary.jsonl",
+    "window": "24h"
+  },
+  "verification": {
+    "field": "canary_probes_24h",
+    "note": "Graded on throughput, not liveness: a running loop with zero volume is DEGRADED.",
+    "source": "/Users/youruser/OmniAgentOS/var/log/planner-canary.jsonl",
+    "type": "snapshot_field"
+  },
+  "what_it_does": "Hourly planner canary probing router models; volume is probe records, error rate is records with ok=false.",
+  "why_it_matters": "The canary is the estate's early warning on planner-model reachability; a silent canary means outages arrive unannounced."
+}

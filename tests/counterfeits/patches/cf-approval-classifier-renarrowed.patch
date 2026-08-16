@@ -1,0 +1,76 @@
+diff --git a/omniagentos/orchestrator/approvals.py b/omniagentos/orchestrator/approvals.py
+index 1c0936eb..0ddc75f7 100644
+--- a/omniagentos/orchestrator/approvals.py
++++ b/omniagentos/orchestrator/approvals.py
+@@ -78,28 +78,6 @@ _DELETE_SIGNALS: tuple[str, ...] = (
+     "truncate ",
+     "trash ",
+     "del ",
+-    # H1 -- plain-English destruction. The pre-hardening list only knew
+-    # "rm"/"delete"/"drop", so `wipe /srv/prod/customer_database` auto-approved.
+-    # These are anchored at a word START by _compile_signal_re, so "wipe" also
+-    # covers "wiped"/"wiping" without matching a suffix of an unrelated word.
+-    # Deliberately ABSENT: "scrub" (matches this repo's own `_scrubbed_env`
+-    # symbol in a test command) and "empty"/"clear" alone (ubiquitous in benign
+-    # engineering prose). Those verbs are carried by _durable_write_floor below,
+-    # where a production/customer/money noun must accompany them.
+-    "wipe",
+-    "erase",
+-    "purge",
+-    "obliterate",
+-    "nuke",
+-    "clear out",
+-    # H1 -- datastore destruction that is not "DROP TABLE".
+-    "drop collection",
+-    "drop_collection",
+-    "drop database",
+-    "drop schema",
+-    "truncate table",
+-    "flushall",
+-    "flushdb",
+ )
+
+ # ORM / driver spellings of a delete. A word-boundary matcher cannot anchor these
+@@ -110,13 +88,7 @@ _DELETE_SIGNALS: tuple[str, ...] = (
+ # English-verb list has no entry for the way a driver actually spells destruction.
+ # ``\bdelete`` already covers deleteMany/deleteOne/.delete(/delete_all, so those
+ # are not repeated here.
+-_ORM_DELETE_SIGNALS: tuple[str, ...] = (
+-    "remove(",  # db.customers.remove({}) / collection.remove(...)
+-    "destroy(",  # ActiveRecord/Sequelize .destroy(...) / destroy_all(
+-    ".drop(",  # db.users.drop()
+-    "truncate(",  # session.truncate(...)
+-    "drop_collection(",
+-)
++_ORM_DELETE_SIGNALS: tuple[str, ...] = ()
+
+ # Money / finance signals — the first hard-stop class.
+ _MONEY_SIGNALS: tuple[str, ...] = (
+@@ -147,19 +119,6 @@ _MONEY_SIGNALS: tuple[str, ...] = (
+     "subscription",
+     "plaid",
+     "braintree",
+-    # H1 -- payment RAILS the pre-hardening list omitted. `zelle send 500 to X`
+-    # and `topup --wallet customer amount 500` both auto-approved because no
+-    # entry above names the rail they move money over. _haystack normalizes
+-    # "-"/"_" to spaces, so "top-up"/"top_up" reach the "top up" alternative.
+-    "zelle",
+-    "cashapp",
+-    "cash app",
+-    "wallet",
+-    "topup",
+-    "top up",
+-    "chargeback",
+-    "disburse",
+-    "remittance",
+ )
+
+ # Bank writes are not satisfiable approvals. These patterns intentionally require
+@@ -1159,6 +1118,7 @@ def _durable_write_floor(
+     as a value-move verb (``pay\\w*``) and ``sepa`` as a rail, and parked a docs
+     edit as a money move until the two halves were read from the same text.
+     """
++    return None  # renarrowed: the keyword lists above are enough
+     destructive = _DESTRUCTIVE_VERB_RE.search(text) is not None
+     value_move = _VALUE_MOVE_VERB_RE.search(text) is not None
+     if not (destructive or value_move):

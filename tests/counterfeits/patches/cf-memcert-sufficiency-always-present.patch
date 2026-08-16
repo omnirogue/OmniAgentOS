@@ -1,0 +1,13 @@
+diff --git a/scripts/memcert/sufficiency.py b/scripts/memcert/sufficiency.py
+index 97c16a70e..a63cf6a69 100644
+--- a/scripts/memcert/sufficiency.py
++++ b/scripts/memcert/sufficiency.py
+@@ -154,7 +154,7 @@ def evaluate_item(
+     if item.axis not in EVIDENCE_AXES:
+         return None
+     context_norm = _norm(context_block)
+-    evidence_present = bool(evidence) and all(_contains(context_norm, ev) for ev in evidence)
++    evidence_present = bool(evidence)
+     # Date binding fails CLOSED (codex-critic CR-005-R2): an as-of item (C-L2)
+     # whose audit lost its dates, or a dates list that does not pair 1:1 with
+     # the evidence, must grade insufficient — never silently skip the check.

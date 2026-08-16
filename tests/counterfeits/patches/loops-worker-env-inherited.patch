@@ -1,0 +1,12 @@
+diff --git a/omniagentos/scheduler/loop_jobs.py b/omniagentos/scheduler/loop_jobs.py
+index a20f3c9..0f86099 100644
+--- a/omniagentos/scheduler/loop_jobs.py
++++ b/omniagentos/scheduler/loop_jobs.py
+@@ -343,7 +343,6 @@ def run_loop_job(store: Any, *, task_template: dict[str, Any] | None = None) ->
+                 text=True,
+                 timeout=spec["timeout_s"],
+                 cwd=str(_REPO_ROOT),
+-                env=_worker_env(),
+                 check=False,
+             )
+         except subprocess.TimeoutExpired:

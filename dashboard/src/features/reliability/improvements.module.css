@@ -1,0 +1,208 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+}
+
+.headerActions {
+  display: flex;
+  gap: var(--space-2);
+  align-items: center;
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.cardHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: var(--space-3);
+}
+
+.cardTitle {
+  margin: 0;
+  font-size: var(--text-body);
+  font-weight: 600;
+  color: var(--text);
+}
+
+.badgeRow {
+  display: flex;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+
+.badgeDate {
+  font-size: var(--text-micro);
+}
+
+.summary {
+  margin: 0;
+  font-size: var(--text-small);
+  color: var(--text-muted);
+  line-height: 1.5;
+}
+
+.votesPanel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  padding: var(--space-2);
+  background: var(--surface-raised);
+  border-radius: var(--radius-md);
+}
+
+.votesTitle {
+  font-size: var(--text-small);
+  font-weight: 600;
+}
+
+.votesRow {
+  font-size: var(--text-micro);
+  color: var(--text-muted);
+}
+
+.sandboxRow {
+  font-size: var(--text-small);
+}
+
+.cardActions {
+  display: flex;
+  gap: var(--space-2);
+  padding-top: var(--space-2);
+  border-top: 1px solid var(--border);
+}
+
+.emptyState {
+  text-align: center;
+  padding: var(--space-4);
+  color: var(--text-muted);
+  font-size: var(--text-small);
+}
+
+.modeDialogContent {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-4);
+}
+
+.modeDialogContent p {
+  margin: 0;
+}
+
+.modeDanger {
+  color: var(--danger);
+  font-size: var(--text-small);
+}
+
+.tabList {
+  display: flex;
+  gap: var(--space-1);
+}
+
+.proposalTarget {
+  font-size: var(--text-small);
+}
+
+.proposalRationale {
+  margin: 0;
+  font-size: var(--text-small);
+  color: var(--text-muted);
+  line-height: 1.5;
+}
+
+.proposalImpact {
+  font-size: var(--text-small);
+  color: var(--text-muted);
+}
+
+/* Demotion banner for /chat → /chats redirect note. */
+.demotionBanner {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  background: color-mix(in srgb, var(--accent) 8%, var(--surface));
+  border: 1px solid color-mix(in srgb, var(--accent) 25%, var(--border));
+  border-radius: var(--radius-md);
+  font-size: var(--text-small);
+  color: var(--text-muted);
+}
+
+.demotionBanner a {
+  color: var(--accent);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.demotionBanner a:hover {
+  text-decoration: underline;
+}
+
+/* Observability section wrapper for page-specific gaps. */
+.pageSection {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+/* Governed proposal evidence sections (design: improvements-governed-evidence). */
+.govSections {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-2);
+  background: var(--surface-raised);
+  border-radius: var(--radius-md);
+}
+
+.govSection {
+  font-size: var(--text-small);
+}
+
+.govLabel {
+  font-weight: 600;
+  font-size: var(--text-micro);
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.govBody {
+  color: var(--text);
+  line-height: 1.5;
+}
+
+.govList {
+  margin: var(--space-1) 0 0;
+  padding-left: var(--space-4);
+}
+
+.govReport {
+  margin-top: var(--space-1);
+  font-size: var(--text-micro);
+  color: var(--text-muted);
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.approveDialogContent {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-4);
+}
+
+.approveDialogContent p {
+  margin: 0;
+}
+
+.selfApprovalError {
+  color: var(--danger);
+  font-size: var(--text-small);
+}

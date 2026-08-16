@@ -1,0 +1,140 @@
+{
+  "contract_version": 1,
+  "lane": "L12",
+  "findings": ["C-08", "H-41", "H-42", "L-01", "L-05"],
+  "origins": {
+    "default_dashboard_port": 3001,
+    "default_allowlist": [
+      "http://127.0.0.1:3001",
+      "http://localhost:3001"
+    ],
+    "env": {
+      "OMNIAGENTOS_CORS_ORIGINS": "comma-separated validated full origins",
+      "OMNIAGENTOS_DASH_PORT": "integer product dashboard port",
+      "OMNIAGENTOS_DASH_PORT": "alias of OMNIAGENTOS_DASH_PORT",
+      "OMNIAGENTOS_CORS_EXTRA_PORTS": "comma-separated extra loopback ports"
+    },
+    "validation": {
+      "hosts": ["127.0.0.1", "localhost"],
+      "schemes": ["http", "https"],
+      "allow_wildcard": false,
+      "allow_credentials": false
+    },
+    "allowed_examples": [
+      "http://127.0.0.1:3001",
+      "http://localhost:3001",
+      "http://127.0.0.1:3011",
+      "http://127.0.0.1:19112"
+    ],
+    "denied_examples": [
+      "*",
+      "http://example.com",
+      "http://127.0.0.1:3001/path",
+      "ftp://127.0.0.1:3001",
+      "http://user:pass@127.0.0.1:3001"
+    ]
+  },
+  "event_hub": {
+    "degraded_after_failures": 3,
+    "restart_after_failures": 8,
+    "max_tailer_restarts": 5,
+    "health_field": "event_hub",
+    "sse_event": "eventbus.status",
+    "status_shape": {
+      "contract_version": 1,
+      "state": "ok",
+      "degraded": false,
+      "consecutive_failures": 0,
+      "last_error": null,
+      "last_failure_at": null,
+      "last_success_at": null,
+      "tailer_alive": false,
+      "tailer_restarts": 0,
+      "max_tailer_restarts": 5,
+      "subscriber_count": 0,
+      "degraded_after_failures": 3,
+      "restart_after_failures": 8
+    },
+    "degraded_sse_example": {
+      "contract_version": 1,
+      "type": "eventbus.status",
+      "state": "degraded",
+      "reason": "persistent_tail_failure",
+      "degraded": true,
+      "consecutive_failures": 3,
+      "last_error": "event_sample: RuntimeError: store down",
+      "tailer_restarts": 0,
+      "max_tailer_restarts": 5
+    },
+    "recovered_sse_example": {
+      "contract_version": 1,
+      "type": "eventbus.status",
+      "state": "ok",
+      "reason": "tailer_recovered",
+      "degraded": false,
+      "consecutive_failures": 0,
+      "last_error": null,
+      "tailer_restarts": 1,
+      "max_tailer_restarts": 5
+    }
+  },
+  "organization": {
+    "approve_path": "/api/org/agent-requests/{id}/approve",
+    "approve_body": { "decided_by": "owner" },
+    "success": {
+      "status_code": 202,
+      "request_status": "designing",
+      "event_action": "agent_request.approved"
+    },
+    "spawn_failure": {
+      "status_code": 503,
+      "error_code": "spawn_failed",
+      "request_status": "failed",
+      "event_action": "agent_request.spawn_failed",
+      "approved_event_emitted": false,
+      "error_envelope": {
+        "error": {
+          "code": "spawn_failed",
+          "message": "design agent subprocess could not be started",
+          "detail": {
+            "id": "areq_example",
+            "status": "failed",
+            "error": "design agent spawn failed: OSError: ..."
+          }
+        }
+      }
+    },
+    "statuses": [
+      "pending",
+      "designing",
+      "awaiting_approval",
+      "approved",
+      "created",
+      "rejected",
+      "failed"
+    ]
+  },
+  "routes": {
+    "projects_tree": {
+      "method": "GET",
+      "path": "/api/projects/tree",
+      "owner": "omniagentos.api.routes.hierarchy.project_tree",
+      "unique_get_registrations": 1
+    }
+  },
+  "revenue": {
+    "undercount_note_template": "{vertical} Stripe: charge pagination was truncated on {day} — revenue is an UNDERCOUNT.",
+    "undercount_level": "warn",
+    "applies_when": "stripe fact meta.truncated is true, independent of payment_failures",
+    "example_fact": {
+      "source": "stripe",
+      "vertical": "AcmeUni",
+      "payment_failures": 0,
+      "meta": { "truncated": true, "charges": 1000 }
+    },
+    "example_note": {
+      "level": "warn",
+      "message": "AcmeUni Stripe: charge pagination was truncated on 2026-07-10 — revenue is an UNDERCOUNT."
+    }
+  }
+}

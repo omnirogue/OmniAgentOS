@@ -1,0 +1,11 @@
+{
+  "runId": "fusion-demo-42",
+  "mode": "feature",
+  "task": "Add governed historical imports",
+  "repo": "OmniAgentOS",
+  "createdAt": "2025-01-10T10:00:00Z",
+  "updatedAt": "2025-01-10T10:02:30Z",
+  "phase": "complete",
+  "status": "completed",
+  "fableApproval": {"approved": true, "by": "fable"}
+}

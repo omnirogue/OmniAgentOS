@@ -1,0 +1,30 @@
+# leaderboard: {{ subject }}
+
+[[Home]]
+
+## Ranked orchestrations
+
+{% if entries %}
+| Rank | Config | Discipline | Elo | Summary | Source experiments | Updated |
+|---|---|---|---|---|---|---|
+{% for e in entries %}
+| {{ e.rank }} | [[{{ e.config_id }}]] | {{ e.discipline }} | {{ "%.1f"|format(e.elo) }} | {{ e.summary }} | {% if e.source_experiments %}{% for exp_id in e.source_experiments %}[[{{ exp_id }}]]{% if not loop.last %}, {% endif %}{% endfor %}{% else %}_none_{% endif %} | {{ e.updated_at }} ({{ e.updated_by }}) |
+{% endfor %}
+{% else %}
+_No ranked orchestrations recorded yet._
+{% endif %}
+
+## Judge notes
+
+{% if entries %}
+{% for e in entries %}
+### #{{ e.rank }} — [[{{ e.config_id }}]]
+
+{{ e.judge_notes if e.judge_notes else "_no judge notes recorded_" }}
+
+{% endfor %}
+{% else %}
+_No judge notes recorded yet._
+{% endif %}
+
+## Notes (human)

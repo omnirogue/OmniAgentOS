@@ -1,0 +1,24 @@
+# corpus.d/gate-verdict-integrity.toml — counterfeits owned by lane
+# `gate-verdict-integrity`. Both entries re-open a trust hole in the merge
+# gate's own counterfeit verdict, which is the one verdict nothing else in the
+# corpus can vouch for: merge-gate.sh is self-judging.
+
+[[counterfeit]]
+id = "cf-step-receipt-reuse-ignores-errored-counterfeits"
+patch = "patches/cf-step-receipt-reuse-ignores-errored-counterfeits.patch"
+rationale = "Restores the survived-only rule in the step-receipt VERIFIER (gate_evidence.py::_step_receipt_rejections), which is how the reuse path shipped: the live gate refused a corpus with other>0 while a signed, fresh, correctly-bound receipt for the SAME run re-passed it for its whole 24h freshness window. The defect is not the specific mismatch — it is that the verdict rule had two definitions that could drift, the class this repo names in routines.py (settled-definition divergence, four auto-pauses on 2026-07-31). The must_fail set therefore binds three separate consequences: an errored run reused as a pass, a receipt whose summary predates the `other` field certifying that `other` was 0, and the live path and the reuse path returning different answers for the same report line."
+must_fail = [
+  "tests/scheduler/test_gate_verdict_definition.py::test_negative_control_reused_receipt_with_errored_counterfeits_is_refused",
+  "tests/scheduler/test_gate_verdict_definition.py::test_reused_receipt_whose_verdict_line_is_missing_is_refused",
+  "tests/scheduler/test_gate_verdict_definition.py::test_live_path_and_receipt_path_reach_the_same_verdict",
+]
+failure_re = "REUSED RECEIPT WITH other>0 WAS ACCEPTED|VERDICT DIVERGENCE|DID NOT RAISE"
+
+[[counterfeit]]
+id = "cf-merge-gate-trusts-summary-over-exit-code"
+patch = "patches/cf-merge-gate-trusts-summary-over-exit-code.patch"
+rationale = "Restores the text-only counterfeit scoring in scripts/merge-gate.sh: the harness's measured exit code is discarded and the verdict is grepped out of stdout — text produced by the very tree being judged. The realistic regression is not an attacker forging a line but the gate silently degrading, so the counterfeit proves the property end to end: a harness that EXITS 1 while printing `total=59 caught=59 survived=0 other=0` earns MERGE GATE: PASS with the patch applied, and is refused for disagreement without it."
+must_fail = [
+  "tests/scripts/test_merge_gate_m8_refusals.py::test_counterfeit_harness_exit_code_is_the_verdict_not_its_printed_summary",
+]
+failure_re = "A COUNTERFEIT HARNESS THAT EXITED 1 WAS SCORED A PASS|did not bind exactly once"

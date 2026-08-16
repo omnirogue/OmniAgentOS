@@ -1,0 +1,13 @@
+diff --git a/omniagentos/scheduler/routines_tick.py b/omniagentos/scheduler/routines_tick.py
+--- a/omniagentos/scheduler/routines_tick.py
++++ b/omniagentos/scheduler/routines_tick.py
+@@ -463,6 +463,9 @@ def _execute_builtin(
+                 "stop_reason": result.stop_reason,
+                 "notes": result.notes,
+                 "started_at": now_iso,
++                "finished_at": now_iso,
++                "gate_passed": result.accepted,
++                "accepted": result.accepted,
+                 SELF_REPORT_COLUMN: result.self_reported_status,
+             },
+         )

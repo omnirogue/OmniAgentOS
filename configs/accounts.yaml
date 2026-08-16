@@ -1,0 +1,124 @@
+# Account pool -- round-robin, rate-limit-aware routing across multiple
+# subscription accounts per provider (omniagentos/routing/account_pool.py).
+#
+# Opt-in only: nothing here changes behavior unless OMNIAGENTOS_ACCOUNT_POOL=1
+# is set in the environment. With the flag off, adapters run exactly as before
+# (single account, whatever the ambient CLI config already resolves to).
+#
+# `config_dir` is a filesystem PATH only (e.g. ~/.claude, ~/.claude-account-2)
+# -- NEVER a credential or token. It is exported as CLAUDE_CONFIG_DIR for a
+# pooled call so the `claude` CLI authenticates as that specific account. The
+# router only ever reads/logs this path, never the credentials inside it.
+#
+# Fields per account:
+#   id                required, must be unique across the WHOLE file (every
+#                     provider shares one id namespace so `report(id, outcome)`
+#                     can look an account up without also taking a provider arg)
+#   config_dir        required, path (~ expands)
+#   enabled           default true; false = never picked
+#   priority          default 0; lower sorts earlier in the round-robin order
+#   max_inflight      default null (unlimited); caps concurrent picks
+#   cooldown_seconds  default null -> falls back to the provider's
+#                     `cooldown_seconds`; set to override per-account
+#
+# Fields per provider:
+#   cooldown_seconds  default cooldown applied to a `rate_limited` report when
+#                     the account itself doesn't set its own
+#   accounts          static list of accounts (see above)
+#   discover_glob     optional; any directory matching the pattern that isn't
+#                     already covered by a `config_dir` above is auto-added
+#                     as a low-priority account (id = the directory's
+#                     basename, e.g. ".claude-account-3" -> "claude-account-3").
+#                     De-duplicated by resolved absolute path, so listing an
+#                     account explicitly above and having it also match the
+#                     glob is harmless (no duplicate pool entry). This is how
+#                     a brand-new ~/.claude-account-N dir joins the pool with
+#                     no config edit.
+
+providers:
+  claude:
+    cooldown_seconds: 60
+    accounts:
+      # Live-verified with `claude auth status` on 2026-07-31. Only profiles 3,
+      # 5, and 7 currently authenticate. Keep every other profile explicit and
+      # disabled so discover_glob cannot silently route work into an expired
+      # session and trigger another login prompt.
+      - id: account-3
+        config_dir: ~/.claude-account-3
+        enabled: true
+        priority: 0
+      - id: account-1
+        config_dir: ~/.claude
+        enabled: false
+        priority: 0
+      - id: account-2
+        config_dir: ~/.claude-account-2
+        enabled: false
+        priority: 0
+      - id: account-4
+        config_dir: ~/.claude-account-4
+        enabled: false
+        priority: 0
+      - id: account-5
+        config_dir: ~/.claude-account-5
+        enabled: true
+        priority: 0
+      - id: account-7
+        config_dir: ~/.claude-account-7
+        enabled: true
+        priority: 0
+      - id: account-1-profile
+        config_dir: ~/.claude-account-1
+        enabled: false
+        priority: 0
+      - id: account-6
+        config_dir: ~/.claude-account-6
+        enabled: false
+        priority: 0
+      - id: claude-account-
+        config_dir: ~/.claude-account-
+        enabled: false
+        priority: 0
+    discover_glob: ~/.claude-account-*
+
+  # Ambient CLI logins (single subscription each). Explicit config_dir pins the
+  # provider-exec home so headless spawns resolve the same state as interactive.
+  codex:
+    cooldown_seconds: 60
+    accounts:
+      - id: codex-default
+        config_dir: ~/.codex
+        enabled: true
+        priority: 0
+      - id: codex-second
+        # example-org@example.com (acct 00000001, pro) — the ORIGINAL/old account,
+        # re-homed here 2026-08-08 11:40 after the new account's login overwrote
+        # ~/.codex. codex-default (~/.codex) = owner@acmeuniversity.com (new,
+        # acct 00000002). Live-probed OK (SECOND-OK, terra low).
+        config_dir: ~/.codex-second
+        enabled: true
+        priority: 1
+
+  grok:
+    cooldown_seconds: 60
+    accounts:
+      - id: grok-default
+        config_dir: ~/.grok
+        enabled: true
+        priority: 0
+
+  gemini:
+    cooldown_seconds: 60
+    accounts:
+      - id: gemini-default
+        config_dir: ~/.gemini
+        enabled: true
+        priority: 0
+
+  kimi:
+    cooldown_seconds: 60
+    accounts:
+      - id: kimi-default
+        config_dir: ~/.kimi-code
+        enabled: true
+        priority: 0

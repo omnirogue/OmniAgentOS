@@ -1,0 +1,478 @@
+#  The counterfeit corpus.
+#
+#  Each entry removes ONE safety or learning property by a single literal
+#  find/replace and names the tests that must go red when it does. An entry that
+#  survives is not a broken test — it is a property nothing in this suite
+#  defends, and the fix is a test, not a smaller corpus.
+#
+#  Fields
+#  ------
+#  id                a stable slug; it is what a failure report names
+#  family            "safety" or "learning"
+#  primary_template  the template this attacks, or "" for a cross-cutting rule
+#  file              path relative to the project root
+#  find / replace    the mutation. `find` must match EXACTLY ONCE or the corpus
+#                    hard-fails as STALE — a refactor that moves a guard must
+#                    break the entry watching it, loudly
+#  rationale         what the removed line is for, printed when it survives
+#  must_fail         pytest node ids, run unmutated in the control pass and
+#                    mutated in the entry's own run
+#  failure_re        regex the mutated output must match, so a red run for an
+#                    unrelated reason is not counted as a catch
+#  undefended_by     set ONLY when nothing in the suite defends the property.
+#                    Names the test that is owed. The entry is marked
+#                    xfail(strict=True), so writing that test turns the XFAIL
+#                    into an XPASS and forces this field's removal.
+#
+#  Why the learning entries are half the corpus: the system this package was
+#  extracted from ran 87 mutation patches and NONE of them touched learning
+#  code, which is exactly the part that starved undetected — 207 candidates
+#  staged, zero ever promoted, for months. Coverage of the learning loop is the
+#  one thing in here that is not cuttable.
+
+# ---------------------------------------------------------------------------
+# SAFETY
+# ---------------------------------------------------------------------------
+
+[[counterfeit]]
+id = "t2_approval_floor_dropped"
+family = "safety"
+primary_template = ""
+file = "selfloop/policy.py"
+find = '''
+    if decision.requires_approval or tool.tier >= APPROVAL_FLOOR_TIER:
+        why = ('''
+replace = '''
+    if decision.requires_approval:
+        why = ('''
+rationale = """The tier floor is the reason an unattended loop is safe to leave running. \
+Dropped, an operator's own PolicyPort decides everything, and a policy tuned for an \
+interactive session — where a person is watching the terminal — auto-executes a \
+CONSEQUENTIAL action. That is not hypothetical: the source system shipped exactly that \
+default, so without the floor a T2 outbound send auto-fires at 3am with nobody in the room."""
+must_fail = [
+  "tests/test_approvals_and_policy.py::test_tier_floor_parks_even_when_the_policy_port_would_allow",
+]
+failure_re = "test_tier_floor_parks_even_when_the_policy_port_would_allow"
+
+[[counterfeit]]
+id = "receipt_written_but_never_read"
+family = "safety"
+primary_template = ""
+file = "selfloop/receipts.py"
+find = '''
+    existing = ctx.receipts.get(key)
+
+    if existing is not None:'''
+replace = '''
+    existing = ctx.receipts.get(key)
+
+    if False:'''
+rationale = """Receipts keep being written and stop being consulted, which is the most \
+plausible shape this bug takes in real life: the bookkeeping still looks present in the \
+ledger and in every dashboard. A completed receipt no longer short-circuits a replay, so a \
+durable executor that re-runs a node performs the external effect a second time — measured \
+directly on the source system as one merge replayed into two merges — and a claimed row \
+with no result stops failing closed, which is the double-billing case."""
+must_fail = [
+  "tests/test_receipts.py::test_a_succeeded_row_short_circuits_the_replay",
+  "tests/test_receipts.py::test_a_claimed_but_uncompleted_row_fails_closed_forever",
+]
+failure_re = "test_a_succeeded_row_short_circuits_the_replay|test_a_claimed_but_uncompleted_row_fails_closed_forever"
+
+[[counterfeit]]
+id = "approval_binding_recheck_removed"
+family = "safety"
+primary_template = ""
+file = "selfloop/approvals.py"
+find = '''
+    if binding is not None:
+        recorded = stored_binding(row)'''
+replace = '''
+    if False:
+        recorded = stored_binding(row)'''
+rationale = """A human approves an ACTION, never a slot. Without the binding re-check the \
+approval row authorises whatever the loop happens to be doing when it reads it, so changing \
+one argument between the decision and the execution — the recipient, the amount — spends a \
+human's decision on something they never saw. This is the check that reads no clock at all \
+and is therefore the actual security boundary; expiry is only a bound on how long a decision \
+is honoured."""
+must_fail = [
+  "tests/test_approvals_and_policy.py::test_changing_one_argument_invalidates_the_human_decision",
+]
+failure_re = "test_changing_one_argument_invalidates_the_human_decision"
+
+[[counterfeit]]
+id = "the_seal_is_removed_from_tool_registration"
+family = "safety"
+primary_template = ""
+file = "selfloop/tools.py"
+find = "    return replace(tool, call=_sealed(tool.call, tool.name))"
+replace = "    return tool"
+rationale = """ToolRegistry.register stops sealing, so the raw implementation is reachable \
+by name from anything holding the tool — a node, a helper, a piece of a template somebody \
+refactored — with no policy verdict, no approval and no receipt. The suite catches this \
+today only INCIDENTALLY: its assertions reach the implementation through the closure cell, \
+which is the one door selfloop/tools.py documents the seal as leaving open, and removing the \
+seal removes that door. No test yet calls a sealed tool outside the seam and asserts \
+SeamBypass, so the enforcement inside _sealed is weaker evidence than this entry looks."""
+must_fail = [
+  "tests/test_approvals_and_policy.py::test_an_approved_action_executes_exactly_once_through_the_seam",
+]
+failure_re = "test_an_approved_action_executes_exactly_once_through_the_seam"
+
+[[counterfeit]]
+id = "expiry_stops_binding_and_a_dead_approval_authorises"
+family = "safety"
+primary_template = ""
+file = "selfloop/approvals.py"
+find = "    if _is_expired(row, moment):"
+replace = "    if False:"
+rationale = """Expiry is checked BEFORE state precisely so that a row reading 'approved' \
+past its deadline still reads as not approved. Remove it and a decision becomes a standing \
+permission: an approval a human clicked last Tuesday resumes an effect this Friday, and a \
+parked loop that nobody got round to answering executes the moment somebody clears their \
+inbox. One audited deployment had fifteen of sixteen approvals expire undecided, so the \
+population this rule governs is most of them."""
+must_fail = [
+  "tests/test_approvals_and_policy.py::test_an_expired_but_approved_row_is_not_resume_authority",
+  "tests/test_approvals_and_policy.py::test_an_unreadable_deadline_counts_as_expired",
+]
+failure_re = "test_an_expired_but_approved_row_is_not_resume_authority|test_an_unreadable_deadline_counts_as_expired"
+
+[[counterfeit]]
+id = "read_mode_t0_guard_removed"
+family = "safety"
+primary_template = ""
+file = "selfloop/tools.py"
+find = "        if tool.tier != RiskTier.T0 or not verdict.allows:"
+replace = "        if False:"
+rationale = """mode='read' is exempt from the receipt, not from the policy. Without the \
+'tier exactly T0 and an allow verdict' guard, any tool at any tier can be run unreceipted \
+and unapproved by passing a different string — a T3 irreversible effect executed as a 'read', \
+with no row anywhere saying it happened. Widening the read path must require editing this \
+function, which is the whole reason the guard is written here rather than at the caller."""
+must_fail = [
+  "tests/test_approvals_and_policy.py::test_read_mode_keeps_the_t0_and_allow_guard",
+]
+failure_re = "test_read_mode_keeps_the_t0_and_allow_guard"
+
+[[counterfeit]]
+id = "lease_age_stealing_reintroduced"
+family = "safety"
+primary_template = ""
+file = "selfloop/lease.py"
+find = '''
+                holder = _holder_diagnostics(path, max_age_s=self.max_age_s)
+                raise LeaseHeld('''
+replace = '''
+                holder = _holder_diagnostics(path, max_age_s=self.max_age_s)
+                if holder.get("stale_looking"):
+                    os.unlink(path)
+                    return self.hold(name)
+                raise LeaseHeld('''
+rationale = """age_s and stale_looking are DIAGNOSTICS — a sentence for a human — and this \
+mutation turns them into a permission for a process. An age threshold that can take a lease \
+is the double-acquire race in costume: a tick that is merely slow (a long gate, a paused \
+container, a stopped-world GC) looks identical to a dead one, so a peer steals a live lease \
+and two processes run the same tick against the same external system. There is no reclaim \
+path on purpose, and the kernel already releases a flock when the holder dies however it dies."""
+must_fail = [
+  "tests/test_concurrency.py::test_an_ancient_lease_is_reported_stale_looking_but_never_taken",
+]
+failure_re = "test_an_ancient_lease_is_reported_stale_looking_but_never_taken"
+
+[[counterfeit]]
+id = "the_attempt_budget_never_exhausts"
+family = "safety"
+primary_template = ""
+file = "selfloop/receipts.py"
+find = '''
+        if failures >= budget:
+            break'''
+replace = '''
+        if False:
+            break'''
+rationale = """Bounded escalation, removed. A permanently failing effect stops raising \
+EffectAttemptsExhausted WITHOUT reaching the tool and instead keeps calling it — once per \
+attempt row, forever, against an external system that is already unhappy. The budget exists \
+so a broken effect escalates to a human rather than becoming a load generator, and it counts \
+recorded FAILURES rather than rows precisely so an outage cannot spend it."""
+must_fail = [
+  "tests/test_receipts.py::test_exhaustion_raises_without_reaching_the_tool",
+  "tests/test_receipts.py::test_the_approval_floor_tier_gets_exactly_one_attempt",
+]
+failure_re = "test_exhaustion_raises_without_reaching_the_tool|test_the_approval_floor_tier_gets_exactly_one_attempt"
+
+[[counterfeit]]
+id = "verified_is_true_weakened_to_truthiness"
+family = "safety"
+primary_template = ""
+file = "selfloop/kit.py"
+find = 'return isinstance(result, Mapping) and result.get("verified") is True'
+replace = 'return isinstance(result, Mapping) and bool(result.get("verified"))'
+rationale = """Only an explicit `verified is True` may render a tick COMPLETED. Under \
+truthiness a non-empty string, a non-zero code, a dict, an enum that drifted after a deploy \
+— every accidental value — becomes a passing verification, and an ABSENT verdict renders as \
+the most favourable outcome available. Both verify-bearing templates in the source system \
+stamped COMPLETED unconditionally, which is why a live tick whose repair returned \
+{"verified": false, "state": "repair_failed"} settled completed, accepted and gate-passed."""
+must_fail = [
+  "tests/test_engine.py::test_a_tick_without_a_recognised_terminal_status_fails_closed",
+]
+failure_re = "test_a_tick_without_a_recognised_terminal_status_fails_closed"
+undefended_by = """NOTHING in this suite exercises selfloop.kit.verification_outcome. The \
+node id above is its nearest sibling — the same fail-closed doctrine, enforced in the engine \
+— and it stays green under this mutation. Owed: a test that feeds verification_outcome a \
+truthy-but-not-True verdict and requires FAILED, and one that requires a non-empty \
+data[FAILED_EFFECTS] to overrule a claimed `verified: true`. tests/test_engine.py is the \
+closest home; a tests/test_kit.py would be a better one."""
+
+[[counterfeit]]
+id = "odav_lets_a_stopped_tick_run_its_happy_path"
+family = "safety"
+primary_template = "observe_decide_act_verify"
+file = "selfloop/templates/observe_decide_act_verify.py"
+find = "    add_status_route(graph, ACT, VERIFY)"
+replace = "    graph.add_edge(ACT, VERIFY)"
+rationale = """A tick a node has already stopped — ABORTED, FAILED, BLOCKED — must not walk \
+into its happy path, and a tick that stood down IDLE because an effect's authority was \
+unreachable must not reach a verify node at all. With an unconditional edge, a verify tool \
+is asked to grade an effect that was never attempted: it goes and looks, finds whatever is \
+already there, and words a verdict about work that did not happen. Under the kill drill that \
+is a tick whose effect state is UNKNOWN being reported as completed."""
+must_fail = [
+  "tests/test_kill_drill.py::test_a_crash_before_completion_resumes_aborted_and_does_not_resend",
+]
+failure_re = "test_a_crash_before_completion_resumes_aborted_and_does_not_resend"
+
+# ---------------------------------------------------------------------------
+# LEARNING — not cuttable. See the header.
+# ---------------------------------------------------------------------------
+
+[[counterfeit]]
+id = "promote_reads_helped_and_used"
+family = "learning"
+primary_template = ""
+file = "selfloop/learn.py"
+find = '''
+    if lesson.tier >= APPROVAL_FLOOR_TIER:
+        return _promote_through_approval(ctx, lesson, evidence)'''
+replace = '''
+    if wilson_lower_bound(lesson.helped, lesson.used) < ctx.promote_threshold:
+        return _verdict(
+            lesson_id, lesson.status, "the wilson bound is below the threshold", evidence=evidence
+        )
+    if lesson.tier >= APPROVAL_FLOOR_TIER:
+        return _promote_through_approval(ctx, lesson, evidence)'''
+rationale = """THE regression guard for FIX-1, and the single most important entry in this \
+corpus. helped and used are written by attribute(), which only runs AFTER a lesson has been \
+promoted and injected, so at first promotion used == 0, wilson_lower_bound returns 0.0, and \
+any positive threshold makes this gate unsatisfiable. It is correctly wired, fully tested by \
+a wiring test, and mathematically always closed — which is precisely how the source system \
+reached 207 staged candidates and zero promotions, forever, with nothing in any log saying \
+anything was wrong."""
+must_fail = [
+  "tests/test_learning_loop.py::test_a_virgin_candidate_promotes_with_used_zero",
+  "tests/test_learning_loop.py::test_a_signal_becomes_an_injected_lesson_and_changes_behaviour",
+  "tests/test_learning_loop.py::test_cold_start_from_an_empty_store_reaches_a_promotion",
+]
+failure_re = "test_a_virgin_candidate_promotes_with_used_zero|test_a_signal_becomes_an_injected_lesson_and_changes_behaviour"
+
+[[counterfeit]]
+id = "candidate_id_takes_the_evidence_ids_again"
+family = "learning"
+primary_template = ""
+file = "selfloop/learn.py"
+find = '''
+        """The candidate id this cluster stages to."""
+        return candidate_id(self.key)'''
+replace = '''
+        """The candidate id this cluster stages to."""
+        return candidate_id("|".join((self.key, *self.signal_ids)))'''
+rationale = """Starvation by a second, entirely independent route (FIX-2). With the evidence \
+ids back in the id preimage, every run that contributes evidence derives a DIFFERENT id, \
+put_once mints a fresh row each time, and no candidate ever accumulates support — so \
+min_support is never reached and nothing is ever promoted. It survives any test that stages \
+a candidate once, which is why the witness stages twice and counts the rows."""
+must_fail = [
+  "tests/test_learning_loop.py::test_candidate_id_is_stable_as_evidence_accumulates",
+]
+failure_re = "test_candidate_id_is_stable_as_evidence_accumulates"
+
+[[counterfeit]]
+id = "recall_stops_filtering_to_promoted"
+family = "learning"
+primary_template = ""
+file = "selfloop/learn.py"
+find = '''
+        RecordKind.LESSON.value, status=LessonStatus.PROMOTED.value, scope=scope
+    ):'''
+replace = '''
+        RecordKind.LESSON.value, scope=scope
+    ):'''
+rationale = """The promotion gate, bypassed by another door. Staged, parked and RETIRED \
+lessons all reach the prompt of every future run in their scope: a candidate no human ever \
+approved is injected as though it had been, and a lesson the machine retired for measurable \
+regression comes straight back. The whole thesis of this package is that the promotion gate \
+IS the effect gate; a recall that reads unpromoted rows makes the gate decorative."""
+must_fail = [
+  "tests/test_learning_loop.py::test_a_t2_scoped_lesson_parks_instead_of_promoting",
+  "tests/test_learning_loop.py::test_a_regressing_lesson_is_auto_retired",
+]
+failure_re = "test_a_t2_scoped_lesson_parks_instead_of_promoting|test_a_regressing_lesson_is_auto_retired"
+
+[[counterfeit]]
+id = "promotion_toctou_rebind_removed"
+family = "learning"
+primary_template = ""
+file = "selfloop/learn.py"
+find = "    if fresh is None or not fresh.fingerprint_intact or fresh.fingerprint != lesson.fingerprint:"
+replace = "    if fresh is None:"
+rationale = """The time-of-check/time-of-use bind, immediately before the write. Accepting by \
+id alone leaves a window in which the row's CONTENT changes between admission and promotion, \
+so unvalidated guidance applies under a validated id — and the inheritance is silent, because \
+the id is still the one that was reviewed. The source system had exactly this window in its \
+proposal pipeline. Note that promote() also checks the fingerprint on entry, so only a test \
+that drifts the row INSIDE the call can see this one."""
+must_fail = [
+  "tests/test_learning_loop.py::test_a_drifted_fingerprint_is_skipped",
+]
+failure_re = "test_a_drifted_fingerprint_is_skipped"
+
+[[counterfeit]]
+id = "recall_stops_reverifying_the_fingerprint"
+family = "learning"
+primary_template = ""
+file = "selfloop/learn.py"
+find = '''
+        if not lesson.fingerprint_intact:
+            emit(
+                ctx,
+                LEARNING_EVENT_KIND,
+                "lesson_skipped_on_drift",'''
+replace = '''
+        if False:
+            emit(
+                ctx,
+                LEARNING_EVENT_KIND,
+                "lesson_skipped_on_drift",'''
+rationale = """The third enforcement point of the same rule, and a separate line from the \
+promotion bind, so it needs its own entry. A promotion verdict attaches to CONTENT, never to \
+an id; without the read-time re-check, whatever text later occupies a promoted id is injected \
+into every future run in its scope carrying a promotion it never earned. Editing a promoted \
+row becomes an unreviewed way to write the loop's own prompt."""
+must_fail = [
+  "tests/test_learning_loop.py::test_a_drifted_fingerprint_is_skipped",
+]
+failure_re = "test_a_drifted_fingerprint_is_skipped"
+
+[[counterfeit]]
+id = "the_one_injection_line_is_deleted"
+family = "learning"
+primary_template = ""
+file = "selfloop/kit.py"
+find = '''
+    block = lesson_block(ctx, scope, query or prompt, run_id=run_id)
+    return f"{block}\n\n{prompt}" if block else prompt'''
+replace = '''
+    lesson_block(ctx, scope, query or prompt, run_id=run_id)
+    return prompt'''
+rationale = """THE feedback edge, severed — and severed in the way that leaves every other \
+signal intact. lesson_block is still called, so the LessonUse rows are still written, the \
+counters still move, the events still say lessons were recalled, and the ledger reads exactly \
+as it does when the loop is learning. Only the prompt is unchanged. Everything upstream of \
+this line is bookkeeping; without it the package is an audit trail with ambitions."""
+must_fail = [
+  "tests/test_learning_loop.py::test_a_signal_becomes_an_injected_lesson_and_changes_behaviour",
+]
+failure_re = "test_a_signal_becomes_an_injected_lesson_and_changes_behaviour"
+
+[[counterfeit]]
+id = "pep_recall_node_drops_the_lesson_block"
+family = "learning"
+primary_template = "propose_evaluate_promote"
+file = "selfloop/templates/propose_evaluate_promote.py"
+find = "        prompt = inject_lessons(ctx, brief, scope_of(state), run_id=run_id)"
+replace = "        prompt = brief"
+rationale = """The same edge cut one level higher: the kit still injects correctly and this \
+template simply stops asking. It is the more likely of the two in practice, because a \
+template author refactoring a prompt-building node has no reason to think the line matters. \
+The loop keeps staging, keeps promoting and keeps recalling; the proposer never sees any of \
+it, and the acceptance rate does not move whatever the loop learns."""
+must_fail = [
+  "tests/test_learning_loop.py::test_a_signal_becomes_an_injected_lesson_and_changes_behaviour",
+]
+failure_re = "test_a_signal_becomes_an_injected_lesson_and_changes_behaviour"
+
+[[counterfeit]]
+id = "neutral_folded_back_into_the_denominator"
+family = "learning"
+primary_template = ""
+file = "selfloop/outcome.py"
+find = '''
+    if record.outcome_class == "neutral":
+        return Settlement.UNGATEABLE'''
+replace = '''
+    if record.outcome_class == "neutral":
+        return Settlement.FAILED'''
+rationale = """A non-result counted as a rejection. Ungateable outcomes must leave BOTH the \
+numerator and the denominator — it is not a weighting and it is not a zero, the observation \
+leaves the sample entirely. Counting them as failures auto-paused four production routines \
+in one night: nothing was broken, they had nothing to do, and the acceptance floor read a run \
+of idle ticks as a run of failures. It also poisons the learning loop from the other end, \
+because scope_acceptance is what a lesson's regression baseline is measured against."""
+must_fail = [
+  "tests/test_outcome.py::test_neutral_leaves_both_the_numerator_and_the_denominator",
+  "tests/test_outcome.py::test_settlement_of_projects_the_composed_outcome",
+]
+failure_re = "test_neutral_leaves_both_the_numerator_and_the_denominator|test_settlement_of_projects_the_composed_outcome"
+
+[[counterfeit]]
+id = "a_zero_check_gate_receipt_is_allowed_to_pass"
+family = "learning"
+primary_template = ""
+file = "selfloop/contracts.py"
+find = '''
+        """True when the gate collected nothing, whatever its exit status said."""
+        return self.checks_collected <= 0'''
+replace = '''
+        """True when the gate collected nothing, whatever its exit status said."""
+        return False'''
+rationale = """FIX-3, defeated at the one place both enforcement points read. A gate that \
+collected zero checks did not rule, whatever its exit status said, and a vacuous gate is \
+worse than no gate: no gate settles every tick visibly uncorroborated, a vacuous one settles \
+every tick invisibly ACCEPTED. The source's default gate command named a test file in its own \
+repository and passed regardless of what the loop had produced, so every loop seeded without \
+an explicit gate settled favourable over garbage for months — and that number was then fed \
+back in as the loop's own training signal."""
+must_fail = [
+  "tests/test_outcome.py::test_a_vacuous_gate_is_recorded_as_absence_and_says_so",
+]
+failure_re = "test_a_vacuous_gate_is_recorded_as_absence_and_says_so"
+
+[[counterfeit]]
+id = "put_once_weakened_to_put_latest"
+family = "learning"
+primary_template = ""
+file = "selfloop/ledger.py"
+find = "    return bool(ctx.records.put_once(str(kind), record_id, dict(payload)))"
+replace = '''
+    ctx.records.put_latest(str(kind), record_id, dict(payload))
+    return True'''
+rationale = """History becomes a cache. A run can then overwrite its own report card, a \
+replayed tick rewrites the record of what a human was asked and when, a second reconciliation \
+erases the audit of the first, and a LessonUse row already graded by attribute() is reset to \
+pending so the same run can be counted twice. Every one of those is invisible: the store \
+still holds exactly one row per id, and it is simply the wrong one. put_once returning False \
+is not an error — it is the normal path on a replay, and the EXISTING record is the real one."""
+must_fail = [
+  "tests/test_learning_loop.py::test_candidate_id_is_stable_as_evidence_accumulates",
+]
+failure_re = "test_candidate_id_is_stable_as_evidence_accumulates"
+undefended_by = """NOTHING in this suite distinguishes write_history (put_once) from \
+write_cache (put_latest); every caller is exercised only on the path where the id is fresh. \
+The node id above is the closest current exercise of the history write and stays green under \
+this mutation. Owed: a test that writes the same record id twice through write_history and \
+requires the SECOND write to be refused and the FIRST record to remain authoritative — an \
+outcome record is the sharpest subject. tests/test_receipts.py or a tests/test_ledger.py."""

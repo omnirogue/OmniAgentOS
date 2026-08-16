@@ -1,0 +1,529 @@
+/* Team Work OS (P5) — shares the design-token vocabulary board.module.css
+   uses (var(--space-*), var(--radius-*), var(--surface), var(--text-*), …)
+   so /team reads as the same product as /board, not a bolt-on. */
+
+/* ── TeamBoard ─────────────────────────────────────────────── */
+
+.filterRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  margin-bottom: var(--space-3);
+  max-width: 480px;
+}
+
+.board {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.personCard {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.personHead {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+
+.personToggle {
+  all: unset;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  cursor: pointer;
+}
+
+.chevron {
+  color: var(--text-faint);
+  font-size: var(--text-small);
+}
+
+.personName {
+  margin: 0;
+  font-size: var(--text-body);
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.personCount {
+  color: var(--text-faint);
+  font-size: var(--text-micro);
+  font-variant-numeric: tabular-nums;
+}
+
+.bucketGrid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: var(--space-3);
+}
+
+@media (max-width: 900px) {
+  .bucketGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.bucketCol {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  gap: var(--space-2);
+}
+
+.bucketHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  color: var(--text-muted);
+  font-size: var(--text-micro);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.bucketCount {
+  padding: 0 var(--space-2);
+  border-radius: var(--radius-pill);
+  background: var(--canvas-sunken);
+  font-variant-numeric: tabular-nums;
+}
+
+.bucketBody {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  max-height: 20rem;
+  overflow-y: auto;
+}
+
+.bucketEmpty {
+  margin: 0;
+  padding: var(--space-2);
+  color: var(--text-faint);
+  font-size: var(--text-micro);
+  text-align: center;
+}
+
+.card {
+  all: unset;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: var(--space-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  cursor: pointer;
+  text-align: left;
+  transition: border-color var(--motion-fast) var(--ease), box-shadow var(--motion-fast) var(--ease);
+}
+
+.card:hover,
+.card:focus-visible {
+  border-color: var(--border-strong);
+  box-shadow: var(--shadow-sm);
+}
+
+.card:focus-visible {
+  outline: 2px solid var(--accent-ring);
+  outline-offset: 1px;
+}
+
+.cardTags {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  flex-wrap: wrap;
+}
+
+.refBadge,
+.sizeChip {
+  font-family: var(--font-mono);
+}
+
+/* Server-truth company chip on the card face (multi-company Work OS). */
+.companyChip {
+  max-width: 9rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Owner short-name on Pool + "Agents & unowned" cards — the person sections
+   already name the owner in their heading, so it only renders there. */
+.cardOwner {
+  margin-left: auto;
+  color: var(--text-muted);
+  font-size: var(--text-micro);
+  font-weight: 600;
+}
+
+.verifiedMark {
+  margin-left: auto;
+  color: var(--ok);
+  font-weight: 700;
+}
+
+/* Tri-state siblings of .verifiedMark (migration 132) — same face slot,
+   never rendered together (completionStateOf is exclusive). */
+.failedMark {
+  margin-left: auto;
+  color: var(--danger);
+  font-weight: 700;
+}
+
+.unverifiedMark {
+  margin-left: auto;
+  color: var(--text-faint);
+  font-weight: 700;
+}
+
+.cardTitle {
+  overflow: hidden;
+  color: var(--text);
+  font-size: var(--text-micro);
+  font-weight: 600;
+  line-height: 1.35;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cardBlocked {
+  overflow: hidden;
+  color: var(--danger);
+  font-size: var(--text-micro);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ── ScoreboardStrip ───────────────────────────────────────── */
+
+.scoreboard {
+  display: flex;
+  gap: var(--space-3);
+  overflow-x: auto;
+  padding-bottom: var(--space-2);
+}
+
+.scoreTile {
+  flex: 0 0 auto;
+  min-width: 8rem;
+}
+
+.scoreTileTeam {
+  border-color: var(--accent-ring);
+}
+
+/* ── AccountabilityStrip (migration 132) ──────────────────────
+   Per-person cards, no leaderboard framing — wraps, unlike the fixed-height
+   horizontally-scrolling ScoreboardStrip, because a person's commitment +
+   done-today list is variable height and clipping it defeats the point. */
+
+.accountability {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  margin-bottom: var(--space-3);
+}
+
+.accountabilityCard {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  flex: 1 1 18rem;
+  min-width: 16rem;
+  max-width: 24rem;
+}
+
+.accountabilityHead {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+.muted {
+  color: var(--text-faint);
+  font-size: var(--text-micro);
+}
+
+.commitmentList,
+.doneTodayList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.commitmentRow,
+.doneTodayRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--text-micro);
+}
+
+.commitmentGlyph {
+  flex-shrink: 0;
+  width: 1.1em;
+  text-align: center;
+  font-weight: 700;
+}
+
+.commitmentTitle {
+  min-width: 0;
+  flex: 1 1 auto;
+  overflow: hidden;
+  color: var(--text);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.accountabilityFoot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  margin-top: var(--space-1);
+}
+
+.improvementLine {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--text-muted);
+  font-size: var(--text-micro);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ── UnattributedInbox ─────────────────────────────────────── */
+
+.inbox {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.inboxRow {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+}
+
+.inboxMeta {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.inboxTitle {
+  overflow: hidden;
+  font-size: var(--text-small);
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.inboxDetail {
+  color: var(--text-faint);
+  font-size: var(--text-micro);
+  font-family: var(--font-mono);
+}
+
+.inboxPicker {
+  min-width: 14rem;
+}
+
+/* ── Evidence tab ──────────────────────────────────────────── */
+
+.evidenceGroup {
+  margin-bottom: var(--space-3);
+}
+
+.evidenceGroupTitle {
+  margin: 0 0 var(--space-2);
+  color: var(--text-muted);
+  font-size: var(--text-micro);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.evidenceRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2);
+  border-bottom: 1px solid var(--border);
+  font-size: var(--text-small);
+}
+
+.evidenceRow:last-child {
+  border-bottom: none;
+}
+
+.evidenceIcon {
+  flex-shrink: 0;
+  color: var(--text-faint);
+}
+
+.evidenceMain {
+  min-width: 0;
+  flex: 1 1 auto;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.evidenceRef {
+  margin-left: var(--space-1);
+  color: var(--text-faint);
+  font-family: var(--font-mono);
+  font-size: var(--text-micro);
+}
+
+.eventsList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  margin-top: var(--space-2);
+  padding-top: var(--space-2);
+  border-top: 1px solid var(--border);
+}
+
+.eventRow {
+  display: flex;
+  gap: var(--space-2);
+  color: var(--text-muted);
+  font-size: var(--text-micro);
+}
+
+.eventAt {
+  flex-shrink: 0;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── TaskOverview additions (verify stamp / owner) ────────────*/
+
+.verifyRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+
+.verifyRowSpaced {
+  margin-top: var(--space-2);
+}
+
+.verifyError {
+  margin: var(--space-1) 0 0;
+  color: var(--danger);
+  font-size: var(--text-micro);
+}
+
+/* ── Company goals tree (goals page) ──────────────────────────*/
+
+.tree {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.treeCompany {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.treeCompanyName {
+  margin: 0;
+  font-size: var(--text-body);
+  font-weight: 700;
+}
+
+.treeGoal {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+}
+
+.treeGoalHead {
+  all: unset;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  width: 100%;
+  padding: var(--space-2) var(--space-3);
+  cursor: pointer;
+}
+
+.treeGoalTitle {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.treeTasks {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 0 var(--space-3) var(--space-2);
+}
+
+.treeTaskRow {
+  all: unset;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  font-size: var(--text-small);
+}
+
+.treeTaskRow:hover,
+.treeTaskRow:focus-visible {
+  background: var(--hover);
+}
+
+.treeTaskTitle {
+  min-width: 0;
+  flex: 1 1 auto;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.treeSubtasks {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-left: var(--space-4);
+}
+
+.treeEmpty {
+  margin: 0;
+  color: var(--text-faint);
+  font-size: var(--text-micro);
+}

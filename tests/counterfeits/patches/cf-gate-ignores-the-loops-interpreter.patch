@@ -1,0 +1,13 @@
+diff --git a/omniagentos/scheduler/gate_runner.py b/omniagentos/scheduler/gate_runner.py
+index 091555bd..60375e93 100644
+--- a/omniagentos/scheduler/gate_runner.py
++++ b/omniagentos/scheduler/gate_runner.py
+@@ -694,7 +694,7 @@ class PytestGateRunner:
+             junit = scratch_path / "gate.xml"
+             inventory_path = scratch_path / "inventory.json"
+             argv = [
+-                interpreter,
++                self.python_executable,
+                 "-m",
+                 "pytest",
+                 "-q",

@@ -1,0 +1,833 @@
+# ROLE-REGISTRY.yaml — every agent role in this estate, and where its system prompt lives.
+#
+# READ system-prompts/README.md FIRST if you are adding a prompt. It is written for
+# an operator, not a developer, and it has the exact commands.
+#
+# This file is an INVENTORY OF WHAT IS TRUE TODAY (2026-08-08), not a wish list.
+# If an entry is wrong, the fix is to correct the entry, never to delete it quietly.
+#
+# ---------------------------------------------------------------------------
+# location — where the prompt body actually is. Only two kinds resolve to text.
+#
+#   registry  body lives at system-prompts/<id>/v<version>.md
+#             The home for every prompt added from now on. Loader returns the text.
+#             The path is CHECKED against `version`, so the file on disk and the
+#             version field can never disagree.
+#
+#   repo      body lives at some other path already inside this checkout.
+#             The registry points at the LIVE file, not a copy of it. A copy that
+#             nothing reads is a copy that drifts, and a drifted inventory is worse
+#             than no inventory. Loader returns the text.
+#
+#   external  body lives OUTSIDE this repository (~/.claude/agents/, ~/.omniagentos/ops/...).
+#             Registered by reference only — never vendored in, because prompts off
+#             the repo may carry private instructions or credential paths. Loader
+#             raises UnresolvablePromptError and tells you where to read it.
+#
+#   embedded  body is a string constant inside a Python module. Registered by
+#             reference so the inventory is honest that it exists. Loader raises
+#             and names the module and constant.
+#
+# kind — agent | loop | daemon | task | fragment. Descriptive only.
+# live — is this prompt in use by something today? false is a legitimate answer.
+# owner — who to ask before changing this prompt.
+# version — the registry's version counter. `repo` and `external` entries start at
+#           1 meaning "first version this registry recorded"; it only increments
+#           when a new versioned copy is published under system-prompts/.
+# consumers — the code or job that reads this prompt. Empty means nothing reads it
+#           yet, which is a real and reportable state.
+# ---------------------------------------------------------------------------
+
+schema_version: 1
+
+roles:
+
+  # =========================================================================
+  # Job roles — the 14-value control/execution/evaluation/release vocabulary in
+  # omniagentos/roles.py::JobRole. tests/swarm/test_roles.py already asserts the
+  # enum and vault/prompts/roles/*.md are the same set, so these files are the
+  # closest thing the repo had to a registry before this one.
+  #
+  # NOTE ON LIVENESS: spawn.py DOES read these, but only when
+  # OMNIAGENTOS_ROLE_PACK_MODE is set to `shadow` or `enforce`. The default is
+  # `off`, so on a default process these prompts are resolved by nothing. They are
+  # recorded live: true because the wiring exists and is one env var from active —
+  # see notes on job.universal-base.
+  # =========================================================================
+
+  - id: job.router
+    description: >-
+      Chooses HOW work executes before it begins — topology, model and lineage
+      assignment, concurrency, budgets, timeouts, risk class, escalation path.
+    owner: omniagentos/swarm
+    version: 1
+    live: true
+    kind: agent
+    location: repo
+    prompt_file: vault/prompts/roles/router.md
+    consumers: &rolepack_consumers
+      - omniagentos/promptshape/rolepack.py::role_pack
+      - omniagentos/swarm/spawn.py::_apply_role_pack (gated by OMNIAGENTOS_ROLE_PACK_MODE, default off)
+
+  - id: job.planner
+    description: >-
+      Turns one admitted objective into a verifiable, dependency-aware task graph.
+      Does not execute, verify, integrate, or accept.
+    owner: omniagentos/swarm
+    version: 1
+    live: true
+    kind: agent
+    location: repo
+    prompt_file: vault/prompts/roles/planner.md
+    consumers: *rolepack_consumers
+
+  - id: job.context_builder
+    description: >-
+      Assembles the smallest context package that lets ONE role complete ONE
+      contract. Does not perform the task or widen the contract.
+    owner: omniagentos/swarm
+    version: 1
+    live: true
+    kind: agent
+    location: repo
+    prompt_file: vault/prompts/roles/context_builder.md
+    consumers: *rolepack_consumers
+
+  - id: job.contract_generator
+    description: >-
+      Converts one approved plan node into an enforceable work contract. Does not
+      decide direction, execute, or judge the result.
+    owner: omniagentos/swarm
+    version: 1
+    live: true
+    kind: agent
+    location: repo
+    prompt_file: vault/prompts/roles/contract_generator.md
+    consumers: *rolepack_consumers
+
+  - id: job.team_lead
+    description: >-
+      Runs ONE bounded workstream: assigns its tasks, holds its dependencies,
+      integrates its verified output. Does not implement or self-verify.
+    owner: omniagentos/swarm
+    version: 1
+    live: true
+    kind: agent
+    location: repo
+    prompt_file: vault/prompts/roles/team_lead.md
+    consumers: *rolepack_consumers
+
+  - id: job.implementer
+    description: >-
+      Turns one approved task contract into a working change inside its declared
+      scope. Does not plan, re-scope, self-verify, integrate, or release.
+    owner: omniagentos/swarm
+    version: 1
+    live: true
+    kind: agent
+    location: repo
+    prompt_file: vault/prompts/roles/implementer.md
+    consumers: *rolepack_consumers
+    notes: >-
+      omniagentos/roles.py::DEFAULT_JOB_ROLE — the role any unclassified swarm job
+      falls back to, so this prompt has the widest blast radius of the fourteen.
+
+  - id: job.tester
+    description: >-
+      Establishes whether behaviour is actually correct by making it observable.
+      Does not fix the code under test or weaken a test to make it pass.
+    owner: omniagentos/swarm
+    version: 1
+    live: true
+    kind: agent
+    location: repo
+    prompt_file: vault/prompts/roles/tester.md
+    consumers: *rolepack_consumers
+
+  - id: job.debugger
+    description: >-
+      Finds the cause of an observed failure and proves it. The diagnosis is the
+      deliverable; shipping the fix is not, unless the contract grants it.
+    owner: omniagentos/swarm
+    version: 1
+    live: true
+    kind: agent
+    location: repo
+    prompt_file: vault/prompts/roles/debugger.md
+    consumers: *rolepack_consumers
+
+  - id: job.reviewer
+    description: >-
+      Independently judges submitted work against its stated acceptance criteria.
+      Did not write it, does not repair it, never approves its own work.
+    owner: omniagentos/swarm
+    version: 1
+    live: true
+    kind: agent
+    location: repo
+    prompt_file: vault/prompts/roles/reviewer.md
+    consumers:
+      - omniagentos/promptshape/rolepack.py::role_pack
+      - omniagentos/swarm/spawn.py::_apply_role_pack (gated by OMNIAGENTOS_ROLE_PACK_MODE, default off)
+      - omniagentos/verify/report.py (its tri-state judgment vocabulary is aligned to this prompt)
+
+  - id: job.trace_auditor
+    description: >-
+      Judges whether the ORCHESTRATION followed its own rules. Explicitly not a
+      judge of whether the code is correct — that is the reviewer's verdict.
+    owner: omniagentos/swarm
+    version: 1
+    live: true
+    kind: agent
+    location: repo
+    prompt_file: vault/prompts/roles/trace_auditor.md
+    consumers: *rolepack_consumers
+
+  - id: job.integrator
+    description: >-
+      Combines independently produced, individually reviewed work into one coherent
+      tree. Authors no features and does not re-review the parts.
+    owner: omniagentos/swarm
+    version: 1
+    live: true
+    kind: agent
+    location: repo
+    prompt_file: vault/prompts/roles/integrator.md
+    consumers: *rolepack_consumers
+
+  - id: job.acceptance
+    description: >-
+      Issues the project's final disposition against its stated definition of done.
+      Did not route, plan, build, or integrate it, and does not repair failures.
+    owner: omniagentos/swarm
+    version: 1
+    live: true
+    kind: agent
+    location: repo
+    prompt_file: vault/prompts/roles/acceptance.md
+    consumers: *rolepack_consumers
+
+  - id: job.learning
+    description: >-
+      Analyses completed work and proposes measured improvements to how the system
+      runs. Proposes only — never promotes a change into standing policy itself.
+    owner: omniagentos/swarm
+    version: 1
+    live: true
+    kind: agent
+    location: repo
+    prompt_file: vault/prompts/roles/learning.md
+    consumers: *rolepack_consumers
+
+  - id: job.incident
+    description: >-
+      Contains blast radius and reconstructs what failed. Finishing the original
+      task is not the priority, and recovery actions do not become standing policy.
+    owner: omniagentos/swarm
+    version: 1
+    live: true
+    kind: agent
+    location: repo
+    prompt_file: vault/prompts/roles/incident.md
+    consumers: *rolepack_consumers
+
+  - id: job.universal-base
+    description: >-
+      The shared preamble prepended to every one of the fourteen job-role prompts —
+      scope, untrusted-input handling, no self-approval, bounded loop.
+    owner: omniagentos/swarm
+    version: 1
+    live: true
+    kind: fragment
+    location: repo
+    prompt_file: vault/prompts/universal-base.md
+    consumers: *rolepack_consumers
+    notes: >-
+      Not a role on its own: rolepack.role_pack composes universal-base + the role
+      file into one cacheable stable segment. Editing this changes all 14 at once.
+
+  # =========================================================================
+  # ThreeLoops — the three continuous operator loops. pipeline/bridge/run-loop.sh
+  # loads these repository prompts at the beginning of each new iteration.
+  # =========================================================================
+
+  - id: loop.planning
+    description: >-
+      The continuous Planning Loop. Never modifies code or lands anything; produces
+      implementation-ready, conflict-aware plans as loopqueue proposals.
+    owner: owner
+    version: 1
+    live: true
+    kind: loop
+    location: repo
+    prompt_file: pipeline/prompts/PROMPT-planning-loop.md
+    consumers:
+      - "pipeline/bridge/run-loop.sh (planning session, reloaded each iteration)"
+      - var/loopqueue/proposals/ (its output lands here in this repo)
+    notes: >-
+      A currently running model retains the snapshot it started with; the next
+      natural iteration loads this repository copy.
+
+  - id: loop.implementer
+    description: >-
+      The continuous Implementer Loop. Admits, claims, builds, schedules, gates,
+      lands, and records — the only loop permitted to write main.
+    owner: owner
+    version: 1
+    live: true
+    kind: loop
+    location: repo
+    prompt_file: pipeline/prompts/PROMPT-implementer-loop.md
+    consumers:
+      - "pipeline/bridge/run-loop.sh (implementer session, reloaded each iteration)"
+    notes: >-
+      A currently running model retains the snapshot it started with; the next
+      natural iteration loads this repository copy.
+
+  - id: loop.repair
+    description: >-
+      The continuous Repair Loop (file is still named PROMPT-reviewer-loop.md).
+      Fixes what is broken today and hands reviewed candidate branches onward.
+    owner: owner
+    version: 1
+    live: true
+    kind: loop
+    location: repo
+    prompt_file: pipeline/prompts/PROMPT-reviewer-loop.md
+    consumers:
+      - "pipeline/bridge/run-loop.sh (reviewer session, reloaded each iteration)"
+    notes: >-
+      The id says `repair` and the filename says `reviewer`; that name remains for
+      compatibility. The next natural iteration loads this repository copy.
+
+  # =========================================================================
+  # Scheduled in-repo daemons — each already keeps its identity prompt beside its
+  # code, committed to this repository. Registered BY VALUE at its live path.
+  # =========================================================================
+
+  - id: daemon.hygiene
+    description: >-
+      Nightly estate hygiene agent (launchd com.omniagentos.hygiene, 04:15) —
+      prunes git branches, dev worktrees, and session state.
+    owner: scripts/hygiene
+    version: 1
+    live: true
+    kind: daemon
+    location: repo
+    prompt_file: scripts/hygiene/prompt.md
+    consumers:
+      - scripts/hygiene/hygiene.py::DEFAULT_PROMPT_PATH
+      - scripts/hygiene/hygiene.sh (launchd com.omniagentos.hygiene)
+
+  - id: daemon.provider-sentinel
+    description: >-
+      Nightly provider and account health preflight at 22:30, thirty minutes ahead
+      of the overnight jobs, so they inherit fresh provider truth.
+    owner: scripts/provider-sentinel
+    version: 1
+    live: true
+    kind: daemon
+    location: repo
+    prompt_file: scripts/provider-sentinel/prompt.md
+    consumers:
+      - scripts/provider-sentinel/sentinel.py::DEFAULT_PROMPT_PATH
+    notes: >-
+      The runner itself is deliberately LLM-free; this file is its identity and
+      instructions doc rather than a prompt sent to a model.
+
+  - id: daemon.backlog-executor
+    description: >-
+      Nightly 00:30 selection judge that picks which backlog candidates are safe
+      and worthwhile to execute unattended overnight.
+    owner: scripts/backlog-executor
+    version: 1
+    live: true
+    kind: daemon
+    location: repo
+    prompt_file: scripts/backlog-executor/prompt.md
+    consumers:
+      - scripts/backlog-executor/executor.py::PROMPT_PATH
+    notes: >-
+      Written for a Kimi seat. Provider seats can be paused for billing reasons,
+      so verify the seat is funded before treating this job as running.
+
+  - id: daemon.golden-suite
+    description: >-
+      Nightly north-star benchmark runner — p50/p90 wall-clock-to-GREEN across
+      three fixed benchmark briefs.
+    owner: scripts/golden-suite
+    version: 1
+    live: true
+    kind: daemon
+    location: repo
+    prompt_file: scripts/golden-suite/prompt.md
+    consumers:
+      - scripts/golden-suite/run_golden.py::DEFAULT_PROMPT_PATH
+
+  - id: daemon.fable-curator
+    description: >-
+      RETIRED single-agent Fable curator. The file at this path is now a tombstone
+      pointing at omniagentos.improvement_chain, which replaced it.
+    owner: scripts/fable-curator
+    version: 1
+    live: false
+    kind: daemon
+    location: repo
+    prompt_file: scripts/fable-curator/prompt.md
+    consumers: []
+    notes: >-
+      Deliberately registered even though it is dead: an operator who greps for the
+      curator prompt must find the redirect, not a silent absence. The active
+      ordered prompts are constructed in omniagentos/improvement_chain.py and its
+      model policy lives in the loop model policy config.
+
+  # =========================================================================
+  # Knowledge pipeline — the repo's existing versioned-prompt-file pattern, and
+  # the precedent this registry's `system-prompts/<id>/vN.md` layout follows.
+  # =========================================================================
+
+  - id: knowledge.extract
+    description: >-
+      Extracts atomic facts, entities, and relationships from a piece of content
+      for the knowledge base.
+    owner: omniagentos/knowledge
+    version: 1
+    live: true
+    kind: task
+    location: repo
+    prompt_file: omniagentos/knowledge/prompts/extract-v1.md
+    consumers:
+      - omniagentos/knowledge/prompts/__init__.py::get_extraction_prompt
+    notes: >-
+      Already versioned by filename and pinned by an explicit version map, so a
+      caller cannot silently drift onto a new prompt. Good existing pattern.
+
+  - id: knowledge.contradiction-judge
+    description: >-
+      Offline adjudicator that decides which of two statements flagged as
+      contradictory should stand.
+    owner: omniagentos/knowledge
+    version: 1
+    live: false
+    kind: task
+    location: repo
+    prompt_file: omniagentos/knowledge/prompts/contradiction-judge-v1.md
+    consumers: []
+    notes: >-
+      Committed and complete, but no code reads it — unlike extract-v1.md it is
+      absent from _EXTRACT_PROMPTS and from every other module. Recorded as an
+      orphan on purpose; it is exactly the kind of prompt that goes stale unseen.
+
+  # =========================================================================
+  # Embedded prompts — real, live, and NOT in a file. Registered by reference so
+  # the inventory does not pretend they are absent. Extracting them into
+  # system-prompts/<id>/v1.md is a follow-up lane, not part of Phase 0.
+  # =========================================================================
+
+  - id: dispatch.classifier
+    description: >-
+      Fast dispatch classifier that routes an incoming task brief to one execution
+      shape (solo_fast / solo_standard / solo_complex / swarm).
+    owner: omniagentos/dispatch
+    version: 1
+    live: true
+    kind: task
+    location: embedded
+    source_ref: omniagentos/dispatch/gate.py::_LLM_PROMPT
+    consumers:
+      - omniagentos/dispatch/gate.py (LLM fallback behind the local semantic router)
+
+  - id: chats.project-router
+    description: >-
+      Routes a new chat conversation to the best-fit project from its first user
+      message.
+    owner: omniagentos/chats
+    version: 1
+    live: true
+    kind: task
+    location: embedded
+    source_ref: omniagentos/chats/classify.py::_PROMPT
+    consumers:
+      - omniagentos/chats/classify.py
+
+  - id: chats.intent-classifier
+    description: >-
+      Decides whether an operator wants a chat, a project, or a recurring loop from
+      a chat workspace.
+    owner: omniagentos/chats
+    version: 1
+    live: true
+    kind: task
+    location: embedded
+    source_ref: omniagentos/chats/intent.py::_PROMPT
+    consumers:
+      - omniagentos/chats/intent.py
+
+  - id: agentless.patcher
+    description: >-
+      The byte-identical system instruction shared by every candidate sample in an
+      Agentless best-of-N patch batch — one unified diff, no prose.
+    owner: omniagentos/agentless
+    version: 1
+    live: true
+    kind: task
+    location: embedded
+    source_ref: omniagentos/agentless/prompts.py::_SYSTEM_INSTRUCTIONS
+    consumers:
+      - omniagentos/agentless/prompts.py (stable segment, so provider prompt cache hits)
+    notes: >-
+      Byte-identity is load-bearing here: it is what makes the provider prompt
+      cache hit and what makes best-of-N a fair comparison. Any extraction to a
+      file must preserve the bytes exactly.
+
+  # =========================================================================
+  # Claude Code subagents — the 18 definitions under ~/.claude/agents/*.md, which
+  # every ~/.claude-account-N/agents symlinks to. OUTSIDE this repository, and
+  # several reference credential locations, so all are BY REFERENCE ONLY.
+  # =========================================================================
+
+  - id: agent.browser-operator
+    description: >-
+      Runs all browser and desktop UI work in a throwaway context and returns text,
+      so screenshots never enter the main session.
+    owner: owner
+    version: 1
+    live: true
+    kind: agent
+    location: external
+    source_ref: ~/.claude/agents/browser-operator.md
+    consumers: &claude_agent_consumers
+      - Claude Code Agent tool (subagent_type), all ~/.claude-account-N profiles
+
+  - id: agent.claude-coder
+    description: Workhorse coder on Claude Sonnet — bounded implementation packages.
+    owner: owner
+    version: 1
+    live: true
+    kind: agent
+    location: external
+    source_ref: ~/.claude/agents/claude-coder.md
+    consumers: *claude_agent_consumers
+
+  - id: agent.codex-critic
+    description: >-
+      Independent reviewer relaying to GPT-5.6-Sol at xhigh via the Codex CLI in a
+      read-only sandbox. The default cross-lineage review seat.
+    owner: owner
+    version: 1
+    live: true
+    kind: agent
+    location: external
+    source_ref: ~/.claude/agents/codex-critic.md
+    consumers: *claude_agent_consumers
+    notes: >-
+      A stale copy sits beside it as codex-critic.md.bak-timeout-0806. Backups are
+      not registered — the live .md is the only definition Claude Code loads.
+
+  - id: agent.gemini-critic
+    description: >-
+      Third reviewer lineage — Gemini 3.1 Pro via the Gemini CLI in plan mode.
+      Additive to codex-critic and opus-critic, never a replacement.
+    owner: owner
+    version: 1
+    live: true
+    kind: agent
+    location: external
+    source_ref: ~/.claude/agents/gemini-critic.md
+    consumers: *claude_agent_consumers
+
+  - id: agent.grok-coder
+    description: Workhorse coder relaying to xAI Grok Build (grok-4.5, high reasoning).
+    owner: owner
+    version: 1
+    live: true
+    kind: agent
+    location: external
+    source_ref: ~/.claude/agents/grok-coder.md
+    consumers: *claude_agent_consumers
+
+  - id: agent.grok-critic
+    description: >-
+      Fourth reviewer lineage — Grok 4.5 at high reasoning in a kernel-enforced
+      read-only sandbox. Tiebreaker among the other three.
+    owner: owner
+    version: 1
+    live: true
+    kind: agent
+    location: external
+    source_ref: ~/.claude/agents/grok-critic.md
+    consumers: *claude_agent_consumers
+
+  - id: agent.luna-coder
+    description: >-
+      Fastest coding worker — GPT-5.6-Luna via Codex CLI in write mode. The default
+      ultrafast implementation seat.
+    owner: owner
+    version: 1
+    live: true
+    kind: agent
+    location: external
+    source_ref: ~/.claude/agents/luna-coder.md
+    consumers: *claude_agent_consumers
+
+  - id: agent.luna-scout
+    description: >-
+      Reconnaissance seat on GPT-5.6-Luna — repo exploration, inventories,
+      dependency maps, low-risk mechanical edits.
+    owner: owner
+    version: 1
+    live: true
+    kind: agent
+    location: external
+    source_ref: ~/.claude/agents/luna-scout.md
+    consumers: *claude_agent_consumers
+
+  - id: agent.opus-coder
+    description: Heavy-lift coder on Claude Opus at high effort — reasoning-heavy bounded work.
+    owner: owner
+    version: 1
+    live: true
+    kind: agent
+    location: external
+    source_ref: ~/.claude/agents/opus-coder.md
+    consumers: *claude_agent_consumers
+
+  - id: agent.opus-critic
+    description: >-
+      Independent reviewer on Claude Opus at xhigh — design challenger and code
+      reviewer. Writes no code; returns ranked evidence-backed findings.
+    owner: owner
+    version: 1
+    live: true
+    kind: agent
+    location: external
+    source_ref: ~/.claude/agents/opus-critic.md
+    consumers: *claude_agent_consumers
+
+  - id: agent.opus-max
+    description: >-
+      Maximum-reasoning coder on Claude Opus at max effort. Reserved for the single
+      hardest problem in a plan; the brief must justify the seat.
+    owner: owner
+    version: 1
+    live: true
+    kind: agent
+    location: external
+    source_ref: ~/.claude/agents/opus-max.md
+    consumers: *claude_agent_consumers
+
+  - id: agent.opus-xhigh
+    description: Escalation coder on Claude Opus at xhigh — the seat after a coder attempt failed.
+    owner: owner
+    version: 1
+    live: true
+    kind: agent
+    location: external
+    source_ref: ~/.claude/agents/opus-xhigh.md
+    consumers: *claude_agent_consumers
+
+  - id: agent.sol-coder
+    description: Primary heavy-lift coder relaying to GPT-5.6-Sol at high reasoning via Codex CLI.
+    owner: owner
+    version: 1
+    live: true
+    kind: agent
+    location: external
+    source_ref: ~/.claude/agents/sol-coder.md
+    consumers: *claude_agent_consumers
+
+  - id: agent.sol-xhigh
+    description: Escalation coder relaying to GPT-5.6-Sol at xhigh — the heaviest Codex-side seat.
+    owner: owner
+    version: 1
+    live: true
+    kind: agent
+    location: external
+    source_ref: ~/.claude/agents/sol-xhigh.md
+    consumers: *claude_agent_consumers
+
+  - id: agent.terra-coder
+    description: Workhorse coder relaying to GPT-5.6-Terra at high reasoning via Codex CLI.
+    owner: owner
+    version: 1
+    live: true
+    kind: agent
+    location: external
+    source_ref: ~/.claude/agents/terra-coder.md
+    consumers: *claude_agent_consumers
+
+  - id: agent.cost-cutter
+    description: Finds duplicate or unused SaaS, fees, and infra cost to cut; returns ranked savings.
+    owner: owner
+    version: 1
+    live: true
+    kind: agent
+    location: external
+    source_ref: ~/.claude/agents/cost-cutter.md
+    consumers: *claude_agent_consumers
+
+  - id: agent.revenue-scout
+    description: >-
+      Researches concrete revenue increases across AcmeUni and Initech — funnel
+      leaks, pricing, follow-up gaps, upsells, ad angles.
+    owner: owner
+    version: 1
+    live: true
+    kind: agent
+    location: external
+    source_ref: ~/.claude/agents/revenue-scout.md
+    consumers: *claude_agent_consumers
+
+  - id: agent.time-saver-scout
+    description: >-
+      Finds repetitive manual work across the PiedPiper/Stripe/CRM/ads stack that can
+      become a loop, Zap, agent, or script.
+    owner: owner
+    version: 1
+    live: true
+    kind: agent
+    location: external
+    source_ref: ~/.claude/agents/time-saver-scout.md
+    consumers: *claude_agent_consumers
+
+  # =========================================================================
+  # Worked example — the template to copy when adding a prompt. Not used by
+  # anything, and it says so.
+
+  - id: fragment.relay-cli-matrix
+    description: >-
+      Authoritative per-CLI invocation facts (codex/kimi/claude/gemini/grok) for relay and orchestrator sessions; every fact paid for by a measured failure.
+    owner: owner
+    version: 1
+    live: true
+    kind: fragment
+    location: registry
+    prompt_file: system-prompts/fragment.relay-cli-matrix/v1.md
+    consumers:
+      - coordinator sessions and relay wrappers (compose into briefs that launch external CLIs)
+    notes: >-
+      Added 2026-08-08 from the 48h mechanization audit prompt pass. A/B evidence
+      (where applicable) in var/prompt-ab/ledger-202608.jsonl; scenarios in
+      scripts/prompt-ab/scenarios/.
+
+  - id: fragment.gate-invocation
+    description: >-
+      Mechanical merge-gate preflight; 64/90 historical refusals were mechanics not defects.
+    owner: owner
+    version: 1
+    live: true
+    kind: fragment
+    location: registry
+    prompt_file: system-prompts/fragment.gate-invocation/v1.md
+    consumers:
+      - job.integrator briefs; coordinator gate runs
+    notes: >-
+      Added 2026-08-08 from the 48h mechanization audit prompt pass. A/B evidence
+      (where applicable) in var/prompt-ab/ledger-202608.jsonl; scenarios in
+      scripts/prompt-ab/scenarios/.
+
+  - id: fragment.wait-discipline
+    description: >-
+      Single-long-wait contract; bans sleep-poll loops (measured: 30,891 wait turns / ~25% of Claude input in 48h).
+    owner: owner
+    version: 1
+    live: true
+    kind: fragment
+    location: registry
+    prompt_file: system-prompts/fragment.wait-discipline/v1.md
+    consumers:
+      - job.universal-base composition; ~/.claude agent briefs that launch children
+    notes: >-
+      Added 2026-08-08 from the 48h mechanization audit prompt pass. A/B evidence
+      (where applicable) in var/prompt-ab/ledger-202608.jsonl; scenarios in
+      scripts/prompt-ab/scenarios/.
+
+  - id: fragment.structured-output-seat
+    description: >-
+      Root-shape + verbatim-enum contract for StructuredOutput seats (measured: 67 schema-mismatch retries / 48h).
+    owner: owner
+    version: 1
+    live: true
+    kind: fragment
+    location: registry
+    prompt_file: system-prompts/fragment.structured-output-seat/v1.md
+    consumers:
+      - workflow seat preambles (SDK-spawned seats answering via StructuredOutput)
+    notes: >-
+      Added 2026-08-08 from the 48h mechanization audit prompt pass. A/B evidence
+      (where applicable) in var/prompt-ab/ledger-202608.jsonl; scenarios in
+      scripts/prompt-ab/scenarios/.
+
+  - id: fragment.guard-denial-discipline
+    description: >-
+      Never re-issue a denied command unchanged; second denial = stop and record; git -C not cd-compounds (measured: 594 refusal storms + 825 cd-compound prompts / 48h).
+    owner: owner
+    version: 1
+    live: true
+    kind: fragment
+    location: registry
+    prompt_file: system-prompts/fragment.guard-denial-discipline/v1.md
+    consumers:
+      - ~/.claude/agents/claude-coder.md (PROMOTED 2026-08-08 — A/B guard-denial-no-reissue candidate 3/3 vs control 2/3, var/prompt-ab/ledger-202608.jsonl)
+      - other coder briefs + loop.implementer pending their own A/B scenarios
+    notes: >-
+      Added 2026-08-08 from the 48h mechanization audit prompt pass. A/B evidence
+      (where applicable) in var/prompt-ab/ledger-202608.jsonl; scenarios in
+      scripts/prompt-ab/scenarios/.
+
+  - id: fragment.headless-discipline
+    description: >-
+      Denials are final in headless sessions: record and reroute, never retry or work around; terminal-error park after 2 attempts (measured: 884 auto-rejects + 135 doomed asks / 48h).
+    owner: owner
+    version: 1
+    live: true
+    kind: fragment
+    location: registry
+    prompt_file: system-prompts/fragment.headless-discipline/v1.md
+    consumers:
+      - loop.planning / loop.implementer / loop.repair; daemon briefs
+    notes: >-
+      Added 2026-08-08 from the 48h mechanization audit prompt pass. A/B evidence
+      (where applicable) in var/prompt-ab/ledger-202608.jsonl; scenarios in
+      scripts/prompt-ab/scenarios/.
+
+  # =========================================================================
+
+  - id: example.hello
+    description: >-
+      Worked example showing the registry-owned layout. Copy this entry and its
+      directory as the starting point for a new prompt.
+    owner: owner
+    version: 1
+    live: false
+    kind: agent
+    location: registry
+    prompt_file: system-prompts/example.hello/v1.md
+    consumers:
+      - tests/prompts/test_registry.py (proves the registry-owned path resolves end to end)
+    notes: >-
+      Deliberately live: false. Delete it once there is a real registry-owned
+      prompt to point newcomers at.
+
+# ---------------------------------------------------------------------------
+# KNOWN AND DELIBERATELY NOT REGISTERED
+#
+# Recorded here rather than omitted, because an inventory that hides its own gaps
+# is the favourable-absence failure this registry exists to prevent. This block is
+# documentation: the loader ignores unknown top-level keys.
+#
+#   vault/prompts/wave3-worker/v0{1,2,3}.md
+#       8, 26, and 26 bytes — empty placeholders from the wave3 proof harness
+#       (scripts/wave3_proof.py). Registering them would put entries in the
+#       registry that fail its own non-empty check. Delete or fill them.
+#
+#   vault/prompts/demo-worker/v01.md
+#       75 bytes of lab seed data (omniagentos/lab/seed.py). A fixture, not a role.
+#
+#   omniagentos/longhaul/prompts.py
+#       Builds initial/continuation/steering prompts by composition at runtime.
+#       There is no single prompt body to register; it is prompt-assembly code.
+#
+#   docs/ui-redesign/*.txt, var/**/*-prompt.md
+#       One-shot run prompts and historical artifacts, not standing roles.
+# ---------------------------------------------------------------------------

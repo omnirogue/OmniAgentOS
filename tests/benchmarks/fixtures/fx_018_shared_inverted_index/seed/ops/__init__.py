@@ -1,0 +1,3 @@
+"""
+Inverted index operations package.
+"""

@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<!-- Product-scoped OmniAgentOS job: agent health sentinel, every 30 min. -->
+<dict>
+    <key>Label</key><string>{{LABEL}}</string>
+    <key>ProgramArguments</key>{{PROGRAM_ARGS}}
+    <key>WorkingDirectory</key><string>{{WORKING_DIR}}</string>
+    <key>StartInterval</key><integer>{{INTERVAL}}</integer>
+    <key>RunAtLoad</key><false/>
+    <key>StandardOutPath</key><string>{{WORKING_DIR}}/var/log/health-sentinel.log</string>
+    <key>StandardErrorPath</key><string>{{WORKING_DIR}}/var/log/health-sentinel.log</string>
+</dict>
+</plist>

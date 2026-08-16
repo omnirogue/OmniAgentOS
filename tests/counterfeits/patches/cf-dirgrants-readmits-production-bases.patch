@@ -1,0 +1,21 @@
+diff --git a/omniagentos/policy/dir_grants.py b/omniagentos/policy/dir_grants.py
+index c8b25644..2f77b9d4 100644
+--- a/omniagentos/policy/dir_grants.py
++++ b/omniagentos/policy/dir_grants.py
+@@ -123,6 +123,15 @@ def allowed_grant_roots(sim_ctx: SimContext | None = None) -> list[str]:
+     if sim_ctx is not None and sim_ctx.sim_mode:
+         if sim_ctx.campaign_root is None:
+             raise DirGrantError("broken invariant: sim context has no campaign root")
++        # COUNTERFEIT: re-open production project bases in sim mode
++        roots = [os.path.realpath(str(sim_ctx.campaign_root))]
++        for root in grantable_mount_roots():
++            resolved = _realpath(root)
++            if resolved and resolved not in roots:
++                roots.append(resolved)
++        for base in _configured_project_bases():
++            if base not in roots:
++                roots.append(base)
++        return roots
+-        return [os.path.realpath(str(sim_ctx.campaign_root))]
+
+     roots: list[str] = []

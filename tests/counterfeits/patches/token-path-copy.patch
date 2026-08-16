@@ -1,0 +1,18 @@
+--- a/omniagentos/sessions/token.py
++++ b/omniagentos/sessions/token.py
+@@ -123,9 +123,8 @@
+         candidate = Path(raw).joinpath(*_TOKEN_LEAF)
+-        # Fail closed: True (it IS production) and None (cannot tell) both refuse.
+-        if _is_legacy_token_path(candidate) is not False:
+-            raise TokenPathError(
+-                "OMNIAGENTOS_SIM_MODE=1 refuses to use the production token "
+-                "path: OMNIAGENTOS_VAR_DIR / OMNIAGENTOS_VAR resolved to the "
+-                f"legacy path {_LEGACY_TOKEN_PATH}"
+-            )
++        # COUNTERFEIT: copy the production token into the campaign path instead of
++        # making both paths resolve the same way (independent campaign secret).
++        import shutil as _shutil
++        candidate.parent.mkdir(parents=True, exist_ok=True)
++        if _LEGACY_TOKEN_PATH.is_file():
++            _shutil.copy2(_LEGACY_TOKEN_PATH, candidate)
+         return candidate

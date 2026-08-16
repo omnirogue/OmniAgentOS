@@ -1,0 +1,64 @@
+-- 118 — token spend accrues toward dollar caps without manufacturing a cost.
+--
+-- WHY
+-- ---
+-- `codex exec --json` reports exact token counts and no cost field at all, so
+-- the honest record of such a session is `sessions.cost_usd IS NULL` (migration
+-- 089 made the column nullable). That invariant is load-bearing:
+--
+--     cost_usd IS NULL   = unpriced / unknown
+--     cost_usd = 0.0     = the provider reported this run was genuinely free
+--
+-- Those two must stay distinguishable. But an unpriced session also accrued
+-- NOTHING toward its run's dollar cap: every budget gate read
+-- `known_cost_usd = 0`, so a codex-only swarm ran against a ceiling it could
+-- never consume, and the only control left was "unknown, therefore blocked".
+--
+-- The fix is a SECOND number, never the same number:
+--
+--     cost_usd              exact, provider-reported (NULL = unknown, 0.0 = free)
+--     cost_estimate_usd     an upper-bound estimate priced from the MEASURED
+--                           tokens and the model-intelligence registry's own
+--                           published per-million rates. Read by cap accrual
+--                           only; never presented as a measured total.
+--     cost_estimate_source  the evidence behind the estimate, e.g.
+--                           "modelintel:gpt-5.6-sol@2026-08-04T11:15:05Z", so an
+--                           estimate is never an anonymous number.
+--
+-- `cost_quality` (exact | estimated | unknown) is DERIVED from those two columns
+-- at read time by `omniagentos.budget.token_pricing.cost_quality` rather than
+-- stored. A stored discriminator can drift out of step with the values it
+-- describes — the same defect class this item exists to close — and deriving it
+-- also makes this migration safe on the operator database (see below).
+--
+-- IDEMPOTENCE / LIVE-DATABASE SAFETY — read before adding a column here
+-- ---------------------------------------------------------------------
+-- A reverted earlier attempt at this item shipped `116_sessions_cost_quality.sql`
+-- and it was APPLIED to the operator database before being reverted from the
+-- tree. That database therefore carries a `cost_quality` column on `sessions`,
+-- `routine_runs` and `routines` that no migration in this repo records, while
+-- every freshly-migrated database lacks it. SQLite has no
+-- `ALTER TABLE ... ADD COLUMN IF NOT EXISTS`, and `omniagentos/db/migrate.py`
+-- executes plain `.sql` only (`Path.glob("*.sql")`), so a `PRAGMA table_info`
+-- guard is not expressible inside a migration file.
+--
+-- This migration is therefore idempotent BY CONSTRUCTION rather than by runtime
+-- guard: it adds ONLY column names that are provably absent from BOTH schemas,
+-- and it deliberately does not touch `cost_quality` at all. The reverted DDL was
+-- read back from the branch that applied it — it added `cost_quality` to those
+-- three tables and introduced no `cost_estimate_*` column anywhere — so
+-- `cost_estimate_usd` / `cost_estimate_source` cannot collide on either shape,
+-- and the stray `cost_quality` is left inert.
+--
+-- Rebuilding `sessions` to converge the two schemas was considered and rejected
+-- here: the operator database's `session_messages` diverged in the same reverted
+-- migration (it gained a foreign key to `sessions`), so the correct DROP order
+-- differs between the two shapes, and `PRAGMA foreign_keys` cannot be toggled
+-- inside the migrator's `BEGIN IMMEDIATE`. Converging the schemas is a separate,
+-- single-purpose migration and must not ride along with a spend-accrual change.
+
+ALTER TABLE sessions ADD COLUMN cost_estimate_usd REAL CHECK (
+    cost_estimate_usd IS NULL OR cost_estimate_usd >= 0
+);
+
+ALTER TABLE sessions ADD COLUMN cost_estimate_source TEXT;

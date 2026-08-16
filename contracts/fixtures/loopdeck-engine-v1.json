@@ -1,0 +1,109 @@
+{
+  "api_version": "loopdeck-engine/v1",
+  "capabilities": {
+    "read_only": true,
+    "required": [
+      "swarm",
+      "parallel_execution",
+      "memory",
+      "reflection",
+      "improvements",
+      "activity_cursor"
+    ]
+  },
+  "runs": {
+    "request": "/api/engine/runs?limit=20",
+    "limit_bounds": {"min": 1, "max": 50, "default": 20},
+    "order": "newest first by created_at",
+    "binding_rule": "the consumer picks a run_id from this list and holds it; a run is never inferred from a project or task identifier",
+    "response": {
+      "runs": [
+        {"id": "swr_example", "status": "running", "goal": "Ship the adapter", "created_at": "2026-08-07T12:00:00Z"}
+      ]
+    }
+  },
+  "snapshot": {
+    "request": "/api/engine/runs/swr_example/snapshot?after=41&limit=200",
+    "run_id_pattern": "^[A-Za-z0-9_.-]{1,64}$",
+    "cursor_rule": "next request uses next_activity_cursor; deduplicate by event id",
+    "scope_rule": "strictly one run; the consumer discards accumulated evidence when its bound run.id changes",
+    "forbidden_fields": [
+      "working_dir",
+      "content_uri",
+      "argv",
+      "environment",
+      "token",
+      "secret"
+    ],
+    "context": {
+      "source": "run plan_json, falling back to metrics_json",
+      "validation": {
+        "repository": "^[\\w.-]+/[\\w.-]+$",
+        "branch": "^[\\w./-]{1,255}$ and no '..' and no leading or trailing '/'",
+        "head_sha": "^[0-9a-f]{7,40}$"
+      },
+      "invalid_field_rule": "becomes null; never echoed raw",
+      "response": {"repository": "acme/widgets", "branch": "main", "head_sha": "deadbeef0123"}
+    },
+    "evidence": {
+      "source": "events with action == 'evidence.reported'",
+      "identity": {"commits": "sha", "files": "path", "tests": "name", "reports": "name"},
+      "dedup_rule": "first occurrence wins, keeping its values and its position",
+      "link_rule": "a url not beginning 'https://github.com/' becomes null; the entry is kept",
+      "response": {
+        "commits": [
+          {"sha": "aaa1111", "message": "fix the thing", "url": "https://github.com/acme/widgets/commit/aaa1111"}
+        ],
+        "files": [{"path": "omniagentos/api/routes/engine.py", "url": null}],
+        "tests": [{"name": "test_snapshot_ok", "status": "passed", "url": null}],
+        "reports": [
+          {"name": "coverage", "url": "https://github.com/acme/widgets/actions/runs/1"}
+        ]
+      }
+    },
+    "approval": {
+      "source": "events with action == 'approval.recorded' naming this run_id, and this run's head_sha when context has one",
+      "never_inferred": "artifacts, review documents and passing tests are evidence, not consent, and must never flip approved",
+      "response": {"approved": false, "receipt": null}
+    },
+    "redaction": {
+      "secret_prefixes": ["sk", "ghp", "gho", "ghs", "github_pat", "xox<a-z>", "AKIA", "Bearer"],
+      "host_path_prefixes": ["/home/", "/Users/", "/tmp/"],
+      "replacement": "[redacted]"
+    }
+  },
+  "hostile_sample": {
+    "note": "what a consumer MUST tolerate without crashing and without trusting. Every field here is deliberately wrong.",
+    "capabilities": {
+      "api_version": "unknown-future/v9",
+      "expected_client_behavior": "present as incompatible; never as connected"
+    },
+    "evidence": {
+      "commits": [
+        {
+          "sha": "aaa1111",
+          "message": "fix ghp_abcdefghijklmnopqrst leak",
+          "url": "https://not-github.example/aaa"
+        }
+      ],
+      "reports": [{"name": "log at /home/ubuntu/secret/out.log", "url": null}],
+      "expected_server_projection": {
+        "commits": [{"sha": "aaa1111", "message": "fix [redacted] leak", "url": null}],
+        "reports": [{"name": "log at [redacted]", "url": null}]
+      },
+      "expected_client_behavior": "render the entry as inert text; never emit an anchor for a non-GitHub url; never parse a payload string as HTML"
+    }
+  },
+  "reserved_event_stream": {
+    "enabled": false,
+    "request": "/api/engine/runs/swr_example/events?after_id=41",
+    "envelope_schema": "omniagentos.event/v1",
+    "cursor": "numeric authoritative event id",
+    "authority": "postgresql event log; NATS is delivery only"
+  },
+  "errors": {
+    "shape": {"error": {"code": "not_found", "message": "engine run not found", "detail": {"id": "swr_missing"}}},
+    "malformed_run_id": {"status": 422, "code": "validation", "rule": "rejected before any data-access call"},
+    "limit_out_of_bounds": {"status": 422, "code": "validation"}
+  }
+}

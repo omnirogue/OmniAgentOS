@@ -1,0 +1,211 @@
+/* Observatory /compute — Estate Compute. Same Stripe-density language as
+   testing.module.css: hairline borders, small radii, tone tokens only. */
+
+/* ── Page chrome ──────────────────────────────────────────────────── */
+
+.lead {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: var(--text-body);
+  line-height: 1.5;
+  max-width: 46rem;
+}
+
+.mono {
+  font-family: var(--font-mono);
+}
+
+/* Header-area note when the last poll failed but a prior snapshot is still
+   on screen (UI-1 review fix) — deliberately the same muted neutral as
+   every other "not a failure, just incomplete" caption on this page, never
+   a danger takeover: the data underneath is still trustworthy. */
+.degradedNote {
+  color: var(--text-muted);
+  font-size: var(--text-small);
+}
+
+/* ── Summary row (4 tiles) ────────────────────────────────────────── */
+
+.statGrid {
+  display: grid;
+  gap: var(--space-4);
+  grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
+}
+
+.statTile {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-5);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  min-height: 7.5rem;
+}
+
+.statTile--unavailable {
+  border-style: dashed;
+}
+
+.statTitle {
+  margin: 0;
+  font-size: var(--text-small);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.statValue {
+  font-family: var(--font-mono);
+  font-size: var(--text-display, 2rem);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1;
+  color: var(--text);
+}
+
+.statValue--ok { color: var(--ok); }
+.statValue--warn { color: var(--warn); }
+.statValue--danger { color: var(--danger); }
+/* "default" is deliberately unstyled here — UNKNOWN is never success- or
+   failure-colored (dashboard-conventions.md Rule 2). */
+
+.statCaption {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: var(--text-micro);
+  line-height: 1.4;
+}
+
+/* ── Machine cards grid ───────────────────────────────────────────── */
+
+.machineGrid {
+  display: grid;
+  gap: var(--space-4);
+  grid-template-columns: repeat(auto-fit, minmax(17rem, 1fr));
+}
+
+.machineCard {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-5);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+}
+
+/* A refusal card (UI-3 review fix) — the local box's own envelope is down.
+   Dashed border matches .statTile--unavailable's existing "not a failure,
+   an honest absence" language; no metrics render inside it. */
+.machineCard--unavailable {
+  border-style: dashed;
+}
+
+.machineRefusal {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: var(--text-small);
+}
+
+.machineHead {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.machineName {
+  font-weight: 600;
+  font-size: var(--text-body);
+  color: var(--text);
+  margin-right: auto;
+}
+
+.machineLoadRow {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-2);
+}
+
+.loadValue {
+  font-family: var(--font-mono);
+  font-size: var(--text-h2, 1.5rem);
+  font-weight: 600;
+  color: var(--text);
+}
+
+.loadValue--ok { color: var(--ok); }
+.loadValue--warn { color: var(--warn); }
+.loadValue--danger { color: var(--danger); }
+
+.machineLoadLabel {
+  color: var(--text-faint);
+  font-size: var(--text-micro);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.machineStats {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-3) var(--space-2);
+  margin: 0;
+}
+
+.machineStats dt {
+  margin: 0;
+  color: var(--text-faint);
+  font-size: var(--text-micro);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.machineStats dd {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: var(--text-small);
+  color: var(--text);
+}
+
+.machineThroughput {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: var(--text-micro);
+  font-family: var(--font-mono);
+}
+
+/* ── Runners strip ────────────────────────────────────────────────── */
+
+.runnersList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.runnerRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+}
+
+.runnerName {
+  font-family: var(--font-mono);
+  font-weight: 600;
+  color: var(--text);
+  margin-right: auto;
+}
+
+.runnerLabels {
+  color: var(--text-muted);
+  font-size: var(--text-micro);
+  font-family: var(--font-mono);
+}

@@ -1,0 +1,86 @@
+# run: {{ title }}
+
+Discipline: {% if discipline_slug %}[[{{ discipline_slug }}]] · {% endif %}[[Home]]
+
+## Summary
+
+- **State:** {{ state }}
+- **Harness:** {{ harness }}{% if arm %} (arm: {{ arm }}){% endif +%}
+- **Model:** {{ model }}
+- **Queued:** {{ queued_at }}
+- **Started:** {{ started_at }}
+- **Finished:** {{ finished_at }}
+
+## Output
+
+{% if output_text %}
+{{ output_text }}
+{% else %}
+_No output text recorded._
+{% endif %}
+
+{% if output_json %}
+### Structured output
+
+```json
+{{ output_json }}
+```
+{% endif %}
+
+## Usage
+
+{% for line in usage_lines %}
+- {{ line }}
+{% endfor %}
+
+## Input
+
+{% if task_input %}
+```
+{{ task_input }}
+```
+{% else %}
+_No task input recorded._
+{% endif %}
+
+## Steps
+
+{% if steps %}
+| # | Name | Status | Started | Finished |
+|---|------|--------|---------|----------|
+{% for step in steps %}
+| {{ step.seq }} | {{ step.name }} | {{ step.status }} | {{ step.started_at }} | {{ step.finished_at }} |
+{% endfor %}
+{% else %}
+_No steps recorded._
+{% endif %}
+
+## Artifacts
+
+{% if artifacts %}
+{% for artifact in artifacts %}
+- `{{ artifact }}`
+{% endfor %}
+{% else %}
+_No artifacts recorded._
+{% endif %}
+
+## Provenance
+
+- **Task:** `{{ task_id }}`
+- **Trace:** `{{ trace_id }}`
+- **Manifest:** `{{ manifest_path }}`
+
+### Receipts
+
+{% if receipts %}
+| Key | Step | Created | Completed |
+|---|------|---------|-----------|
+{% for receipt in receipts %}
+| {{ receipt.key }} | {{ receipt.step_name }} | {{ receipt.created_at }} | {{ receipt.completed_at or "_pending_" }} |
+{% endfor %}
+{% else %}
+_No receipts recorded._
+{% endif %}
+
+## Notes (human)

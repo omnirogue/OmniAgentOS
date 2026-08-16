@@ -1,0 +1,86 @@
+# lane-claims.yaml — MACHINE-READABLE path ownership for concurrent lanes.
+#
+# WHY
+# ---
+# devtasks/SESSION-CLAIMS.md is human prose in a markdown table. Nothing reads it,
+# so nothing enforces it: today a lane crossed a live `dashboard/**` claim and only
+# a human noticed, after the work was done. With 4-6 lanes running concurrently that
+# is a continuous hazard, so the claim set needs a form a script can check.
+#
+# This file is that form. `scripts/gates/lane-claims-check.sh <base> <candidate>`
+# refuses a candidate whose changed paths hit a glob owned by a DIFFERENT lane whose
+# status is `in_flight`.
+#
+# SESSION-CLAIMS.md remains the human narrative (contested notes, rationale, the
+# "shared / nobody owns" table). This file is the checkable subset. When you claim
+# or release paths, update BOTH — SESSION-CLAIMS.md is claimed by `t/queue-docs`,
+# so coordinate before editing it.
+#
+# !! NOT AUTHORITATIVE YET !!
+# This ledger covers only the rows of SESSION-CLAIMS.md labelled "IN FLIGHT". Five
+# further rows express active "do not edit" / "reserved" restrictions but carry no
+# IN FLIGHT label; they are recorded verbatim under `# NOT TRANSCRIBED` at the bottom
+# and are NOT enforced. Until their owners decide whether to promote them, a green
+# lane-claims-check means "no IN-FLIGHT claim was crossed" — NOT "no claim was
+# crossed". Do not mistake partial coverage for full coverage. (Same honesty
+# discipline as devtasks/REACHABILITY-EXEMPT.txt: the gap is written down, not
+# implied.)
+#
+# SCHEMA
+#   lane        lane id, unique. This is the value a lane passes as LANE_ID.
+#   owner       session or operator holding the lane.
+#   status      in_flight | released   (only `in_flight` blocks anyone)
+#   claimed_at  ISO-8601 date or timestamp, verbatim from the source row.
+#   aliases     optional; alternate ids that resolve to this lane — normally the
+#               branch name, so a caller that only knows `lane/foo` still resolves
+#               to lane id `foo`. Required for merge-gate-style callers, because an
+#               UNKNOWN LANE_ID is a refusal (exit 2), never a silent pass: a typo
+#               in a lane name must not disable the check.
+#   paths       list of path GLOBS, repo-relative. Validated at parse time — a
+#               blank, absolute, `..`-bearing or backslash glob is a hard error,
+#               because such a glob can never match a git-diff path and would
+#               silently protect nothing.
+#   note        free text; never interpreted by the checker.
+#
+# GLOB SEMANTICS (pinned by tests in tests/gates_scripts/test_lane_claims_check.py)
+#   The WHOLE path must match; the pattern is anchored at both ends.
+#     scripts/merge-gate.sh   matches scripts/merge-gate.sh
+#                             does NOT match scripts/merge-gate.sh.bak
+#     a/b.py                  does NOT match a/bc.py
+#   `**` matches any characters INCLUDING `/`:
+#     dashboard/**            matches dashboard/src/deep/x.ts   (any depth)
+#                             does NOT match dashboard          (a dir is not a file)
+#                             does NOT match dashboard-other/x.ts
+#   `*` and `?` never cross `/`:
+#     omniagentos/*/models.py matches omniagentos/swarm/models.py
+#                             does NOT match omniagentos/a/b/models.py
+#   There is NO implicit prefix matching: a directory claim must be written `dir/**`.
+#
+# RENAMES: the checker diffs with `--name-status -M` and tests BOTH sides, so moving
+# a file OUT of a claimed tree is a violation too.
+#
+# PUBLIC-RELEASE NOTE
+# This tree ships only the mechanism, not the operator's live claim history: the
+# `source` narrative doc (devtasks/SESSION-CLAIMS.md) is process content and is
+# deliberately not included here. The single example lane below exists to pin the
+# schema — including the `aliases` field's `lane/<id>` resolution rule — for the
+# tests in tests/gates_scripts/test_lane_claims_check.py; it claims nothing real.
+
+version: 1
+source: devtasks/SESSION-CLAIMS.md
+seeded_at: "2026-07-31"
+
+lanes:
+  # Example entry showing the shape. `released` lanes enforce nothing; a lane
+  # you want enforced must be `in_flight` with the exact globs it owns. The
+  # alias demonstrates the `lane/<id>` resolution merge-gate-style callers rely
+  # on (LANE_ID=$BRANCH, e.g. branch `lane/example-lane` resolving to lane id
+  # `example-lane`).
+  - lane: example-lane
+    owner: "session 00000000 (example)"
+    status: released
+    claimed_at: "2026-07-31"
+    aliases:
+      - lane/example-lane
+    paths:
+      - docs/examples/**

@@ -1,0 +1,14 @@
+diff --git a/omniagentos/api/routes/employee_transcripts.py b/omniagentos/api/routes/employee_transcripts.py
+index 559eb8bb..b5ebf4bb 100644
+--- a/omniagentos/api/routes/employee_transcripts.py
++++ b/omniagentos/api/routes/employee_transcripts.py
+@@ -246,4 +246,9 @@ def _get_employee_transcript(transcript_id: str, store: StoreDep) -> dict[str, A
+     return transcript
+ 
+ 
++@employee_transcripts_router.post("/auto-collect", status_code=201)
++def _auto_collect_employee_transcripts() -> dict[str, Any]:
++    # COUNTERFEIT: Adds forbidden auto-ingestion endpoint
++    return {"collected": 0}
++
+ __all__ = ["employee_transcripts_router"]

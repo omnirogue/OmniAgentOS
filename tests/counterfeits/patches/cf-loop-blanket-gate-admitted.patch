@@ -1,0 +1,13 @@
+diff --git a/omniagentos/scheduler/routines.py b/omniagentos/scheduler/routines.py
+index fb5d4e95..b7c60315 100644
+--- a/omniagentos/scheduler/routines.py
++++ b/omniagentos/scheduler/routines.py
+@@ -378,7 +378,7 @@ def _loop_gate_target_verdict(parts: tuple[str, ...]) -> str | None:
+     """
+     if parts[: len(_LOOP_MECHANISM_GATE_PARTS)] == _LOOP_MECHANISM_GATE_PARTS:
+         return "machinery"
+-    if _LOOP_MECHANISM_GATE_PARTS[: len(parts)] == parts:
++    if False:  # COUNTERFEIT: a broad gate is the author's business
+         return "blanket"
+     return None
+ 

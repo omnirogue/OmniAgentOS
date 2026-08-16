@@ -1,0 +1,36 @@
+# FROZEN fixture — see tests/benchmarks/README.
+id: fx_003_multifile_refactor
+discipline: code-changes
+kind: refactor
+repo_rev: 14a84bc36df760f9603cfbae1a00ba20060de922
+tier: standard
+timeout_ms: 600000
+max_turns: 40
+declared_files:
+  - emitters/frame.py
+  - emitters/run_events.py
+  - emitters/task_events.py
+  - emitters/alert_events.py
+canaries: []
+acceptance:
+  paths:
+    - check_accept_emitters.py
+  timeout_s: 120
+prompt: |
+  This package has three modules — `emitters/run_events.py`,
+  `emitters/task_events.py`, `emitters/alert_events.py` — that each duplicate
+  the same SSE frame-formatting logic inline.
+
+  Refactor:
+    1. Create `emitters/frame.py` exposing
+       `format_frame(event: str, data: dict) -> str`, holding that logic once.
+    2. Rewrite all three modules to call `format_frame`. Afterwards none of
+       those three modules may import `json` or call `json.dumps` — the
+       serialization lives only in `frame.py`.
+
+  The observable behavior of every existing public function must be
+  byte-for-byte identical, and their names and signatures must not change.
+  `python -m pytest check_emitters.py` must still pass.
+
+  Modify only the four files listed above (three existing + the new
+  `emitters/frame.py`). Do not modify `check_emitters.py`.

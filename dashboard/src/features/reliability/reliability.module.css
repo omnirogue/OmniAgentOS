@@ -1,0 +1,399 @@
+/* Company / reliability dashboard layouts — design tokens only. */
+
+.statGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
+  gap: var(--space-3);
+}
+
+.layoutSplit {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(16rem, 20rem);
+  gap: var(--space-5);
+  align-items: start;
+}
+
+@media (max-width: 960px) {
+  .layoutSplit {
+    grid-template-columns: 1fr;
+  }
+}
+
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  align-items: center;
+  margin-bottom: var(--space-4);
+}
+
+.liveRow {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--text-small);
+  color: var(--text-muted);
+}
+
+.heartbeat {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  font-size: var(--text-small);
+  color: var(--text-muted);
+}
+
+.heartbeatDot {
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+  background: var(--health-healthy);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--health-healthy) 25%, transparent);
+}
+
+.heartbeatDot[data-state="degraded"] {
+  background: var(--health-degraded);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--health-degraded) 25%, transparent);
+}
+
+.heartbeatDot[data-state="critical"] {
+  background: var(--health-critical);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--health-critical) 25%, transparent);
+}
+
+.heartbeatDot[data-state="recovering"] {
+  background: var(--health-recovering);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--health-recovering) 25%, transparent);
+}
+
+.eventRow {
+  display: grid;
+  grid-template-columns: auto auto auto minmax(0, 1fr) auto;
+  gap: var(--space-3);
+  align-items: center;
+  padding: var(--space-3);
+  border-bottom: 1px solid var(--border);
+}
+
+.eventRow:last-child {
+  border-bottom: none;
+}
+
+.eventSummary {
+  min-width: 0;
+  font-size: var(--text-small);
+  color: var(--text);
+}
+
+.eventMeta {
+  margin-top: var(--space-1);
+  font-size: var(--text-micro);
+  color: var(--text-muted);
+}
+
+.cardStack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.impCard {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.impHead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.impTitle {
+  margin: 0;
+  font-size: var(--text-h3);
+  font-weight: 600;
+  color: var(--text);
+}
+
+.impMeta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  align-items: center;
+}
+
+.impBody {
+  margin: 0;
+  font-size: var(--text-small);
+  color: var(--text-muted);
+  line-height: var(--leading-normal, 1.5);
+}
+
+.votesGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
+  gap: var(--space-2);
+}
+
+.voteChip {
+  padding: var(--space-2);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+  background: color-mix(in srgb, var(--surface) 80%, var(--canvas));
+  font-size: var(--text-micro);
+}
+
+.voteFamily {
+  font-weight: 600;
+  color: var(--text);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.voteDetail {
+  margin-top: var(--space-1);
+  color: var(--text-muted);
+}
+
+.sandboxBox,
+.beforeAfter {
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+  background: var(--surface-raised);
+  font-size: var(--text-small);
+  color: var(--text-muted);
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.modeWidget {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  position: sticky;
+  top: var(--space-4);
+}
+
+.modeField {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.modeLabel {
+  font-size: var(--text-micro);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.immutableNote {
+  font-size: var(--text-micro);
+  color: var(--text-faint);
+}
+
+.deptBlock {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
+}
+
+.deptToggle {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  background: none;
+  border: none;
+  padding: 0;
+  color: var(--text);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.agentGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(14rem, 1fr));
+  gap: var(--space-3);
+}
+
+.agentCard {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.agentTop {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: var(--space-2);
+}
+
+.agentName {
+  margin: 0;
+  font-size: var(--text-body);
+  font-weight: 600;
+}
+
+.agentRole {
+  margin: 0;
+  font-size: var(--text-micro);
+  color: var(--text-muted);
+}
+
+.formStack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.drawerBackdrop {
+  position: fixed;
+  inset: 0;
+  background: color-mix(in srgb, var(--canvas) 55%, transparent);
+  z-index: var(--z-dialog);
+  display: flex;
+  justify-content: flex-end;
+}
+
+.drawer {
+  width: min(28rem, 100vw);
+  height: 100%;
+  background: var(--surface);
+  border-left: 1px solid var(--border);
+  box-shadow: var(--shadow-lg);
+  padding: var(--space-5);
+  overflow: auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.drawerTitle {
+  margin: 0;
+  font-size: var(--text-h3);
+  font-weight: 600;
+}
+
+.listPlain {
+  margin: 0;
+  padding-left: var(--space-4);
+  color: var(--text-muted);
+  font-size: var(--text-small);
+}
+
+.familyGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
+  gap: var(--space-3);
+}
+
+.familyCard {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.availRow {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--text-small);
+  color: var(--text-muted);
+}
+
+.riskBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: var(--text-micro);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  line-height: 1;
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-pill);
+  border: 1px solid transparent;
+  white-space: nowrap;
+}
+
+.riskBadge[data-level="1"] {
+  color: var(--risk-l1);
+  background: color-mix(in srgb, var(--risk-l1) 14%, transparent);
+  border-color: color-mix(in srgb, var(--risk-l1) 28%, transparent);
+}
+
+.riskBadge[data-level="2"] {
+  color: var(--risk-l2);
+  background: color-mix(in srgb, var(--risk-l2) 14%, transparent);
+  border-color: color-mix(in srgb, var(--risk-l2) 28%, transparent);
+}
+
+.riskBadge[data-level="3"] {
+  color: var(--risk-l3);
+  background: color-mix(in srgb, var(--risk-l3) 14%, transparent);
+  border-color: color-mix(in srgb, var(--risk-l3) 28%, transparent);
+}
+
+.riskBadge[data-level="4"] {
+  color: var(--risk-l4);
+  background: color-mix(in srgb, var(--risk-l4) 14%, transparent);
+  border-color: color-mix(in srgb, var(--risk-l4) 28%, transparent);
+}
+
+.healthBadge {
+  composes: riskBadge;
+}
+
+.healthBadge[data-state="healthy"] {
+  color: var(--health-healthy);
+  background: color-mix(in srgb, var(--health-healthy) 14%, transparent);
+  border-color: color-mix(in srgb, var(--health-healthy) 28%, transparent);
+}
+
+.healthBadge[data-state="degraded"] {
+  color: var(--health-degraded);
+  background: color-mix(in srgb, var(--health-degraded) 14%, transparent);
+  border-color: color-mix(in srgb, var(--health-degraded) 28%, transparent);
+}
+
+.healthBadge[data-state="critical"] {
+  color: var(--health-critical);
+  background: color-mix(in srgb, var(--health-critical) 14%, transparent);
+  border-color: color-mix(in srgb, var(--health-critical) 28%, transparent);
+}
+
+.healthBadge[data-state="recovering"] {
+  color: var(--health-recovering);
+  background: color-mix(in srgb, var(--health-recovering) 14%, transparent);
+  border-color: color-mix(in srgb, var(--health-recovering) 28%, transparent);
+}
+
+.muted {
+  color: var(--text-muted);
+  font-size: var(--text-small);
+}
+
+.truncate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 24rem;
+}

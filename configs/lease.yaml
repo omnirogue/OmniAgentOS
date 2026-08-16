@@ -1,0 +1,78 @@
+# Autonomy Lease Configuration File
+# =================================
+#
+# This file governs the sandboxed agent execution environment (the autonomy lease).
+#
+# Key Features and Behaviors:
+# - mode: off
+#   The autonomy lease ships dark by default. The environment variable
+#   OMNIAGENTOS_AUTONOMY_LEASE acts as a bidirectional override and is the kill switch:
+#   setting it to "off" (or any falsy value) disables the LEASE on a host whose config
+#   file enables it. Read that precisely — turning the lease off removes only the lease
+#   layer. The pre-existing OS sandbox (omniagentos/runner/sandbox.py), the env scrub,
+#   the credential broker and the fail-closed unattended-launch floor are all UNCHANGED
+#   and still enforced with the lease off; mode "off" restores exactly today's behavior,
+#   byte for byte, and never weakens it. "enforce" (or any truthy value) makes the lease
+#   drive write roots, ceilings, TTL and egress; "shadow" issues and records leases to
+#   the append-only ledger and changes nothing about the launch.
+#
+# - ceilings:
+#   These are hard process-level limits applied to the agent's process tree during leased execution:
+#   * cpu_s: Represents RLIMIT_CPU. Unlike other limits, macOS (Darwin) does honor RLIMIT_CPU
+#     per-process and will signal a process exceeding this limit.
+#   * rss_mb: Set to 0 (UNSET) on purpose. On macOS, RLIMIT_RSS behaves as an alias for RLIMIT_AS
+#     (address space). Modern runtimes and node-based CLIs frequently allocate massive virtual
+#     address space upfront; enforcing a low RSS or address-space limit on macOS would immediately
+#     terminate processes unnecessarily.
+#   * max_procs: Set to 0 (UNSET) on purpose. On macOS/Darwin, RLIMIT_NPROC is counted per-UID
+#     system-wide rather than per process tree. Enforcing a low limit here could block new processes
+#     for other unrelated tasks on an already-busy host, causing system-wide degradation.
+#   * wall_s: Maximum real (wall) time in seconds the lease is permitted to run.
+#
+# - net:
+#   Governs the outbound network constraints.
+#   * default_policy: open
+#     Matches today's default behavior exactly. The macOS Sandbox Profile Language (SBPL) does not
+#     natively support granular filtering of outbound traffic by hostname; therefore, policies like
+#     "deny" or "proxy" are opt-in, specialized behaviors per-lane.
+#     "deny" is a TOTAL egress deny with no loopback exception -- SBPL's only accepted spelling of
+#     a loopback allow re-opens ALL outbound traffic, so writing one would be a guardrail that
+#     lies. A lane needing a loopback exception uses "proxy" with an explicit port.
+#     "proxy" denies direct egress and re-opens exactly the ephemeral port of the parent-side
+#     allowlisting CONNECT proxy. Read its limit honestly before enabling it: SBPL enforces only
+#     the PORT half of the filter, so that one port is reachable on any host and a sub-CLI that
+#     WANTS to evade the allowlist can dial attacker.example on it. proxy mode controls
+#     accidental and incidental egress; it is not an exfiltration-proof boundary against a
+#     hostile sub-CLI. The defense there is unchanged and does not rely on hostname filtering:
+#     secret dirs are read-denied, the env is an allowlist, and the broker holds the real keys.
+#   * allow_domains applies ONLY under "proxy". A bare entry matches that exact host and NOT its
+#     subdomains; write "*.example.com" when subdomains are intended.
+
+autonomy_lease:
+  # Mode of sandboxing. Valid options: off, shadow, enforce.
+  mode: off
+
+  # Time-to-live for a single autonomy lease in seconds.
+  ttl_seconds: 3600
+
+  # Resource limits applied to the process tree. A value of 0 means UNSET (disabled limit).
+  ceilings:
+    cpu_s: 1800
+    rss_mb: 0
+    max_procs: 0
+    wall_s: 3600
+
+  # Network controls for leased execution.
+  net:
+    default_policy: open
+    allow_ports: [443]
+    allow_domains:
+      - api.anthropic.com
+      - api.openai.com
+      - api.moonshot.ai
+      - api.moonshot.cn
+      - api.x.ai
+      - generativelanguage.googleapis.com
+      - cloudcode-pa.googleapis.com
+      - statsig.anthropic.com
+      - sentry.io

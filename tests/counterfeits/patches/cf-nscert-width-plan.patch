@@ -1,0 +1,12 @@
+diff --git a/tests/simharness/assertions.py b/tests/simharness/assertions.py
+--- a/tests/simharness/assertions.py
++++ b/tests/simharness/assertions.py
+@@ -14,7 +14,7 @@ def assert_escalated_model(attempts: Sequence[Mapping[str, Any]]) -> None:
+ 
+ 
+ def assert_concurrency_matches_plan(result: ScenarioResult) -> None:
+-    assert result.max_interval_overlap == result.target_concurrency, (
++    assert result.max_interval_overlap == result.target_concurrency + 1, (
+         "concurrency mismatch: "
+         f"planned={result.target_concurrency}, "
+         f"strict_interval_overlap={result.max_interval_overlap}"

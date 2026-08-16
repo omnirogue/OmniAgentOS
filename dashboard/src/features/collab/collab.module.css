@@ -1,0 +1,84 @@
+/* Page-level layout/header now come from the shared <Page>/<PageHeader> (@/design) —
+   see agents/board/chat pages. Only this feature's own content classes live here. */
+.muted { color: var(--text-muted); font-size: var(--text-small); }
+.faint { color: var(--text-faint); font-size: var(--text-micro); }
+
+.agentGrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr)); gap: var(--space-4); }
+.agentCardButton { all: unset; display: block; width: 100%; cursor: pointer; border-radius: var(--radius-lg); }
+.agentCardButton:focus-visible { outline: 2px solid var(--accent-ring); outline-offset: 2px; }
+.agentCard { display: grid; gap: var(--space-4); min-height: 13rem; text-align: left; transition: border-color var(--motion-fast) var(--ease), box-shadow var(--motion-fast) var(--ease); }
+.agentCardButton:hover .agentCard { border-color: var(--border-strong); box-shadow: var(--shadow-sm); }
+.agentHead { display: flex; justify-content: space-between; gap: var(--space-3); align-items: flex-start; }
+.agentIdentity { display: flex; gap: var(--space-3); align-items: center; min-width: 0; }
+.agentName { margin: 0; font-size: var(--text-h3); overflow-wrap: anywhere; }
+.pills { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+.chipsRow { display: flex; flex-wrap: wrap; gap: var(--space-2); align-items: center; }
+.status { display: inline-flex; align-items: center; gap: var(--space-2); color: var(--text-muted); font-size: var(--text-small); text-transform: capitalize; }
+.cardFooter { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); margin-top: auto; }
+/* Inline status/notice line (cockpit Live work). The board's own copy lives in
+   features/board/board.module.css with the rest of the kanban chrome. */
+.archiveNotice { margin: var(--space-3) 0 0; color: var(--text-muted); font-size: var(--text-small); }
+
+
+.filesDialog { align-self: stretch; max-width: 42rem; max-height: none; margin-left: auto; border-radius: var(--radius-xl) 0 0 var(--radius-xl); }
+.filesPanel { display: grid; gap: var(--space-5); }
+.filesActions { display: flex; align-items: center; justify-content: space-between; gap: var(--space-2); flex-wrap: wrap; }
+.fileArchiveLink { color: var(--accent); font-size: var(--text-small); }
+.fileList { display: grid; gap: var(--space-2); }
+.fileRow { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); padding: var(--space-3); border: 1px solid var(--border); border-radius: var(--radius-md); background: color-mix(in srgb, var(--surface) 72%, var(--canvas)); }
+.fileIdentity { display: grid; min-width: 0; gap: var(--space-1); }
+.fileName { overflow: hidden; color: var(--text); font-weight: 600; text-overflow: ellipsis; white-space: nowrap; }
+.fileMeta { color: var(--text-faint); font-size: var(--text-micro); }
+.fileRowActions { display: flex; align-items: center; gap: var(--space-1); flex-shrink: 0; }
+.uploadPanel { display: grid; gap: var(--space-2); padding-top: var(--space-4); border-top: 1px solid var(--border); }
+.uploadPanel p { margin: 0; }
+.uploadDropzone { display: flex; align-items: center; justify-content: center; gap: var(--space-2); flex-wrap: wrap; min-height: 5rem; padding: var(--space-4); border: 1px dashed var(--border-strong); border-radius: var(--radius-md); text-align: center; }
+.instructionsField { display: grid; gap: var(--space-1); }
+.instructionsField textarea { box-sizing: border-box; width: 100%; min-height: 5rem; padding: var(--space-2); resize: vertical; color: var(--text); background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm); font: inherit; }
+.uploadActions { display: flex; align-items: center; gap: var(--space-2); flex-wrap: wrap; }
+.successNotice { color: var(--ok); font-size: var(--text-small); }
+.uploadError { color: var(--danger); font-size: var(--text-small); }
+
+.chatLayout { display: grid; grid-template-columns: minmax(13rem, 17rem) minmax(0, 1fr); min-height: min(43rem, calc(100vh - 10rem)); border: 1px solid var(--border); border-radius: var(--radius-xl); overflow: hidden; background: var(--surface); }
+.channelSidebar { padding: var(--space-3); border-right: 1px solid var(--border); background: color-mix(in srgb, var(--surface) 78%, var(--canvas)); }
+.sidebarTitle { margin: var(--space-2) var(--space-2) var(--space-3); font-size: var(--text-small); color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.06em; }
+.channelList { display: grid; gap: var(--space-1); }
+.channelButton { display: grid; grid-template-columns: 1.25rem minmax(0, 1fr); gap: var(--space-2); align-items: center; width: 100%; padding: var(--space-3); color: var(--text-muted); background: transparent; border: 1px solid transparent; border-radius: var(--radius-md); text-align: left; cursor: pointer; transition: color var(--motion-fast) var(--ease), background-color var(--motion-fast) var(--ease); }
+.channelButton:hover { color: var(--text); background: color-mix(in srgb, var(--text) 5%, transparent); }
+.channelButton[aria-current="true"] { color: var(--text); border-color: var(--accent-ring); background: color-mix(in srgb, var(--accent) 11%, transparent); }
+.channelName { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: var(--text-small); font-weight: 600; }
+.channelKind { color: var(--text-faint); font-size: var(--text-micro); text-transform: capitalize; }
+.chatMain { display: grid; grid-template-rows: auto auto minmax(0, 1fr) auto; min-width: 0; }
+.chatHead { display: flex; justify-content: space-between; gap: var(--space-3); padding: var(--space-5); border-bottom: 1px solid var(--border); }
+.chatName { margin: 0; font-size: var(--text-h3); }
+.search { padding: var(--space-3) var(--space-5); border-bottom: 1px solid var(--border); }
+.searchResults { padding: var(--space-3) var(--space-5); border-bottom: 1px solid var(--border); background: color-mix(in srgb, var(--accent) 5%, transparent); }
+.searchResult { padding: var(--space-2) 0; border-top: 1px solid var(--border); color: var(--text-muted); font-size: var(--text-small); }
+.searchResult:first-child { border-top: 0; }
+.messageStream { display: grid; align-content: start; gap: var(--space-4); padding: var(--space-5); overflow-y: auto; }
+.message { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: var(--space-3); }
+.messageBody { min-width: 0; }
+.messageMeta { display: flex; align-items: center; gap: var(--space-2); flex-wrap: wrap; }
+.messageAuthor { font-size: var(--text-small); font-weight: 700; }
+.messageText { margin: var(--space-1) 0 0; color: var(--text); line-height: 1.55; overflow-wrap: anywhere; white-space: pre-wrap; }
+.reference { display: inline-flex; align-items: center; gap: 0.3rem; color: var(--accent); font-family: var(--font-mono); font-size: var(--text-micro); text-decoration: none; }
+.reference:hover { text-decoration: underline; }
+.composer { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: var(--space-3); padding: var(--space-4) var(--space-5); border-top: 1px solid var(--border); }
+.composerFoot { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); padding: 0 var(--space-5) var(--space-4); color: var(--text-faint); font-size: var(--text-micro); }
+.composerActions { display: flex; align-items: center; gap: var(--space-3); }
+.dictationStatus { margin: 0; padding: var(--space-2) var(--space-5) 0; color: var(--text-muted); font-size: var(--text-small); }
+.dictationError { margin: 0; padding: var(--space-2) var(--space-5) 0; color: var(--danger); font-size: var(--text-small); }
+
+@media (max-width: 48rem) {
+  .chatLayout { grid-template-columns: 1fr; }
+  .channelSidebar { border-right: 0; border-bottom: 1px solid var(--border); }
+  .channelList { grid-auto-flow: column; grid-auto-columns: minmax(9rem, 1fr); grid-template-columns: none; overflow-x: auto; }
+  .chatMain { min-height: 34rem; }
+}
+
+@media (max-width: 34rem) {
+  .composer { grid-template-columns: 1fr; }
+  .filesDialog { border-radius: var(--radius-xl); }
+  .fileRow { align-items: flex-start; flex-direction: column; }
+  .fileRowActions { width: 100%; justify-content: space-between; }
+}

@@ -1,0 +1,247 @@
+[
+  {
+    "id": "ctx_confirmed",
+    "variant": "confirmed",
+    "execution_ref": {
+      "request_id": "req_mission_1",
+      "execution_id": "exec_ready_1",
+      "company_id": "comp_alpha",
+      "project_id": "proj_mission_rail",
+      "campaign_id": null,
+      "idempotency_key_hash": null,
+      "created_at": "2026-07-30T12:00:00Z"
+    },
+    "revision": 3,
+    "sequence": 1,
+    "status": "confirmed",
+    "timestamps": {
+      "created_at": "2026-07-30T12:00:00.000Z",
+      "updated_at": "2026-07-30T12:00:10.000Z",
+      "confirmed_at": "2026-07-30T12:00:10.000Z"
+    },
+    "organization_context": {
+      "company_id": "comp_alpha",
+      "company_slug": "alpha-robotics",
+      "product_id": "prod_mission",
+      "product_slug": "mission-command",
+      "initiative_id": "init_p0",
+      "goal_ids": ["goal_fixtures"],
+      "epic_id": "epic_mission_surface"
+    },
+    "project_suggestion": {
+      "project_id": "proj_mission_rail",
+      "confidence": 0.91,
+      "rationale": "Explicit operator confirmation of mission rail project"
+    }
+  },
+  {
+    "id": "ctx_suggested",
+    "variant": "suggested",
+    "execution_ref": {
+      "request_id": "req_mission_1",
+      "execution_id": "exec_ready_1",
+      "company_id": "comp_alpha",
+      "project_id": "proj_mission_rail",
+      "campaign_id": null,
+      "idempotency_key_hash": null,
+      "created_at": "2026-07-30T12:00:00Z"
+    },
+    "revision": 1,
+    "sequence": 2,
+    "status": "suggested",
+    "timestamps": {
+      "created_at": "2026-07-30T12:00:00.000Z",
+      "updated_at": "2026-07-30T12:00:00.000Z"
+    },
+    "organization_context": {
+      "company_id": "comp_alpha",
+      "company_slug": "alpha-robotics",
+      "product_id": "prod_mission",
+      "product_slug": "mission-command",
+      "initiative_id": null,
+      "goal_ids": [],
+      "epic_id": null
+    },
+    "project_suggestion": {
+      "project_id": "proj_mission_rail",
+      "confidence": 0.72,
+      "rationale": "Classifier suggests mission rail from first message"
+    }
+  },
+  {
+    "id": "ctx_ambiguous",
+    "variant": "ambiguous",
+    "execution_ref": {
+      "request_id": "req_mission_4",
+      "execution_id": "exec_clarify_1",
+      "company_id": "comp_alpha",
+      "project_id": null,
+      "campaign_id": null,
+      "idempotency_key_hash": null,
+      "created_at": "2026-07-30T12:03:00Z"
+    },
+    "revision": 1,
+    "sequence": 3,
+    "status": "ambiguous",
+    "timestamps": {
+      "created_at": "2026-07-30T12:03:00.000Z",
+      "updated_at": "2026-07-30T12:03:00.000Z"
+    },
+    "organization_context": {
+      "company_id": "comp_alpha",
+      "company_slug": "alpha-robotics",
+      "product_id": null,
+      "product_slug": null,
+      "initiative_id": null,
+      "goal_ids": [],
+      "epic_id": null
+    },
+    "project_suggestion": {
+      "project_id": null,
+      "confidence": 0.41,
+      "rationale": "Two projects score within epsilon; operator must choose"
+    },
+    "candidates": ["proj_mission_rail", "proj_routing"]
+  },
+  {
+    "id": "ctx_corrected",
+    "variant": "corrected",
+    "execution_ref": {
+      "request_id": "req_mission_1",
+      "execution_id": "exec_ready_1",
+      "company_id": "comp_alpha",
+      "project_id": "proj_routing",
+      "campaign_id": null,
+      "idempotency_key_hash": null,
+      "created_at": "2026-07-30T12:00:00Z"
+    },
+    "revision": 4,
+    "sequence": 4,
+    "status": "corrected",
+    "timestamps": {
+      "created_at": "2026-07-30T12:00:00.000Z",
+      "updated_at": "2026-07-30T12:05:00.000Z",
+      "corrected_at": "2026-07-30T12:05:00.000Z"
+    },
+    "organization_context": {
+      "company_id": "comp_alpha",
+      "company_slug": "alpha-robotics",
+      "product_id": "prod_routing",
+      "product_slug": "routing",
+      "initiative_id": null,
+      "goal_ids": [],
+      "epic_id": null
+    },
+    "project_suggestion": {
+      "project_id": "proj_routing",
+      "confidence": 0.88,
+      "rationale": "Operator corrected from mission rail to routing"
+    },
+    "previous_project_id": "proj_mission_rail"
+  },
+  {
+    "id": "ctx_stale",
+    "variant": "stale-revision",
+    "execution_ref": {
+      "request_id": "req_mission_1",
+      "execution_id": "exec_ready_1",
+      "company_id": "comp_alpha",
+      "project_id": "proj_mission_rail",
+      "campaign_id": null,
+      "idempotency_key_hash": null,
+      "created_at": "2026-07-30T12:00:00Z"
+    },
+    "revision": 2,
+    "sequence": 5,
+    "status": "stale",
+    "timestamps": {
+      "created_at": "2026-07-30T11:50:00.000Z",
+      "updated_at": "2026-07-30T11:50:00.000Z",
+      "stale_at": "2026-07-30T12:00:10.000Z"
+    },
+    "organization_context": {
+      "company_id": "comp_alpha",
+      "company_slug": "alpha-robotics",
+      "product_id": "prod_mission",
+      "product_slug": "mission-command",
+      "initiative_id": "init_p0",
+      "goal_ids": ["goal_fixtures"],
+      "epic_id": "epic_mission_surface"
+    },
+    "project_suggestion": {
+      "project_id": "proj_mission_rail",
+      "confidence": 0.91,
+      "rationale": "Superseded by revision 3 confirmation"
+    },
+    "current_revision": 3
+  },
+  {
+    "id": "ctx_reclass",
+    "variant": "reclassification-pending",
+    "execution_ref": {
+      "request_id": "req_mission_2",
+      "execution_id": "exec_incomplete_1",
+      "company_id": "comp_alpha",
+      "project_id": "proj_mission_rail",
+      "campaign_id": null,
+      "idempotency_key_hash": null,
+      "created_at": "2026-07-30T12:01:00Z"
+    },
+    "revision": 5,
+    "sequence": 6,
+    "status": "reclassification_pending",
+    "timestamps": {
+      "created_at": "2026-07-30T12:06:00.000Z",
+      "updated_at": "2026-07-30T12:06:00.000Z"
+    },
+    "organization_context": {
+      "company_id": "comp_alpha",
+      "company_slug": "alpha-robotics",
+      "product_id": "prod_mission",
+      "product_slug": "mission-command",
+      "initiative_id": "init_p0",
+      "goal_ids": ["goal_fixtures"],
+      "epic_id": "epic_mission_surface"
+    },
+    "project_suggestion": {
+      "project_id": "proj_mission_rail",
+      "confidence": 0.55,
+      "rationale": "Shadow classifier proposed axis changes awaiting review"
+    }
+  },
+  {
+    "id": "ctx_high_risk",
+    "variant": "high-risk-needs-confirmation",
+    "execution_ref": {
+      "request_id": "req_mission_6",
+      "execution_id": "exec_risk_1",
+      "company_id": "comp_alpha",
+      "project_id": "proj_mission_rail",
+      "campaign_id": null,
+      "idempotency_key_hash": null,
+      "created_at": "2026-07-30T12:05:00Z"
+    },
+    "revision": 1,
+    "sequence": 7,
+    "status": "needs_confirmation",
+    "timestamps": {
+      "created_at": "2026-07-30T12:05:00.000Z",
+      "updated_at": "2026-07-30T12:05:00.000Z"
+    },
+    "organization_context": {
+      "company_id": "comp_alpha",
+      "company_slug": "alpha-robotics",
+      "product_id": "prod_mission",
+      "product_slug": "mission-command",
+      "initiative_id": "init_p0",
+      "goal_ids": ["goal_fixtures"],
+      "epic_id": "epic_mission_surface"
+    },
+    "project_suggestion": {
+      "project_id": "proj_mission_rail",
+      "confidence": 0.8,
+      "rationale": "High-risk classification requires explicit confirmation"
+    },
+    "risk_class": "R3"
+  }
+]

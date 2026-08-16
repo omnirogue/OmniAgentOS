@@ -1,0 +1,46 @@
+# Counterfeit fragment — lane/settle-clock-freshness.
+#
+# Both entries are about the SAME line of code from opposite sides. Evidence
+# freshness compares a receipt's `finished_at` against a `now`, and there are
+# two ways to get that comparison wrong: point it at the wrong clock (entry 1,
+# the live defect), or stop asking the question (entry 2, the "fix" a future
+# reader reaches for when entry 1 bites them again).
+
+[[counterfeit]]
+id = "cf-settle-judges-on-batch-start-clock"
+patch = "patches/cf-settle-judges-on-batch-start-clock.patch"
+rationale = """Restores the shipped defect exactly: `settle_pending` hands each candidate
+the instant captured at BATCH START instead of the clock, and freshness is judged against
+it. It looks like a simplification — the batch already has a `now`, why thread a clock —
+and it is invisible until a gate runs slowly, because settlement now EXECUTES the gate
+inside that same batch and the receipt is stamped with wall-clock at completion. Any gate
+finishing more than 60s after batch start is then read as dated in the future, i.e.
+forged, and a PASSING gate settles gate_passed=0 / accepted=0 / adverse. Live on
+2026-08-01: routine_runs 741/742/744-749 on both always-on routines
+(lab-jobs-drain rtn_7ce023cc8efb471abe9e, improve-lane-dispatcher rtn_cd01d8e43e0d41f48ab2),
+every one of them judging a receipt that says exit_code=0 with 20 of 20 checks passed —
+run_03c9eea448424cc5beea's gate ran 23:16:30Z->23:19:27Z and was judged against 23:16:22Z.
+Left alone it auto-pauses both routines on fabricated evidence."""
+must_fail = [
+  "tests/scheduler/test_settle_clock_freshness.py::test_a_gate_slower_than_the_freshness_window_settles_on_its_real_exit_code",
+  "tests/scheduler/test_settle_clock_freshness.py::test_a_slow_gate_that_really_failed_still_settles_adverse_on_its_exit_code",
+  "tests/scheduler/test_settle_clock_freshness.py::test_the_batch_stamp_is_not_the_judging_clock",
+]
+failure_re = "judged against a stale batch clock|dated in the future|assert"
+
+[[counterfeit]]
+id = "cf-future-dated-evidence-accepted"
+patch = "patches/cf-future-dated-evidence-accepted.patch"
+rationale = """Deletes the anti-forgery half of the freshness rule: age is taken as an
+absolute value, so "stale" still catches an old receipt and a receipt dated arbitrarily
+far in the FUTURE is accepted. This is the tempting over-correction once the batch-clock
+defect above has bitten — the false adverse disappears, the suite goes green, and the
+gate stops being able to tell a slow honest run from a post-dated one. A receipt that
+claims to have finished after it was written is the one thing a signed receipt cannot
+prove and the one thing this check exists to refuse. Fixing WHICH clock is read must
+never turn into trusting ANY timestamp: the 60s window and its direction are both load
+bearing."""
+must_fail = [
+  "tests/scheduler/test_settle_clock_freshness.py::test_a_receipt_dated_after_the_gate_finished_is_still_refused_as_forged",
+]
+failure_re = "dated in the future|assert"

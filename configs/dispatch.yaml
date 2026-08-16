@@ -1,0 +1,255 @@
+# FAST DISPATCH three-gate classifier (PKG-FAST-DISPATCH). Read best-effort by
+# omniagentos/dispatch/gate.py; a missing/broken file falls back to the hard-coded
+# defaults baked into gate.py, so the classifier keeps working on a fresh checkout.
+#
+# Gates run in order and the FIRST confident verdict wins:
+#   Gate 0  pure functions, 0 ms   -- risk / sweep / solo-fast rules below
+#   Gate 1  local semantic router  -- ~3 ms warm (bge-small via fastembed)
+#   Gate 2  one-shot Haiku call    -- ~1 s, only on genuine ambiguity
+#
+# Decisions: solo_fast | solo_standard | solo_complex | swarm | fallthrough.
+# fallthrough == today's heavyweight inline-Fable planning path (unchanged).
+
+thresholds:
+  # Gate 1: a semantic route below this cosine score is NOT trusted -- fall to
+  # Gate 2 (the Haiku tiebreaker). Benchmarked headroom on this machine.
+  # 0.60 (was 0.72): live smoke showed bge-small scores routine matches in the
+  # 0.6-0.7 band, so 0.72 pushed most briefs to the ~1s LLM gate.
+  semantic_confidence: 0.60
+  # Gate 0c: a brief longer than this (words) is never fast-laned by the rules.
+  solo_fast_word_cap: 40
+  # Gate 1: how long a build failure poisons the singleton before a retry is
+  # allowed (a transient model download must not disable the gate until restart).
+  gate1_retry_seconds: 300
+  # Gate 2: a Haiku verdict below this confidence is not trusted -> fallthrough.
+  gate2_min_confidence: 0.5
+  # PKG-SEMANTIC-PINS: the SwarmRouter's semantic category-pin fallback (behind
+  # configs/swarm.yaml router.semantic_pins) classifies a task's title+description
+  # against the `category_routes` below; a route scoring under this cosine
+  # confidence is NOT trusted -> no pin (the explicit-field path stays in
+  # control). Shares the bge-small encoder headroom the lane gate is tuned for.
+  semantic_pin_confidence: 0.65
+
+# Gate 0a: RISK. If ANY of these match, decide() returns fallthrough with
+# risk_flagged=True IMMEDIATELY -- risky work NEVER fast-lanes; the existing
+# heavyweight path (with its approval gates) owns it. Case-insensitive regex.
+# Kept in lockstep with gate._DEFAULT_RISK_PATTERNS.
+risk_patterns:
+  # Payments / money movement, incl. credit-card collection.
+  - '\b(payment|payments|stripe|paypal|billing|invoice|charge|payout|refund|checkout|credit ?cards?)\b'
+  - '\bweb ?hook\b.*\b(pay|money|charge|billing|stripe)\b'
+  # Schema / migration structure changes. Bare `drop` is NOT risk (drop shadow);
+  # only drop <table|column|database|schema|index>.
+  - '\b(migration|migrate|schema change|alter table|drop (table|column|database|schema|index))\b'
+  # Database / data-model structure or version changes.
+  - '\b(update|change|migrate|alter|modify|upgrade|move|rename|revamp|restructure)\b[^.]*\b(database|schema|data ?model)\b'
+  - '\bdatabase\b[^.]*\b(to v\d|version|schema|migration)\b'
+  # Auth surfaces: authn/authz, SSO, login/signup, keys/secrets/passwords.
+  - '\b(auth|authentication|authorization|oauth|sso|single sign-?on|login|log in|sign-?up|sign-?in|api ?keys?|secrets?|credentials?|password|permissions?|rbac|acl)\b'
+  # Tokens ONLY in a security context (never bare "design token").
+  - '\b(api|auth|access|oauth|bearer|refresh|csrf|session) ?tokens?\b'
+  # Bulk-destructive removal of records/data/users.
+  - '\b(remove|delete|drop|wipe|purge|clear|erase)\s+(all|every)\b'
+  - '\b(delete|truncate|wipe|purge|destroy|erase)\b'
+  # Deploy / production / live-site release.
+  - '\b(deploy|deployment|production|prod release|rollout|ship to prod|go live)\b'
+  - '\b(live|production|prod) (site|server|environment|env|deployment|release|build)\b'
+
+# Gate 0b: SWARM. Sweep phrasing that implies many independent deliverables ->
+# route to the swarm planner. Case-insensitive regex; a match short-circuits to
+# decision=swarm (speed_hint="fast" only when the brief also looks simple).
+sweep_patterns:
+  - '\bevery \w+'
+  - '\ball (the|of)\b'
+  - '\beach (of|one)\b'
+  - '\baudit all\b'
+  - '\bacross (all|every|the (whole|entire))\b'
+  - '\b(repo-wide|repo wide|codebase-wide|fleet-wide|system-wide)\b'
+  - '\bfor all \w+'
+  - '\bthroughout the (codebase|repo|project)\b'
+
+# Gate 1: local semantic encoder. FastEmbedEncoder loads this ONNX model once
+# per process (~8.6 s cold on this machine, then 2.4-3.7 ms/call warm).
+encoder: BAAI/bge-small-en-v1.5
+
+# Gate 1 route seeds. One route per decision (+ a risk route mirroring Gate 0a).
+# 10-14 hand-written utterances each -- the encoder generalises from these, so
+# they should span the decision's shape, not repeat one phrasing.
+routes:
+  solo_fast:
+    - fix a typo in the README
+    - make a tiny file listing three quotes
+    - create a glossary file with five short definitions
+    - write one file containing a short list of items
+    - add a single markdown file with a handful of bullet points
+    - write a haiku into a new markdown file
+    - create a small script that prints a short report
+    - rename the variable foo to bar in utils.py
+    - add a docstring to the parse_config function
+    - update the copyright year in the footer
+    - create an empty CHANGELOG.md file
+    - bump the version string to 1.2.3
+    - tweak the button colour to blue on the landing page
+    - remove the unused import in main.py
+    - add a .gitignore entry for .env
+    - change the default timeout constant to 30 seconds
+    - correct the spelling of "recieve" in the docs
+    - add a trailing newline to config.json
+    - update the log message wording in the health check
+    - rename the file helper.py to helpers.py
+  solo_standard:
+    - add a GET endpoint that returns the current user profile
+    - write unit tests for the pagination helper
+    - implement a rate limiter for the login route
+    - add pagination to the orders list API
+    - build a CSV export for the reports page
+    - add input validation to the signup form handler
+    - create a small dashboard widget showing weekly totals
+    - implement a caching layer for the settings lookup
+    - add a webhook handler that logs incoming events
+    - write an integration test for the checkout happy path
+    - add a feature flag to gate the new sidebar
+    - implement retry with backoff on the outbound HTTP client
+    - add a filter parameter to the search endpoint
+    # NOTE (A2 / content_dispatch): bare numerics that are DURATIONS or media
+    # DIMENSIONS ("30 second", "30 seconds", "1080", "1080x1080") are NOT batch
+    # counts — see OMNIAGENTOS_CONTENT_DISPATCH_MODE in omniagentos.intake.fastlane.
+    # True batch counts remain ("make 10 creatives", "create 5 files").
+  solo_complex:
+    - debug an intermittent race condition in the scheduler
+    - refactor the payment reconciliation subsystem into modules
+    - design the plugin architecture for third-party extensions
+    - track down a memory leak in the long-running worker
+    - redesign the state machine that drives session lifecycle
+    - refactor the monolithic router into composable middlewares
+    - diagnose why the cache occasionally serves stale reads under load
+    - rework the retry and idempotency logic across the queue consumers
+    - design a new event-sourcing model for the ledger
+    - untangle the circular dependency between intake and planner
+    - profile and optimise the hot path in the embedding pipeline
+    - reason about the concurrency model for the new coordinator
+  swarm:
+    - audit every module for missing error handling
+    - build the dashboard with the kanban board, the metrics panel, and the provider health view
+    - check all the servers for certificate expiry and patch each one
+    - sweep the repo and fix the lint errors in every package
+    - add type hints across the entire codebase
+    - migrate all three services from REST to gRPC
+    - write tests for each of the twelve API endpoints
+    - update the license header in every source file
+    - port all the components from Vue 2 to Vue 3
+    - review the whole repo for hardcoded secrets and flag them
+    - convert every callback in the codebase to async await
+    - add OpenTelemetry spans throughout the request pipeline
+    - upgrade all the dependencies and fix the resulting breakages
+    - document every public function in the library
+    - split the monolith into separate microservices for each domain
+  risk:
+    - wire up Stripe payments for the subscription checkout
+    - run a database migration that drops the legacy orders table
+    - rotate the production API keys and update the secrets manager
+    - deploy the new build to production
+    - change the OAuth scopes and permission model for admins
+    - add a webhook that charges the customer on invoice paid
+    - truncate the audit log table to reclaim disk space
+    - update the billing logic to prorate mid-cycle upgrades
+    - migrate the user password hashes to a new algorithm
+    - grant the support role write access to the payments table
+    - ship the payout scheduler to prod
+    - alter the schema to add a foreign key on the transactions table
+  # Content-creation shape (A2). Intentionally its own route name: Gate 1 maps
+  # only solo_fast/solo_standard/solo_complex/swarm/risk, so a confident match
+  # here falls through to Gate 2 / planned rather than solo_fast. Utterances
+  # span webinars, short ads, multi-phase video, and dimensioned creatives.
+  content_creation:
+    - create a 30 second webinar for globex
+    - produce a 30-minute training video with multi-phase storyboard
+    - write ad creatives at 1080x1080 for the launch campaign
+    - draft a webinar script with hook body and offer
+    - build a multi-phase video ad from storyboard to final render
+    - generate a 15 second promo video with voiceover
+    - design thumbnail and 1080p end card for the webinar
+    - produce a funnel video with hook and CTA
+    - write a 30 second video script for the product launch
+    - create multi-phase creative deliverables for the ad campaign
+    - storyboard then produce a 30 minute educational webinar
+    - make a short-form video ad with captions at 1080x1920
+
+# PKG-SEMANTIC-PINS category routes. A SEPARATE route group from the lane
+# `routes` above: the route names ARE the swarm's category_pins disciplines
+# (configs/swarm.yaml router.category_pins), and omniagentos/dispatch/categories.py
+# builds them with the SAME bge-small encoder + caching machinery as the lane
+# gate. classify_category(text) returns the best-matching category (+ score); the
+# SwarmRouter applies it as a pin only when router.semantic_pins is on, the score
+# clears thresholds.semantic_pin_confidence, and the category is in the pins map.
+# 8-14 hand-written utterances each spanning the category's SHAPE (not one
+# phrasing) so the encoder generalises. Absent/broken file → categories.py finds
+# no routes and degrades to no-pin (never raises), so a fresh checkout is safe.
+# content_creation is seeded here for semantic pin fallback once a pin is
+# registered; until then a match is informational only.
+category_routes:
+  web_research:
+    - research what changed in the LLM landscape this month
+    - look up the latest news about the new GPU release
+    - find the current pricing for the competitor's API
+    - what are people saying on X about the framework migration
+    - search the web for recent benchmarks of the vector database
+    - gather the most recent information on the regulation change
+    - check what the community is discussing about the outage
+    - find current events and news relevant to the launch this week
+    - look up the latest release notes and changelog online
+    - investigate what the market is doing with this technology right now
+    - summarise recent developments in the field over the past quarter
+    - find up-to-date documentation and community threads about the tool
+  adversarial_review:
+    - tear this design apart and show me where it breaks
+    - find the flaws in this architecture plan
+    - red-team this proposal and attack its weakest assumptions
+    - poke holes in this approach before we commit to it
+    - stress test this plan and surface the failure modes
+    - what could go catastrophically wrong with this design
+    - challenge every assumption in this technical proposal
+    - try to break this system and expose the security gaps
+    - play devil's advocate against this rollout strategy
+    - hunt for the edge cases this plan does not handle
+    - adversarially probe this spec for the ways it falls apart
+    - find the strongest argument against shipping this
+  independent_critique:
+    - give me a second opinion on this pull request
+    - critique this write-up and suggest improvements
+    - review this proposal and share your honest feedback
+    - offer an independent take on this technical decision
+    - what do you think of this approach, be candid
+    - provide a fresh perspective on this draft
+    - assess the quality of this design and where it can be better
+    - read this over and tell me what you would change
+    - a neutral reviewer's assessment of this plan
+    - evaluate this document and flag anything unclear or weak
+    - sanity-check my reasoning and point out gaps
+    - weigh the tradeoffs in this decision from an outside view
+  science_engineering:
+    - work through the mathematics of this scheduling algorithm
+    - analyse the computational complexity of this approach
+    - reason about the physics of the thermal model
+    - derive the equations governing this control system
+    - prove the correctness of this concurrency algorithm
+    - investigate the numerical stability of this simulation
+    - model the queueing behaviour under this load
+    - work out the optimal data structure for this problem
+    - analyse the statistical properties of this estimator
+    - reason from first principles about this signal-processing pipeline
+    - evaluate the algorithmic tradeoffs between these two methods
+    - solve the optimisation problem behind this resource allocation
+  content_creation:
+    - create a 30 second webinar for globex
+    - produce a 30-minute training video with multi-phase storyboard
+    - write ad creatives at 1080x1080 for the launch campaign
+    - draft a webinar script with hook body and offer
+    - build a multi-phase video ad from storyboard to final render
+    - generate a 15 second promo video with voiceover
+    - design thumbnail and 1080p end card for the webinar
+    - produce a funnel video with hook and CTA
+    - write a 30 second video script for the product launch
+    - create multi-phase creative deliverables for the ad campaign
+    - storyboard then produce a 30 minute educational webinar
+    - make a short-form video ad with captions at 1080x1920

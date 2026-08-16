@@ -1,0 +1,3 @@
+# Default owners: any of these approvals satisfies "require code owner reviews" on main.
+# Merge rights are governed by the branch-protection push allowlist, not this file.
+* @example-org @alice-dev @bob-dev

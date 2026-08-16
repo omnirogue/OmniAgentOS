@@ -1,0 +1,37 @@
+# configs/governance.yaml — Tier P (protected, forced L4; never auto-applied).
+#
+# The ONLY home for governance knobs (§6, B3): quorum flags, judge panel families
+# + fallbacks, observation-window durations, KPI-regression thresholds, risk maps.
+# configs/reliability.yaml keeps only cosmetic knobs (paths, batch sizes, token caps).
+#
+# Every value here is re-validated against HARDCODED floors in governance.py on load
+# (panel >= 3 distinct families, observation window >= 6h, thresholds in [0,1],
+# allow_majority_l1 default false, max_auto_risk_cap <= 2). A value below a floor is
+# REFUSED at load time — editing this file cannot relax the floors.
+
+quorum:
+  # L1 requires 3/3 by default. Enabling 2/3 majority for L1 is itself a protected
+  # governance change (this flag flip lands as an L4 improvement).
+  allow_majority_l1: false
+
+panel:
+  # Judge panel = 3 distinct model families; substitution keeps 3 distinct families.
+  families: [anthropic, openai, xai]
+  fallback_families: [google, moonshot]
+
+observation_windows_hours:
+  # Monitoring window per risk level (floor 6h). L1 24h, L2 48h per §5.
+  L1: 24
+  L2: 48
+  L3: 48
+  L4: 72
+
+kpi_thresholds:
+  # Fractional regression allowed before auto-rollback (raw failures up by > this).
+  regression_fraction: 0.15
+  # Raw-up-while-events-down divergence tolerance before a critical alert (M1).
+  divergence_fraction: 0.10
+
+# Operating cap on auto-apply risk (recommended 1 until injection drills pass, §13.11).
+# Hard ceiling is 2 (schema); the loader refuses anything above 2.
+max_auto_risk_cap: 2

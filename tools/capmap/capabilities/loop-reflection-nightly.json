@@ -1,0 +1,66 @@
+{
+  "blast_radius": "Writes a digest and evidence file per night; no code changes.",
+  "cadence_seconds": 86400,
+  "company": "omniagentos",
+  "escalation_tier": "medium",
+  "exit_semantics": {
+    "DEGRADED": "degraded",
+    "DOWN": "down",
+    "OK": "ok",
+    "UNVERIFIED": "cannot_evaluate",
+    "default": "cannot_evaluate"
+  },
+  "host": "owner-mac",
+  "id": "loop-reflection-nightly",
+  "kind": "llm-loop",
+  "last_status": "OK",
+  "last_verified": null,
+  "owner": "estate-ops",
+  "repo": "/Users/youruser/OmniAgentOS",
+  "staleness_slo_seconds": 172800,
+  "throughput": {
+    "derivation": "Count of files per dated directory under var/reflection/. Dated directories are a real count, unlike a log mtime.",
+    "floor": {
+      "floor": 0.6,
+      "fraction": 0.3,
+      "median": 2.0,
+      "min_sample_days": 7,
+      "reason": null,
+      "sample": {
+        "2024-01-01": 2,
+        "2024-01-02": 2,
+        "2024-01-03": 2,
+        "2024-01-04": 2,
+        "2024-01-05": 2,
+        "2024-01-06": 2,
+        "2024-01-07": 2
+      },
+      "sample_days": 7,
+      "sample_window": "2024-01-01..2024-01-07"
+    },
+    "max_error_rate": 0.25,
+    "metric": "artifacts_24h",
+    "notes": [
+      "History can have real gaps; absent days are not imputed as zero, they are simply outside the sample."
+    ],
+    "observed": {
+      "as_of": null,
+      "burn": null,
+      "error_rate": null,
+      "last_success": null,
+      "process_state": "RUNNING",
+      "volume": 2
+    },
+    "signal_exists": true,
+    "signal_path": "/Users/youruser/OmniAgentOS/var/reflection",
+    "window": "24h"
+  },
+  "verification": {
+    "field": "artifacts_24h",
+    "note": "Graded on throughput, not liveness: a running loop with zero volume is DEGRADED.",
+    "source": "/Users/youruser/OmniAgentOS/var/reflection",
+    "type": "snapshot_field"
+  },
+  "what_it_does": "Nightly reflection digest; volume is artifacts written under var/reflection/<date>/.",
+  "why_it_matters": "The reflection digest is the estate's only nightly self-review; silence here reads as 'nothing went wrong' when it means 'nothing was checked'."
+}

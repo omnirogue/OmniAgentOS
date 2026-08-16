@@ -1,0 +1,15 @@
+diff --git a/omniagentos/api/routes/board_files.py b/omniagentos/api/routes/board_files.py
+index f59f6247..0897a5a7 100644
+--- a/omniagentos/api/routes/board_files.py
++++ b/omniagentos/api/routes/board_files.py
+@@ -280,6 +280,9 @@ def _approved_workspace_roots() -> list[str]:
+     if sim_ctx.sim_mode:
+         if sim_ctx.campaign_root is None:
+             fail(403, "forbidden", "broken invariant: sim context has no campaign root")
+-        return [os.path.realpath(str(sim_ctx.campaign_root))]
++        # COUNTERFEIT: unconditionally admit executing checkout in sim mode
++        import omniagentos
++        checkout = os.path.dirname(os.path.dirname(os.path.abspath(omniagentos.__file__)))
++        return [os.path.realpath(str(sim_ctx.campaign_root)), checkout]
+
+     candidates = [_repo_var_dir()] + grantable_mount_roots()

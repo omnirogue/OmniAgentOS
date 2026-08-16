@@ -1,0 +1,157 @@
+.cardHead {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: var(--space-2);
+}
+.titleRow {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+.ref {
+  font-family: var(--font-mono, monospace);
+  font-size: var(--font-size-sm, 0.85em);
+  color: var(--color-text-muted, #888);
+}
+.badges {
+  display: flex;
+  gap: var(--space-1);
+  flex-wrap: wrap;
+  margin-top: var(--space-1);
+}
+.age {
+  font-size: var(--font-size-sm, 0.85em);
+  color: var(--color-text-muted, #888);
+  white-space: nowrap;
+}
+.source {
+  color: var(--color-text-muted, #888);
+  font-size: var(--font-size-sm, 0.9em);
+  margin: var(--space-2) 0 0;
+}
+.reason {
+  margin: var(--space-1) 0 0;
+}
+.recommend,
+.recommendMissing {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  margin: var(--space-2) 0;
+  padding: var(--space-2);
+  border-radius: var(--radius-md, 8px);
+  border-left: 3px solid var(--color-accent, #4c8bf5);
+  background: var(--color-surface-raised, rgba(76, 139, 245, 0.08));
+}
+.recommendMissing {
+  border-left-color: var(--color-danger, #d9534f);
+  background: var(--color-danger-soft, rgba(217, 83, 79, 0.12));
+  font-weight: 600;
+}
+.recommendLabel {
+  font-size: var(--font-size-xs, 0.72em);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--color-text-muted, #888);
+}
+.draft {
+  margin: var(--space-2) 0;
+  padding: var(--space-2);
+  border: 1px solid var(--color-border, #ddd);
+  border-radius: var(--radius-md, 8px);
+}
+.draftMeta {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: var(--font-size-sm, 0.85em);
+  color: var(--color-text-muted, #888);
+}
+.draftBody {
+  white-space: pre-wrap;
+  margin: var(--space-2) 0 0;
+  font-family: var(--font-mono, monospace);
+  font-size: var(--font-size-sm, 0.85em);
+}
+.verification {
+  margin: var(--space-2) 0 0;
+  font-size: var(--font-size-sm, 0.9em);
+}
+.notes {
+  margin: var(--space-1) 0 0;
+  font-size: var(--font-size-sm, 0.9em);
+  color: var(--color-text-muted, #888);
+}
+.actions {
+  display: flex;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+  margin-top: var(--space-3);
+}
+.dialogActions {
+  display: flex;
+  gap: var(--space-2);
+  justify-content: flex-end;
+}
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin-bottom: var(--space-2);
+}
+.textarea {
+  width: 100%;
+  font: inherit;
+  padding: var(--space-2);
+  border: 1px solid var(--color-border, #ccc);
+  border-radius: var(--radius-md, 8px);
+  resize: vertical;
+}
+.hint {
+  font-size: var(--font-size-sm, 0.85em);
+  color: var(--color-text-muted, #888);
+  margin: 0;
+}
+.checkRow {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+  margin: var(--space-2) 0;
+}
+.dangerBanner {
+  padding: var(--space-2);
+  border-radius: var(--radius-md, 8px);
+  border: 1px solid var(--color-danger, #d9534f);
+  background: var(--color-danger-soft, rgba(217, 83, 79, 0.12));
+  margin: 0 0 var(--space-2);
+}
+.dangerText {
+  color: var(--color-danger, #d9534f);
+}
+.decisionError {
+  color: var(--color-danger, #d9534f);
+  margin: var(--space-2) 0 0;
+}
+.section {
+  margin-top: var(--space-3);
+}
+.collapsibleHead {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  cursor: pointer;
+  background: none;
+  border: none;
+  font: inherit;
+  color: inherit;
+  padding: var(--space-2) 0;
+  width: 100%;
+  text-align: left;
+}
+.cardList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}

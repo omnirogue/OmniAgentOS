@@ -1,0 +1,13 @@
+diff --git a/omniagentos/scheduler/routines.py b/omniagentos/scheduler/routines.py
+index 3e2d3106..65435b85 100644
+--- a/omniagentos/scheduler/routines.py
++++ b/omniagentos/scheduler/routines.py
+@@ -472,6 +472,8 @@ def loop_gate_errors(task_template: Any, gate_type: Any, gate_config: Any) -> li
+     payload = task_template.get("input") if isinstance(task_template, dict) else None
+     if not isinstance(payload, dict) or payload.get("module") != LOOP_TASK_MODULE:
+         return []
++    if payload.get("kind") != "loop":  # COUNTERFEIT: only rows that SAY they are loops
++        return []
+     if gate_type not in _executed_gate_types():
+         return [
+             f"a loop routine may not use gate_type={gate_type!r}: its command is never "

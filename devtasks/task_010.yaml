@@ -1,0 +1,3 @@
+id: "task_010"
+prompt: "Write a Python function duplicate_detector(lst: list) -> list that returns elements that appear more than once, preserving first-seen order. Provide a test case."
+discipline: "code-changes"

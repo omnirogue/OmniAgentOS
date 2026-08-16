@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  Team auto-dispatch, every 5 minutes. MACHINE WORK ONLY (v3, 2026-08-13).
+  TEMPLATE — not installed by the lane that ships it; installing is an
+  operator action.
+
+  One bounded pass per run (omniagentos/team/dispatch.py, once mode): enqueues up
+  to OMNIAGENTOS_TEAM_AUTODISPATCH_CAP compute-pool board cards
+  (org_json.dispatch.target == 'compute-pool') to the local wq-server. It
+  NEVER assigns humans — the operator's v3 ruling: people get work only by /task claim
+  or the operator/Alice delegation in Slack. wq idempotency keys + the enqueue-event
+  pre-check make the 300s cycle idempotent. Without
+  OMNIAGENTOS_TEAM_AUTODISPATCH=1 the run is a clean no-op — remove that key
+  here to park the job without unloading it.
+
+  launchd hands a job a STRIPPED environment: no shell profile, no PATH from
+  .zshrc, no cwd. Every path here is absolute and the interpreter is the
+  repo's own .venv python invoked directly.
+-->
+<plist version="1.0">
+<dict>
+	<key>Label</key>
+	<string>com.omniagentos.team-dispatch</string>
+	<key>EnvironmentVariables</key>
+	<dict>
+		<key>PATH</key>
+		<string>/usr/local/bin:/opt/homebrew/bin:/usr/bin:/bin:/usr/sbin:/sbin</string>
+		<key>OMNIAGENTOS_TEAM_AUTODISPATCH</key>
+		<string>1</string>
+		<key>OMNIAGENTOS_TEAM_AUTODISPATCH_CAP</key>
+		<string>3</string>
+	</dict>
+	<key>ProgramArguments</key>
+	<array>
+		<string>/Users/youruser/OmniAgentOS/.venv/bin/python</string>
+		<string>-m</string>
+		<string>omniagentos.team.dispatch</string>
+		<string>--once</string>
+	</array>
+	<key>WorkingDirectory</key>
+	<string>/Users/youruser/OmniAgentOS</string>
+	<key>StartInterval</key>
+	<integer>300</integer>
+	<key>StandardOutPath</key>
+	<string>/Users/youruser/OmniAgentOS/var/log/team-dispatch.log</string>
+	<key>StandardErrorPath</key>
+	<string>/Users/youruser/OmniAgentOS/var/log/team-dispatch.log</string>
+</dict>
+</plist>

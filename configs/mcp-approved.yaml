@@ -1,0 +1,177 @@
+# Reviewed allow-list of MCP servers.
+#
+# WHY THIS FILE EXISTS
+# .mcp.json is git-tracked and is the file the agent runtime LOADS, so its
+# contents replicate into ~70 swarm clones and ~25 worktrees on the next clone.
+# That made adding a server a one-file change nobody reviewed, and the roster
+# accreted to 11 servers.
+#
+# This header used to say .mcp.json was a tracked symlink to
+# tools/mcp-servers.json, and both controls below read the mirror on that
+# premise. 00000000 (2026-08-02) replaced the symlink with a regular file for an
+# unrelated reason; the two files have disagreed ever since (11 vs 2), and the
+# controls kept passing on the file nobody loads. Do not restore that wording
+# without restoring the symlink -- an assumption written only in a comment is
+# what broke here.
+#
+# This file is the second half of the change. scripts/gates/mech_gate.sh
+# (--check-mcp-roster) and scripts/health-sentinel/audit_checks.py
+# (mcp_roster) both FAIL if .mcp.json names a server that is absent here, or
+# approved here with an empty justification. Adding a server is therefore a
+# reviewed TWO-file change, and the roster cannot re-accrete unnoticed.
+#
+# Both also REFUSE when .mcp.json and tools/mcp-servers.json disagree: while a
+# second copy exists, the reviewed roster is not necessarily the loaded one.
+#
+# The same gate also refuses any server in the roster whose "${VAR}"
+# placeholders resolve to empty in the environment the gate runs in. That is
+# what removed tavily and brave-search: TAVILY_API_KEY and BRAVE_API_KEY are
+# unset in the environment and absent from ~/.zshrc, ~/.zshenv and ~/.zprofile,
+# so those two servers were dead by configuration and could only ever fail.
+#
+# TO ADD A SERVER
+#   1. add it to .mcp.json (and to tools/mcp-servers.json while that copy
+#      exists, or the divergence check refuses)
+#   2. add it here with a justification that names the measured use
+#   3. if it needs a "${VAR}", provision the secret first -- the gate refuses an
+#      entry whose variable resolves to empty
+#
+# Measured baseline (one full week of ~/.grok telemetry, reviewed 2026-08-03):
+#   8,228 mcp_init_completed records / 15,027s of startup, and exactly two tools
+#   ever invoked: memory_search (32 calls) and web_fetch (12 calls).
+
+approved:
+  # EMPTY BY DESIGN as of 2026-08-13. The default roster loads in every session,
+  # so nothing belongs here that a session cannot justify paying for on EVERY
+  # launch. Nothing currently clears that bar -- see below. Servers live in
+  # configs/toolbroker/mcp-profiles/ and are named explicitly:
+  #
+  #   claude --strict-mcp-config --mcp-config configs/toolbroker/mcp-profiles/base.json
+  #
+  # WHY fetch AND memory LEFT THE DEFAULT ROSTER (2026-08-13)
+  # They were kept on 2026-08-03 as "the two with recorded use": memory_search
+  # (32 calls) and web_fetch (12). That attribution is WRONG, and adversarial
+  # review caught it:
+  #
+  #   * @modelcontextprotocol/server-memory exposes create_entities / open_nodes /
+  #     search_nodes. It has no tool called memory_search. `memory_search` is THIS
+  #     REPO's own bridge tool (omniagentos/toolplane/mcp_server.py:106).
+  #   * mcp-server-fetch exposes `fetch`. It has no tool called web_fetch;
+  #     `web_fetch` is grok's native tool.
+  #
+  # So the 44 calls that justified these two were most likely not MCP calls at
+  # all, and the measured per-server call count for the whole roster may be zero.
+  # The raw ~/.grok telemetry no longer exists to re-check, so the honest posture
+  # is to stop paying for them on every launch and let a session that wants them
+  # name the base profile. If raw telemetry is ever recovered, re-decide here.
+  #
+  # Separately: .mcp.json never set MEMORY_FILE_PATH, so the memory server was
+  # stateless per session and retained nothing between runs regardless.
+
+# ---------------------------------------------------------------------------
+# REMOVED 2026-08-03 -- kept as a record so a future "why is this missing?"
+# does not get answered by re-adding it without evidence.
+#
+# Dead by configuration (required key unset everywhere; ~93,000
+# mcp_server_failed events in ~/.grok between them):
+#   tavily        TAVILY_API_KEY unset
+#   brave-search  BRAVE_API_KEY  unset
+#
+# Zero recorded tool calls across the measured week, while still paying init
+# cost on every session start:
+#   duckduckgo           superseded by fetch for the retrieval that was used
+#   filesystem           agents use the harness's own file tools
+#   git                  agents use the git CLI directly
+#   markitdown           no recorded conversion
+#   playwright           browser work routes to the scraper crew / browser-operator
+#   sequential-thinking  no recorded call
+#   sqlite               agents query var/runtime/state.sqlite3 via the CLI
+# ---------------------------------------------------------------------------
+
+# ---------------------------------------------------------------------------
+# OPT-IN PROFILES (added 2026-08-13)
+#
+# The servers above load in EVERY session. The servers below load only when a
+# session explicitly names a profile:
+#
+#   claude --strict-mcp-config --mcp-config configs/toolbroker/mcp-profiles/browser.json
+#
+# WHY THIS SECTION EXISTS
+# Moving the nine removed servers into profile files would otherwise move them
+# OUT of review entirely: both controls (mech_gate.sh --check-mcp-roster and
+# health-sentinel check_mcp_roster) read three fixed paths -- .mcp.json,
+# tools/mcp-servers.json and this file -- so a profile under configs/toolbroker/
+# is invisible to both. The 11-server accretion this file was created to stop
+# would simply recur one directory over, and the audit would keep reporting OK.
+#
+# So both controls now ALSO iterate configs/toolbroker/mcp-profiles/*.json and
+# hold every server in them to the same three rules: named here, justified to at
+# least 20 characters, and no "${VAR}" resolving empty.
+#
+# A profile is loaded INSTEAD OF the default roster, not in addition to it, so
+# each profile file is self-contained and repeats fetch/memory. That is expected
+# and is not accretion.
+#
+# The bar here is deliberately lower than for `approved` -- an opt-in server
+# costs nothing until named -- but it is not zero: a justification must still say
+# what the profile is FOR, so that "why does this exist?" has an answer later.
+profile_approved:
+
+  playwright:
+    justification: >-
+      Browser automation for the one case the scraper crew and browser-operator
+      cannot cover: driving a page from inside this repo's own e2e suite. Removed
+      from the default roster 2026-08-03 because ordinary browser work routes to
+      browser-operator, and that routing is unchanged -- this is the escape hatch,
+      not the default path. No credential, so no "${VAR}" to resolve.
+
+  markitdown:
+    justification: >-
+      Converts PDF/DOCX/XLSX to markdown. No recorded call in the measured week,
+      which is why it is not in the default roster, but it is the only tool here
+      that reads binary document formats at all -- shelling out is not an
+      equivalent. Kept as opt-in for document-ingest work. No credential.
+
+  sqlite:
+    justification: >-
+      Structured querying of var/runtime/state.sqlite3 for analysis sessions
+      that run many exploratory queries, where the sqlite3 CLI's one-shot shape is
+      the friction. Routine lookups still use the CLI. No credential.
+
+  filesystem:
+    justification: >-
+      Sandboxed file access for sessions where the harness's own file tools are
+      scoped elsewhere. In-repo work uses the harness tools, which is why this
+      left the default roster. ROOTED AT THE REPO, never at $HOME: the profile
+      shipped rooted at /Users/youruser, which put ~/.config/omni/connections.env
+      and its 602 live credentials inside a server described as "sandboxed". A
+      sandbox whose root contains the credential vault is not one. No credential
+      of its own.
+
+  git:
+    justification: >-
+      Structured git operations for sessions doing bulk history analysis, where
+      parsing porcelain output repeatedly is the cost being avoided. Ordinary git
+      work uses the CLI directly, per the estate's git doctrine. No credential.
+
+  duckduckgo:
+    justification: >-
+      Keyless web search, for sessions that need search rather than the fetch of a
+      known URL. Superseded by fetch for the retrieval actually recorded in the
+      measured week, hence opt-in. Chosen over tavily/brave precisely because it
+      needs no API key and so cannot fail closed the way those two did.
+
+  fetch:
+    justification: >-
+      Retrieves and markdown-renders a URL. Opt-in rather than default because
+      the harness's own WebFetch covers the same need for in-session agents, and
+      the telemetry once cited for its default place counted grok's native
+      web_fetch, not this server. No credential, so no "${VAR}" to resolve.
+
+  memory:
+    justification: >-
+      Cross-session recall via a knowledge graph (create_entities / open_nodes /
+      search_nodes). Opt-in because the 32 calls once cited for it were
+      memory_search, which is this repo's own bridge tool and not this server.
+      Any session enabling it should also pin MEMORY_FILE_PATH, or it is
+      stateless. No credential.

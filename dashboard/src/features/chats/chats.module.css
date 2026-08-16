@@ -1,0 +1,472 @@
+/* ── Chats — leftovers of the pre-rebuild stylesheet ───────────
+ * The chat shell (page, sidebar, surface, composer, ctx-row, thread) now lives
+ * in chatShell.module.css, rebuilt on the ratified prototype. What remains here
+ * is only what the pieces that were deliberately NOT restyled still need:
+ * ModelPicker, PlanCard, SpawnCard, ProjectSuggestionBar, SessionFollow and
+ * TerminalView. Every rule whose class no longer had a reader was deleted with
+ * the migration (2086 → this).
+ */
+
+
+
+.deckButton {
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  color: var(--text);
+  cursor: pointer;
+  font-size: var(--text-small);
+  padding: var(--space-1) var(--space-2);
+  max-width: 14rem;
+  transition: border-color var(--motion-fast) var(--ease);
+}
+
+.deckButton:hover {
+  border-color: var(--border-strong);
+}
+
+.deckButtonLabel {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ── ModelPicker popover (§2.3.1) ──────────────────────────── */
+
+.modelPicker {
+  position: relative;
+}
+
+.modelPopover {
+  position: absolute;
+  bottom: calc(100% + var(--space-2));
+  left: 0;
+  z-index: 40;
+  min-width: 16rem;
+  max-height: 22rem;
+  overflow-y: auto;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: var(--space-2);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.modelGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.modelGroupLabel {
+  font-size: var(--text-micro);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+  padding: var(--space-2) var(--space-2) var(--space-1);
+}
+
+.modelOption {
+  appearance: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-sm);
+  color: var(--text);
+  cursor: pointer;
+  font-size: var(--text-small);
+  padding: var(--space-2);
+  text-align: left;
+  transition: background-color var(--motion-fast) var(--ease);
+}
+
+.modelOption:hover:not(:disabled) {
+  background: var(--surface-raised);
+}
+
+.modelOption:disabled {
+  color: var(--text-faint);
+  cursor: not-allowed;
+}
+
+.modelOptionActive {
+  background: var(--surface-raised);
+  font-weight: 600;
+}
+
+.modelUnavailable {
+  font-size: var(--text-micro);
+  color: var(--text-faint);
+}
+
+.modelFooter {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  border-top: 1px solid var(--border);
+  margin-top: var(--space-1);
+  padding: var(--space-2) var(--space-1) 0;
+}
+
+.modelJustThis {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--text-small);
+  color: var(--text-muted);
+  cursor: pointer;
+}
+
+.modelRoutingLink {
+  appearance: none;
+  background: transparent;
+  border: none;
+  color: var(--accent);
+  cursor: pointer;
+  font-size: var(--text-small);
+}
+
+.modelRoutingLink:hover {
+  text-decoration: underline;
+}
+
+.modelWarnBadge {
+  margin-left: var(--space-1);
+}
+
+.modelEmpty {
+  margin: var(--space-3);
+  font-size: var(--text-small);
+  color: var(--text-muted);
+}
+
+.modelSkeletonList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-2);
+}
+
+.modelSkeletonList > * {
+  height: 1.75rem;
+  border-radius: var(--radius-sm);
+}
+
+/* ── PlanCard / SpawnCard / suggestion bar ─────────────────── */
+
+.planCard,
+.spawnCard {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  padding: var(--space-3) var(--space-4);
+}
+
+.planCardHead,
+.spawnCardHead {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--text-small);
+}
+
+.planCardTitle {
+  font-weight: 600;
+}
+
+.planCardDescription {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: var(--text-small);
+}
+
+.planCardList {
+  margin: 0;
+  padding-left: var(--space-4);
+  display: grid;
+  gap: var(--space-1);
+  font-size: var(--text-small);
+}
+
+.planCardSub {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.planCardSubName {
+  font-size: var(--text-micro);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-faint);
+}
+
+.planCardActions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+  padding-top: var(--space-1);
+}
+
+.spawnCardChips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.spawnChip {
+  display: inline-flex;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-pill);
+  color: var(--accent);
+  font-size: var(--text-micro);
+  padding: var(--space-1) var(--space-2);
+  text-decoration: none;
+  transition: border-color var(--motion-fast) var(--ease);
+}
+
+.spawnChip:hover {
+  border-color: var(--accent);
+}
+
+.suggestionBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+  padding: var(--space-2) var(--space-4);
+  font-size: var(--text-small);
+}
+
+.suggestionText {
+  color: var(--text-muted);
+}
+
+.suggestionRationale {
+  color: var(--text-faint);
+}
+
+.suggestionActions {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+/* ── Routing dialog ────────────────────────────────────────── */
+
+.routingForm {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.routingGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-3);
+}
+
+/* ── Workspace drawer: session follow + live terminal ──────── */
+/* These classes were referenced by SessionFollow/TerminalView since v1 but
+   never defined — both drawer tabs rendered with className="undefined".
+   The terminal is a dark canvas in BOTH themes, so its text colors are
+   scoped custom properties here (theme tokens are light/dark aware and
+   would be unreadable on the fixed-dark terminal surface). */
+
+.sessionPanel {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+}
+
+.sessionHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  border-bottom: 1px solid var(--border);
+}
+
+.sessionTitle {
+  font-family: var(--font-mono);
+  font-size: var(--text-micro);
+  color: var(--text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sessionSelectWrap {
+  width: 12rem;
+  flex-shrink: 0;
+}
+
+.terminalContainer {
+  --terminal-text: #c9d1d9;
+  --terminal-muted: #9ca3af;
+  --terminal-danger: #ef4444;
+  --terminal-info: #60a5fa;
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: var(--space-3);
+  background: var(--terminal-bg, #0c0d10);
+  color: var(--terminal-text);
+  font-family: var(--font-mono);
+  font-size: var(--text-small);
+  line-height: 1.5;
+}
+
+/* The Activity tab is a log, not a terminal: themed canvas so EmptyState and
+   badges stay readable in both themes. */
+.activityContainer {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: var(--space-3);
+  background: var(--canvas);
+  font-size: var(--text-small);
+  line-height: 1.5;
+}
+
+.terminalLoadingWrap {
+  display: flex;
+  justify-content: center;
+  padding: var(--space-6);
+}
+
+.terminalError {
+  color: var(--danger);
+  padding: var(--space-4);
+}
+
+.terminalWaiting {
+  color: var(--terminal-muted);
+  font-style: italic;
+  padding: var(--space-2);
+}
+
+.terminalLine {
+  min-height: 1.2em;
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
+.terminalSystemText {
+  color: var(--terminal-muted);
+}
+
+.terminalSystemTag {
+  color: var(--terminal-danger);
+  font-weight: 700;
+}
+
+.terminalToolText {
+  color: var(--terminal-info);
+}
+
+.terminalToolTag {
+  color: var(--terminal-info);
+  font-weight: 700;
+}
+
+.terminalRow {
+  padding: var(--space-2) 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.terminalHead {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--text-muted);
+  font-size: var(--text-micro);
+}
+
+.terminalSummary {
+  margin: var(--space-1) 0 0;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.terminalActor {
+  color: var(--text);
+}
+
+.terminalActorUser {
+  color: var(--running);
+}
+
+.terminalActorSystem {
+  color: var(--danger);
+}
+
+.terminalFollow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.terminalFollowDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--ok);
+  display: inline-block;
+}
+
+.terminalFollowDotPaused {
+  background: var(--warn);
+}
+
+.terminalFollowLabel {
+  font-size: var(--text-micro);
+  color: var(--text-muted);
+}
+
+.resumeButton {
+  position: absolute;
+  bottom: var(--space-4);
+  left: 50%;
+  transform: translateX(-50%);
+  appearance: none;
+  background: var(--surface-raised);
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: var(--space-2) var(--space-4);
+  border-radius: var(--radius-pill);
+  cursor: pointer;
+  font-size: var(--text-micro);
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.resumeButtonNew {
+  background: var(--accent);
+  border-color: transparent;
+  color: #fff;
+}

@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  EDC mail ingest, every 5 minutes.
+
+  Reads the operator's Gmail accounts through the capability broker into comms_messages
+  (owner stamped at ingest), which is exactly what the Executive Decision Center
+  triage pipeline SELECTs over. Each configured source is polled once per cycle:
+  gmail_ownera, gmail_initech, gmail_acmeuni, gmail_hooli and globex.
+  Gmail sources use the OAuth broker; globex uses the named IMAP poller.
+  Every read is GET-only, so the mailbox is never mutated. The poller is idempotent (durable
+  internal_date_cursor plus Message-ID dedupe), so a re-run can never duplicate a
+  row or double count.
+
+  OPERATOR STEP ONLY: this template is tracked but NOT loaded. Load it by hand
+  once the Gmail OAuth refresh tokens and Globex IMAP credentials are provisioned in
+  the broker environment;
+  a missing credential flips the source to status=error and this job keeps
+  running (it never crashes the box). Same launchd discipline as the team jobs:
+  absolute interpreter, absolute paths, no PATH dependency for python itself.
+-->
+<plist version="1.0">
+<dict>
+	<key>Label</key>
+	<string>com.omniagentos.edc-gmail-poll</string>
+	<key>ProgramArguments</key>
+	<array>
+		<string>/bin/sh</string>
+		<string>-lc</string>
+		<string>set -a; . "$HOME/.config/omni/connections.env" 2&gt;/dev/null; set +a; . /Users/youruser/OmniAgentOS/scripts/launch-env.sh; exec /Users/youruser/OmniAgentOS/scripts/edc/poll-all.sh</string>
+	</array>
+	<key>WorkingDirectory</key>
+	<string>/Users/youruser/OmniAgentOS</string>
+	<key>EnvironmentVariables</key>
+	<dict>
+		<key>OMNIAGENTOS_DB</key>
+		<string>/Users/youruser/OmniAgentOS/var/runtime/state.sqlite3</string>
+		<key>OMNIAGENTOS_LEDGER_DIR</key>
+		<string>/Users/youruser/OmniAgentOS/var/runtime/ledger</string>
+		<key>OMNIAGENTOS_VAR</key>
+		<string>/Users/youruser/OmniAgentOS/var/runtime</string>
+		<key>OMNIAGENTOS_VAR_DIR</key>
+		<string>/Users/youruser/OmniAgentOS/var/runtime</string>
+		<key>OMNIAGENTOS_VAULT_DIR</key>
+		<string>/Users/youruser/OmniAgentOS/var/runtime/vault</string>
+		<key>PATH</key>
+		<string>/Users/youruser/.local/bin:/Users/youruser/.grok/bin:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin</string>
+	</dict>
+	<key>StartInterval</key>
+	<integer>300</integer>
+	<key>RunAtLoad</key>
+	<false/>
+	<key>KeepAlive</key>
+	<false/>
+	<key>StandardOutPath</key>
+	<string>/Users/youruser/OmniAgentOS/var/log/edc-gmail-poll.log</string>
+	<key>StandardErrorPath</key>
+	<string>/Users/youruser/OmniAgentOS/var/log/edc-gmail-poll.log</string>
+</dict>
+</plist>

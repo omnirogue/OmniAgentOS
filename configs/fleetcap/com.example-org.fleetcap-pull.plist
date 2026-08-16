@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0"><dict>
+  <key>Label</key><string>com.example-org.fleetcap-pull</string>
+  <key>ProgramArguments</key><array>
+    <string>/Users/youruser/OmniAgentOS/.venv/bin/python</string>
+    <string>-m</string><string>omniagentos.fleetcap.pull</string>
+    <string>--config</string><string>/Users/youruser/OmniAgentOS/configs/fleetcap/devices.yaml</string>
+    <string>--extract</string>
+  </array>
+  <key>WorkingDirectory</key><string>/Users/youruser/OmniAgentOS</string>
+  <key>StartInterval</key><integer>7200</integer>
+  <key>Nice</key><integer>10</integer><key>LowPriorityIO</key><true/>
+  <key>StandardOutPath</key><string>/Users/youruser/Work/Ops/telemetry/logs/fleetcap-pull.log</string>
+  <key>StandardErrorPath</key><string>/Users/youruser/Work/Ops/telemetry/logs/fleetcap-pull.err.log</string>
+</dict></plist>

@@ -1,0 +1,219 @@
+# Reliability drill catalog, machine-readable form.
+#
+# `status` describes the STATE OF THE CODE. Verification records only authorized
+# checks that actually ran and their scope; it is never a live-runtime claim.
+meta:
+  driver: scripts/drills/grok_sandbox_drills.py
+  entrypoint: python scripts/drills/grok_sandbox_drills.py --self-test
+  verification: PASSED — 2026-08-03 isolated self-test only
+  notes: >-
+    S1-S3 are implemented and execute only inside throwaway temporary
+    directories. They make no network, provider, launchd, live-service or
+    live-database call. S4-S12 are skeletons and are never executed by the
+    driver.
+
+drills:
+  S1:
+    name: Backup/restore integrity
+    status: implemented
+    verification: PASSED — 2026-08-03 isolated self-test only
+    driver_functions: [run_drill_s1, run_drill_s1_git]
+    description: >-
+      Exercises the SQLite backup, the SQLite restore and the local Git bundle
+      backup against throwaway sources. Asserts the exact receipt key set, the
+      published file's identity/mode/link-count/size, the receipt checksum
+      against the published bytes, the full sqlite_master schema, every table's
+      row count, the migration head, the user_version, and the exact Git ref map,
+      ref count and HEAD state. Asserts that the source database bytes and inode
+      and the source Git refs and HEAD are the same before and after each run.
+    oracles:
+      A:
+        name: WAL continuity
+        asserts: >-
+          With a writer connection left open, wal_autocheckpoint=0 and a
+          committed but uncheckpointed row, the backup and the subsequent restore
+          both contain that row, and the source main database file is not
+          checkpointed by the backup.
+      B:
+        name: Symlink refusals
+        asserts: >-
+          Source-ancestor, destination-ancestor, restore-source leaf and
+          Git-destination leaf symlinks are refused, as is a default-database
+          path reached through a symlinked ancestor.
+      C:
+        name: Pinned-parent exchange
+        asserts: >-
+          For database backup, restore and Git bundle backup, exchanges both the
+          source and destination parents at pre-open, pre-link and late
+          post-unlink validation. Each case checks that its hook rendezvous fired,
+          that the run refuses, and that substituted parents receive no output.
+          Destination pre-link cases require exactly the expected preserved temp
+          tree; destination post-unlink cases additionally require exactly one
+          single-link regular quarantine entry and no unaccounted residue.
+      D:
+        name: Asynchronous abort after the final link
+        asserts: >-
+          For each of the three publication paths, a BaseException delivered
+          immediately after the publishing link leaves no destination or residue.
+      E:
+        name: Foreign replacement during rollback
+        asserts: >-
+          For each publication path, regular-file, symlink and directory
+          replacements during late cleanup preserve exact foreign bytes/tree;
+          only the expected inode may be removed.
+      F:
+        name: Same-size post-unlink mutation
+        asserts: >-
+          A same-size byte mutation after temp unlink is caught by terminal
+          descriptor-bound validation for database backup, restore and Git.
+      G:
+        name: Temporary-directory replacement
+        asserts: >-
+          For database backup, restore and Git, a replaced private temporary
+          directory is preserved, reported and causes publication rollback. A
+          deterministic post-pin creation failure must instead remove the exact
+          held empty directory safely, emit byte-exact refusal diagnostics and
+          leave no destination or private residue.
+      H:
+        name: Ambient GIT_* poisoning
+        asserts: >-
+          GIT_DIR, GIT_WORK_TREE, GIT_COMMON_DIR, GIT_OBJECT_DIRECTORY,
+          GIT_ALTERNATE_OBJECT_DIRECTORIES, GIT_INDEX_FILE and GIT_NAMESPACE in
+          the ambient environment do not change the result.
+      I:
+        name: Git grammar defects
+        asserts: >-
+          The byte grammar matrix injects failure, garbage, missing terminal LF,
+          CRLF, bare CR, whitespace, duplicate, non-hex, wrong-length, invalid,
+          pseudoref, missing and extra records into both show-ref and list-heads;
+          it is a source-level fault matrix that must be run by an authorized gate
+          before it can establish diagnostics, stdout behavior or residue claims.
+      J:
+        name: Worktree and HEAD receipts
+        asserts: >-
+          Linked-worktree, attached-HEAD and detached-HEAD runs produce the exact
+          receipt key set, matching worktree/Git-dir/common-dir/.git-marker
+          identities, marker mode/link-count and marker content, with size exact
+          for a regular marker and null for a non-regular marker; they also require
+          a symbolic HEAD name or DETACHED, unique refs/count, independent bundle
+          verify/list-heads, checksum/mode/identity, unchanged source refs/HEAD and
+          link count 1 after publication.
+  S2:
+    name: Interrupted-work recovery
+    status: implemented
+    verification: PASSED — 2026-08-03 isolated self-test only
+    driver_functions: [run_drill_s2]
+    description: >-
+      Writes one valid and one corrupt spooled observation into a throwaway
+      ledger directory, then drives the real
+      omniagentos.toolplane.observe.ObservationSink through recover_pending and
+      retry_pending. Asserts the valid observation is durably recorded and the
+      corrupt one is quarantined in the dead-letter directory.
+  S3:
+    name: Idempotent replay
+    status: implemented
+    verification: PASSED — 2026-08-03 isolated self-test only
+    driver_functions: [run_drill_s3]
+    description: >-
+      Pre-records an observation, leaves an identical entry in the spool as a
+      crash would, and asserts that recovery does not duplicate or overwrite the
+      recorded observation.
+  S4:
+    name: Network partition
+    status: operator-only / unimplemented
+    verification: NOT RUN
+    inputs: [interface_name, partition_seconds]
+    fault: Drop packets on the named interface.
+    oracle: Timeouts and degraded states are logged rather than silently retried.
+    containment: A temporary network namespace or an equivalent local scope only.
+    recovery: Re-enable the interface.
+    completion_criteria: Normal operation resumes after the interface returns.
+    approval: the operator's explicit approval is required before any PID, network, provider or disk action.
+  S5:
+    name: Process crash
+    status: operator-only / unimplemented
+    verification: NOT RUN
+    inputs: [pid_pattern]
+    fault: Send SIGKILL to the matched process.
+    oracle: The supervisor notices and restarts within the stated threshold.
+    containment: A sandboxed process tree only.
+    recovery: The supervisor's own restart loop.
+    completion_criteria: The target process is running and accepting requests.
+    approval: the operator's explicit approval is required before any PID, network, provider or disk action.
+  S6:
+    name: Corrupted ledger
+    status: operator-only / unimplemented
+    verification: NOT RUN
+    inputs: [ledger_path]
+    fault: Inject garbage bytes into a copy of the ledger.
+    oracle: The parser raises an explicit verification error and halts processing.
+    containment: A sandboxed copy of the ledger, never the live one.
+    recovery: Fall back to the last known-good snapshot.
+    completion_criteria: State matches the snapshot.
+    approval: the operator's explicit approval is required before any PID, network, provider or disk action.
+  S7:
+    name: Config drift
+    status: operator-only / unimplemented
+    verification: NOT RUN
+    inputs: [config_key, bad_value]
+    fault: Mutate the in-memory configuration away from the on-disk source of truth.
+    oracle: The drift is detected and the run warns or aborts.
+    containment: An isolated configuration registry.
+    recovery: Reload the configuration from disk.
+    completion_criteria: Configuration matches its disk representation.
+    approval: the operator's explicit approval is required before any PID, network, provider or disk action.
+  S8:
+    name: Model degradation
+    status: operator-only / unimplemented
+    verification: NOT RUN
+    inputs: [provider, latency_ms]
+    fault: A local proxy delays or fails provider requests.
+    oracle: The agent falls back or queues safely instead of hanging.
+    containment: A local proxy only; no live provider traffic.
+    recovery: Remove the delay/error injection.
+    completion_criteria: Original routing is restored.
+    approval: the operator's explicit approval is required before any PID, network, provider or disk action.
+  S9:
+    name: Disk full
+    status: operator-only / unimplemented
+    verification: NOT RUN
+    inputs: [mount_point]
+    fault: Exhaust free space on a dedicated loopback mount or quota.
+    oracle: ENOSPC is handled and no partially written artifact is published.
+    containment: A loopback mount or quota, never a real volume.
+    recovery: Remove the ballast file.
+    completion_criteria: Free space is restored and operations resume.
+    approval: the operator's explicit approval is required before any PID, network, provider or disk action.
+  S10:
+    name: Clock skew
+    status: operator-only / unimplemented
+    verification: NOT RUN
+    inputs: [skew_seconds]
+    fault: Skew the process clock with a process-local shim.
+    oracle: Cryptographic and lease validations fail closed rather than silently pass.
+    containment: Process-level only; the system clock is never changed.
+    recovery: Remove the shim.
+    completion_criteria: Time-dependent validations pass again.
+    approval: the operator's explicit approval is required before any PID, network, provider or disk action.
+  S11:
+    name: Rate-limit exhaustion
+    status: operator-only / unimplemented
+    verification: NOT RUN
+    inputs: [api_endpoint]
+    fault: A mock server returns 429 responses.
+    oracle: The client backs off exponentially instead of spinning.
+    containment: A mock server only; no live endpoint is called.
+    recovery: Resume 200 responses.
+    completion_criteria: The request succeeds after backoff.
+    approval: the operator's explicit approval is required before any PID, network, provider or disk action.
+  S12:
+    name: Orphaned locks
+    status: operator-only / unimplemented
+    verification: NOT RUN
+    inputs: [lock_file]
+    fault: Create a lock file naming a dead PID.
+    oracle: The dead PID is detected and the lock is reaped.
+    containment: An isolated temporary directory.
+    recovery: Not applicable; the reap is the recovery.
+    completion_criteria: The lock is acquired and execution proceeds.
+    approval: the operator's explicit approval is required before any PID, network, provider or disk action.

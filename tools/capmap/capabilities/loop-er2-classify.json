@@ -1,0 +1,67 @@
+{
+  "blast_radius": "Writes category/escalation flags onto tickets; drives routing, not sending.",
+  "cadence_seconds": 300,
+  "company": "initech",
+  "escalation_tier": "high",
+  "exit_semantics": {
+    "DEGRADED": "degraded",
+    "DOWN": "down",
+    "OK": "ok",
+    "UNVERIFIED": "cannot_evaluate",
+    "default": "cannot_evaluate"
+  },
+  "host": "initech-worker-host",
+  "id": "loop-er2-classify",
+  "kind": "llm-loop",
+  "last_status": "OK",
+  "last_verified": null,
+  "owner": "estate-ops",
+  "repo": "example-support-service",
+  "staleness_slo_seconds": 3600,
+  "throughput": {
+    "derivation": "Read-only database query inside the service's own container over one SSH session. count by day(classified_at) over a trailing window; 24h = classified_at >= now()-24h.",
+    "floor": {
+      "floor": 21.0,
+      "fraction": 0.3,
+      "median": 70.0,
+      "min_sample_days": 7,
+      "reason": null,
+      "sample": {
+        "2024-01-01": 40,
+        "2024-01-02": 50,
+        "2024-01-03": 60,
+        "2024-01-04": 70,
+        "2024-01-05": 80,
+        "2024-01-06": 90,
+        "2024-01-07": 100
+      },
+      "sample_days": 7,
+      "sample_window": "2024-01-01..2024-01-07"
+    },
+    "max_error_rate": 0.25,
+    "metric": "tickets_classified_24h",
+    "notes": [
+      "30-day category mix (illustrative): other 700, refund 500, escalated 300, cancellation 200, dispute 100, fraud 50.",
+      "A minority of tickets classified in 24h are flagged for escalation (illustrative: 20 of 100)."
+    ],
+    "observed": {
+      "as_of": null,
+      "burn": null,
+      "error_rate": null,
+      "last_success": null,
+      "process_state": "RUNNING",
+      "volume": 100
+    },
+    "signal_exists": true,
+    "signal_path": "postgres://example-service-db/example_service (container-local; credentials in EXAMPLE_SERVICE_* env, never read by capmap)#tickets.classified_at",
+    "window": "24h"
+  },
+  "verification": {
+    "field": "tickets_classified_24h",
+    "note": "Graded on throughput, not liveness: a running loop with zero volume is DEGRADED.",
+    "source": "postgres://example-service-db/example_service (container-local; credentials in EXAMPLE_SERVICE_* env, never read by capmap)#tickets.classified_at",
+    "type": "snapshot_field"
+  },
+  "what_it_does": "Ticket classifier for the support pipeline; volume is tickets stamped with a classification timestamp in the window.",
+  "why_it_matters": "Classification is the step that decides how a ticket is routed (refund / dispute / fraud / escalate); a stalled classifier means every downstream routing decision goes stale."
+}

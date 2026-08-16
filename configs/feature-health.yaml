@@ -1,0 +1,194 @@
+# Feature-health matrix — the executable source of truth for the feature-health lane.
+# Consumed by scripts/feature_health/fh.py. Docs: docs/testing/FEATURE-HEALTH.md.
+#
+# Per feature:
+#   tier1: mechanical, $0, zero-GPU test paths (existing suites + tests/feature_health/tier1)
+#   tier2: live cheap-LLM / live-network paths (marked `live`, run only by this lane)
+#   tier3: UI/API-surface paths (isolated app instance; live probes are runner flags)
+# Attribution: a JUnit testcase belongs to a feature when its classname/file starts with
+# any prefix in that feature's paths. First match wins in file order below.
+#
+# NEVER add these to any tier (mutation/quarantine/cost hazards — see TESTING.md):
+#   tests/doctrine, tests/counterfeits, tests/simharness, tests/longhaul
+schema: feature-health-matrix.v1
+features:
+  jira:
+    tier1:
+      - tests/connectors/test_jira_client.py
+      - tests/connectors/test_jira_retry.py
+      - tests/connectors/test_jira_fields_config.py
+      - tests/connectors/test_jira_broker_allowlist.py
+      - tests/connectors/test_secrets_env.py
+      - tests/db/test_migration_jira_project_key.py
+      - tests/feature_health/tier1/test_jira_stub_routes.py
+    tier2:
+      - tests/connectors/test_jira_live.py
+    tier3:
+      - tests/api/test_jira_routes.py
+      # jira_project_key validation only — the rest of tests/projects/test_routes.py is
+      # generic project CRUD and belongs to the allocation feature, not jira.
+      - tests/projects/test_routes.py::test_jira_project_key_unknown_returns_400_with_allowed_set
+      - tests/projects/test_routes.py::test_combined_reparent_and_jira_key_409_leaves_parent_unchanged
+      - tests/projects/test_routes.py::test_jira_project_key_live_key_maps_ok
+  goals:
+    tier1:
+      - tests/goals
+      - tests/feature_health/tier1/test_goals_collectors.py
+    tier2: []
+    tier3:
+      - tests/feature_health/tier3/test_ui_api_paths.py::TestGoalsPaths
+  routines:
+    tier1:
+      - tests/routines
+      - tests/scheduler
+      - tests/feature_health/tier1/test_routines_tick.py
+    tier2: []
+    tier3:
+      - tests/feature_health/tier3/test_ui_api_paths.py::TestRoutinesPaths
+  tasks:
+    tier1:
+      - tests/collab
+      - tests/intake
+      - tests/dispatch
+      - tests/feature_health/tier1/test_tasks_board_flow.py
+    tier2:
+      - tests/feature_health/tier2/test_planner_gate_cheap.py
+    tier3:
+      - tests/feature_health/tier3/test_board_claim_http.py
+      - tests/feature_health/tier3/test_ui_api_paths.py::TestBoardPaths
+  single_agent:
+    tier1:
+      - tests/runner
+      - tests/sessions
+      - tests/execution
+      - tests/feature_health/tier1/test_sandbox_gate.py
+    tier2:
+      - tests/feature_health/tier2/test_runner_once_cheap.py
+    tier3:
+      - tests/feature_health/tier3/test_agent_exec_paths.py::TestSingleAgentPaths
+  multi_agent:
+    tier1:
+      - tests/swarm
+      - tests/formation
+      - tests/orchestrator
+      - tests/worktrees
+      - tests/feature_health/tier1/test_multi_agent_spawn.py
+    tier2:
+      - tests/feature_health/tier2/test_swarm_one_task_cheap.py
+    tier3:
+      - tests/feature_health/tier3/test_agent_exec_paths.py::TestMultiAgentPaths
+  dag:
+    tier1:
+      - tests/graph_runtime
+      - tests/feature_health/tier1/test_dag_complete_node_race.py
+      - tests/feature_health/tier1/test_dag_step_edges.py
+    tier2:
+      - tests/feature_health/tier2/test_dag_node_cheap.py
+    tier3:
+      - tests/feature_health/tier3/test_ui_api_paths.py::TestGraphPaths
+  memory:
+    tier1:
+      - tests/memlife
+      - tests/memory
+      - tests/metacog
+      - tests/metacognition
+      - tests/knowledge
+      - tests/vault
+      - tests/vaultgraph
+      - tests/feature_health/tier1/test_recall_fusion.py
+      - tests/feature_health/tier1/test_memlife_corrupt_input.py
+    tier2:
+      - tests/feature_health/tier2/test_knowledge_extract_cheap.py
+    tier3:
+      - tests/feature_health/tier3/test_ui_api_paths.py::TestKnowledgePaths
+  skill_injection:
+    tier1:
+      - tests/skills
+      - tests/feature_health/tier1/test_coral_enforce.py
+    tier2:
+      - tests/feature_health/tier2/test_skill_labels_cheap.py
+    tier3:
+      - tests/feature_health/tier3/test_ui_api_paths.py::TestSkillsPaths
+  tool_injection:
+    tier1:
+      - tests/toolplane
+      - tests/feature_health/tier1/test_toolplane_manifest.py
+    tier2: []
+    tier3: []
+  allocation:
+    tier1:
+      - tests/allocation
+      - tests/projects
+      - tests/workfs
+      - tests/scope
+      - tests/feature_health/tier1/test_workfs_toctou.py
+    tier2: []
+    tier3:
+      - tests/feature_health/tier3/test_ui_api_paths.py::TestProjectsPaths
+  # ---- landed since 2026-07-31 (registered 2026-08-11) ----------------------
+  # These sit ahead of api_ui deliberately: api_ui claims the bare `tests/api`
+  # prefix, and control_plane below needs its own tests/api/*.py file to win
+  # attribution over that broad prefix (first match wins in file order).
+  team_work_os:
+    tier1:
+      - tests/team
+      - tests/team_api
+      - tests/team_attribution
+      - tests/team_import
+      - tests/team_inference
+      - tests/team_scoring
+      - tests/team_slack
+    tier2: []
+    tier3:
+      # TestTeamPaths is being written by a peer lane alongside this one; if it
+      # is not yet in the file, this binding legitimately records as missing
+      # until that class lands (see report note).
+      - tests/feature_health/tier3/test_ui_api_paths.py::TestTeamPaths
+  landing_pipeline:
+    tier1:
+      # pipeline/tests only (pyproject testpaths=["tests"], so this dir needs
+      # an explicit path here and in run.sh's --collect-only invocation).
+      - pipeline/tests
+      # The risk-tier classifier's suite lives under tests/, NOT pipeline/tests —
+      # without this line every one of its testcases is attributed to `other`
+      # and the classifier's fail-closed behaviour has no owning cell.
+      - tests/test_risk_tier.py
+    tier2: []
+    tier3: []
+  account_pool:
+    tier1:
+      - tests/accounts
+    tier2: []
+    tier3: []
+  control_plane:
+    tier1:
+      # Attribution runs PER TIER (fh.py cmd_append builds prefix_order from
+      # matrix[feature][tier] for the tier being appended), so a claim in a
+      # DIFFERENT tier cannot out-rank api_ui's broad tier1 `tests/api` prefix —
+      # it just makes this file record twice, once per tier. It has to sit in
+      # the SAME tier as the prefix it must beat, ahead of api_ui in file order.
+      - tests/api/test_engine_routes.py
+    tier2: []
+    tier3: []
+  northstar_cert:
+    tier1:
+      - tests/scripts/test_nscert_emit_gaps.py
+      - tests/scripts/test_nscert_file_gap_findings.py
+      - tests/scripts/test_nscert_record_results.py
+      - tests/scripts/test_nscert_seed_holdout.py
+    tier2: []
+    tier3: []
+  api_ui:
+    tier1:
+      - tests/api
+      - tests/feature_health/tier1/test_ui_api_drift.py
+    tier2:
+      - tests/feature_health/tier2/test_llm_probes.py
+    tier3:
+      - tests/feature_health/tier3/test_ui_api_paths.py
+      - tests/feature_health/tier3/test_live_probes.py
+      # test_production_surface.py is being written by a peer lane alongside
+      # this one; if it is not yet on disk, this binding legitimately records
+      # as missing until that file lands (see report note).
+      - tests/feature_health/tier3/test_production_surface.py
+    playwright: true

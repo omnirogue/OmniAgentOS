@@ -1,0 +1,120 @@
+[
+  {
+    "id": "gate_pending",
+    "variant": "pending",
+    "execution_id": "exec_ready_1",
+    "project_id": "proj_mission_rail",
+    "company_id": "comp_alpha",
+    "gate_id": "G3",
+    "status": "pending",
+    "evidence": null,
+    "command": "uv run pytest -q tests/api/test_mission_fixture_parity.py",
+    "blocking": true
+  },
+  {
+    "id": "gate_running",
+    "variant": "running",
+    "execution_id": "exec_ready_1",
+    "project_id": "proj_mission_rail",
+    "company_id": "comp_alpha",
+    "gate_id": "G3",
+    "status": "running",
+    "evidence": null,
+    "command": "uv run pytest -q tests/api/test_mission_fixture_parity.py",
+    "blocking": true
+  },
+  {
+    "id": "gate_passed",
+    "variant": "passed-with-evidence",
+    "execution_id": "exec_ready_1",
+    "project_id": "proj_mission_rail",
+    "company_id": "comp_alpha",
+    "gate_id": "G3",
+    "status": "passed",
+    "evidence": {
+      "digest": "sha256:gate_pass_001",
+      "artifact_ref": "var/gate-evidence/exec_ready_1/G3.json",
+      "verdict": "pass"
+    },
+    "command": "uv run pytest -q tests/api/test_mission_fixture_parity.py",
+    "blocking": true
+  },
+  {
+    "id": "gate_failed",
+    "variant": "failed",
+    "execution_id": "exec_ready_1",
+    "project_id": "proj_mission_rail",
+    "company_id": "comp_alpha",
+    "gate_id": "G4",
+    "status": "failed",
+    "evidence": {
+      "digest": "sha256:gate_fail_001",
+      "artifact_ref": "var/gate-evidence/exec_ready_1/G4.json",
+      "verdict": "fail"
+    },
+    "command": "uv run ruff check tests/api/test_mission_fixture_parity.py",
+    "blocking": true
+  },
+  {
+    "id": "gate_blocked",
+    "variant": "blocked",
+    "execution_id": "exec_refused_1",
+    "project_id": "proj_mission_rail",
+    "company_id": "comp_alpha",
+    "gate_id": "G0",
+    "status": "unavailable",
+    "evidence": null,
+    "command": null,
+    "blocking": true,
+    "reason": "execution refused before gate scheduling"
+  },
+  {
+    "id": "gate_skipped",
+    "variant": "skipped-approved",
+    "execution_id": "exec_ready_1",
+    "project_id": "proj_mission_rail",
+    "company_id": "comp_alpha",
+    "gate_id": "G7",
+    "status": "skipped",
+    "evidence": {
+      "digest": "sha256:gate_skip_001",
+      "artifact_ref": "var/gate-evidence/exec_ready_1/G7-skip.json",
+      "verdict": "pass"
+    },
+    "command": "make e2e",
+    "blocking": false,
+    "reason": "operator approved skip for non-blocking e2e"
+  },
+  {
+    "id": "gate_insufficient",
+    "variant": "insufficient-evidence",
+    "execution_id": "exec_incomplete_1",
+    "project_id": "proj_mission_rail",
+    "company_id": "comp_alpha",
+    "gate_id": "G5",
+    "status": "insufficient_evidence",
+    "evidence": null,
+    "command": "uv run pytest -q tests/api/test_mission_fixture_parity.py",
+    "blocking": true,
+    "verdict": "insufficient_evidence"
+  },
+  {
+    "id": "gate_stale",
+    "variant": "stale-evidence",
+    "execution_id": "exec_changed_1",
+    "project_id": "proj_mission_rail",
+    "company_id": "comp_alpha",
+    "gate_id": "G3",
+    "status": "failed",
+    "evidence": {
+      "digest": "sha256:gate_stale_old",
+      "artifact_ref": "var/gate-evidence/exec_changed_1/G3-stale.json",
+      "verdict": "pass",
+      "artifact_hash_at_judgment": "sha256:old_tree",
+      "current_artifact_hash": "sha256:new_tree"
+    },
+    "command": "uv run pytest -q tests/api/test_mission_fixture_parity.py",
+    "blocking": true,
+    "reason": "evidence judged against superseded artifact hash"
+  }
+]

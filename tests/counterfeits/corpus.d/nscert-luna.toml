@@ -1,0 +1,20 @@
+# LUNA-owned North Star content counterfeits. Patches are deliberately
+# runtime-neutral: they weaken existing mechanical assertions in scratch trees.
+
+[[counterfeit]]
+id = "cf-nscert-terminal-assertion"
+patch = "patches/cf-nscert-terminal-assertion.patch"
+rationale = "A terminal-state checker that accepts only failed runs converts completed deterministic work into a false negative."
+must_fail = [
+  "tests/simharness/test_orchestration.py::test_planned_concurrency_usage_and_terminal_state",
+]
+failure_re = "counterfeit requires failed status"
+
+[[counterfeit]]
+id = "cf-nscert-width-plan"
+patch = "patches/cf-nscert-width-plan.patch"
+rationale = "An off-by-one makespan/width comparison must not certify a plan whose observed overlap equals its target."
+must_fail = [
+  "tests/simharness/test_orchestration.py::test_planned_concurrency_usage_and_terminal_state",
+]
+failure_re = "concurrency mismatch"

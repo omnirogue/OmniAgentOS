@@ -1,0 +1,319 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://omniagentos.local/schema/loops/ledger-event-v1.1.json",
+  "title": "Ledger event v1.1",
+  "description": "One line of var/loopqueue/ledger.jsonl. Append-only, NEVER rewritten - it is the history, and it wins over state/queue.json. Append only through bridge/ledger_write.py, which serializes writers with locks/ledger.lock, checks short writes, and fsyncs before success; readers must tolerate a torn final line after a crash. Put bulk output in receipts/ and reference the path.",
+  "type": "object",
+  "required": [
+    "ts",
+    "role",
+    "event"
+  ],
+  "additionalProperties": true,
+  "properties": {
+    "ts": {
+      "type": "string",
+      "format": "date-time",
+      "description": "RFC3339 UTC, always Z"
+    },
+    "role": {
+      "enum": [
+        "planner",
+        "reviewer",
+        "implementer",
+        "external"
+      ]
+    },
+    "event": {
+      "enum": [
+        "found",
+        "inquired",
+        "answered",
+        "proposed",
+        "claimed",
+        "released",
+        "claim_expired",
+        "submitted",
+        "admitted",
+        "gated",
+        "merged",
+        "completed",
+        "rejected",
+        "parked",
+        "unparked",
+        "isolated",
+        "instrument_error",
+        "closed"
+      ],
+      "$comment": "`answered` closes an inquiry once a proposal carrying answers_inquiry is written; every inquiry must reach `answered` or `rejected` or inquiries/ grows forever. `unparked` records a human releasing a parked item - the attempt counter is derived from rejections SINCE the latest unparked, so without this event the producer recounts old rejections and re-parks immediately. `completed` is a TERMINAL event (alongside `merged`/`rejected`) for out-of-repo / host-ops work that was VERIFIED and APPLIED but legitimately has no merge_sha - unlike `merged` it carries NO detail.merge_sha, and unlike `rejected` it is not a refusal (no TTL/class). It follows the same 7-day terminal retention as `merged`. `closed` is the FINDING-side terminal event: emitted on a FINDING id by the gate loop when a candidate that resolves it lands AND the finding's bound test ran GREEN in that gate run. It carries detail.closed_by (the candidate id), detail.merge_sha, and detail.bound_test. It is never emitted by an agent by hand and never on a proposal/candidate id - those terminalise with merged/rejected/completed. `isolated` is a NON-TERMINAL routing marker emitted per member of a multi-member candidate-defect train that was ISOLATED instead of mass-rejected: it records that the member must re-gate SOLO and carries detail.isolation_members (the complete sorted group, so any one surviving event reconstructs it). It grants NO landing permission, produces NO queue status, and is NOT terminal - the member keeps its prior status until it reaches merged/rejected/completed. Read only by the gate loop's _pending_isolation_ids. It requires no detail-bearing allOf block (base fields ts/role/event/id suffice)."
+    },
+    "id": {
+      "type": "string",
+      "pattern": "^sha256:[0-9a-f]{64}$",
+      "description": "Required for every event EXCEPT instrument_error, which often has no artifact (provider down, disk full)."
+    },
+    "base_sha": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{40}$"
+    },
+    "actor": {
+      "type": "string",
+      "description": "process, model, or person that emitted the event"
+    },
+    "detail": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "result": {
+          "enum": [
+            "pass",
+            "fail"
+          ]
+        },
+        "receipt": {
+          "type": "string",
+          "description": "path under receipts/"
+        },
+        "merge_sha": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{40}$"
+        },
+        "reason": {
+          "type": "string"
+        },
+        "class": {
+          "enum": [
+            "candidate-defect",
+            "instrument-error",
+            "blocked-on-human",
+            "stale-base",
+            "answered"
+          ]
+        },
+        "expires_at": {
+          "type": "string",
+          "format": "date-time",
+          "description": "MANDATORY on rejected. A rejection without a TTL is a permanent ban. After expiry the idea may be RE-ARGUED with new evidence and an explicit supersedes - never resubmitted unchanged."
+        },
+        "exit_code": {
+          "type": "integer",
+          "description": "2 means DO NOT RETRY THIS INPUT"
+        },
+        "attempts": {
+          "type": "integer"
+        },
+        "duration_s": {
+          "type": "number"
+        },
+        "alerted": {
+          "type": "boolean",
+          "description": "parked - true once, ever. Repeated alerts train the operator to ignore them."
+        },
+        "remedy": {
+          "enum": [
+            "replan",
+            "drop",
+            "blocked"
+          ],
+          "description": "What the producer should DO. 'replan' = fix the named gap and resubmit with supersedes. 'drop' = eliminate the idea; the TTL is the earliest it may be RE-ARGUED with new evidence, not a retry timer. 'blocked' = wait on a named dependency. Producers assume 'replan' when absent, and then burn attempts polishing an idea you meant to kill."
+        },
+        "isolation_members": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "pattern": "^sha256:[0-9a-f]{64}$"
+          },
+          "description": "Present on an `isolated` event: the COMPLETE sorted member group of the isolated train, so any one surviving event reconstructs the whole set. Defense-in-depth for the reader's own validation - a non-empty array of canonical sha256 ids. The gate loop's _ledger_isolated_active SKIPS a single malformed event (building membership from the well-formed ones) and only VETOES when no usable isolation source remains at all - it does NOT raise on one bad line, which would permanently halt dispatch on an append-only ledger; schema validation is the second lens, not the only one."
+        }
+      }
+    }
+  },
+  "allOf": [
+    {
+      "$comment": "every event except instrument_error names an artifact",
+      "if": {
+        "not": {
+          "properties": {
+            "event": {
+              "const": "instrument_error"
+            }
+          },
+          "required": [
+            "event"
+          ]
+        }
+      },
+      "then": {
+        "required": [
+          "id"
+        ]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "event": {
+            "const": "merged"
+          }
+        },
+        "required": [
+          "event"
+        ]
+      },
+      "then": {
+        "required": [
+          "detail"
+        ],
+        "properties": {
+          "detail": {
+            "required": [
+              "merge_sha"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "event": {
+            "const": "completed"
+          }
+        },
+        "required": [
+          "event"
+        ]
+      },
+      "then": {
+        "required": [
+          "detail"
+        ],
+        "properties": {
+          "detail": {
+            "required": [
+              "reason"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "event": {
+            "const": "closed"
+          }
+        },
+        "required": [
+          "event"
+        ]
+      },
+      "then": {
+        "required": [
+          "id",
+          "detail"
+        ],
+        "properties": {
+          "detail": {
+            "type": "object",
+            "required": [
+              "closed_by",
+              "merge_sha",
+              "bound_test"
+            ],
+            "properties": {
+              "closed_by": {
+                "type": "string",
+                "pattern": "^sha256:[0-9a-f]{64}$"
+              },
+              "merge_sha": {
+                "type": "string",
+                "pattern": "^[0-9a-f]{40}$"
+              },
+              "bound_test": {
+                "type": "string",
+                "minLength": 1
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "event": {
+            "const": "rejected"
+          }
+        },
+        "required": [
+          "event"
+        ]
+      },
+      "then": {
+        "required": [
+          "detail"
+        ],
+        "properties": {
+          "detail": {
+            "required": [
+              "reason",
+              "class",
+              "expires_at"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "event": {
+            "const": "gated"
+          }
+        },
+        "required": [
+          "event"
+        ]
+      },
+      "then": {
+        "required": [
+          "detail"
+        ],
+        "properties": {
+          "detail": {
+            "required": [
+              "result",
+              "receipt"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "event": {
+            "const": "parked"
+          }
+        },
+        "required": [
+          "event"
+        ]
+      },
+      "then": {
+        "required": [
+          "detail"
+        ],
+        "properties": {
+          "detail": {
+            "required": [
+              "reason"
+            ]
+          }
+        }
+      }
+    }
+  ]
+}

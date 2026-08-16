@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key><string>com.omniagentos.reliability-weekly</string>
+    <key>ProgramArguments</key>
+    <array>
+        <string>/bin/sh</string>
+        <string>-lc</string>
+        <string>set -a; . "$HOME/.config/omni/connections.env" 2>/dev/null; set +a; . "{{ROOT}}/scripts/launch-env.sh"; exec "{{PYBIN}}" -m omniagentos.reliability weekly --once</string>
+    </array>
+    <key>WorkingDirectory</key><string>{{ROOT}}</string>
+    <key>StartCalendarInterval</key>
+    <dict><key>Weekday</key><integer>0</integer><key>Hour</key><integer>9</integer><key>Minute</key><integer>0</integer></dict>
+    <key>StandardOutPath</key><string>{{ROOT}}/var/log/reliability-weekly.out.log</string>
+    <key>StandardErrorPath</key><string>{{ROOT}}/var/log/reliability-weekly.err.log</string>
+</dict>
+</plist>

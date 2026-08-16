@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>EnvironmentVariables</key>
+	<dict>
+		<key>PATH</key>
+		<string>/usr/local/bin:/opt/homebrew/bin:/usr/bin:/bin:/usr/sbin:/sbin:/Users/youruser/.local/bin</string>
+	</dict>
+	<key>Label</key>
+	<string>com.threeloops.publish-queue</string>
+	<key>ProgramArguments</key>
+	<array>
+		<string>/Users/youruser/OmniAgentOS/.venv/bin/python</string>
+		<string>/Users/youruser/OmniAgentOS/pipeline/bridge/publish_queue.py</string>
+		<string>--loops-root</string>
+		<string>/Users/youruser/OmniAgentOS/var/loopqueue</string>
+		<string>--once</string>
+	</array>
+	<key>RunAtLoad</key>
+	<true/>
+	<key>StandardErrorPath</key>
+	<string>/Users/youruser/OmniAgentOS/var/loopqueue/logs/publish-queue.err</string>
+	<key>StandardOutPath</key>
+	<string>/Users/youruser/OmniAgentOS/var/loopqueue/logs/publish-queue.log</string>
+	<key>StartInterval</key>
+	<integer>300</integer>
+	<key>WorkingDirectory</key>
+	<string>/Users/youruser/OmniAgentOS/pipeline</string>
+</dict>
+</plist>

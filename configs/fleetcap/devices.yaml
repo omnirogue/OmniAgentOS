@@ -1,0 +1,54 @@
+{
+  "hub": {"device": "mac-studio", "host": "mac-studio", "user": "owner", "owner": "emp_owner"},
+  "defaults": {"timeout": 30, "bwlimit": 8192, "max_size": "512m"},
+  "devices": [
+    {
+      "device": "mw0001-owner", "host": "mw0001-owner", "user": "youruser",
+      "owner": "emp_owner", "mode": "pull", "bwlimit": 8192,
+      "roots": [
+        {"cli": "claude", "account": "default", "path": "/Users/youruser/.claude/projects"},
+        {"cli": "claude", "account": "account-1", "path": "/Users/youruser/.claude-account-1/projects"},
+        {"cli": "claude", "account": "twin", "path": "/Users/youruser/.claude-twin/projects"},
+        {"cli": "codex", "account": "default", "path": "/Users/youruser/.codex/sessions"},
+        {"cli": "spool", "account": "default", "path": "/Users/youruser/Work/Ops/telemetry/spool"}
+      ]
+    },
+    {
+      "device": "mw0002", "host": "mw0002", "user": "cloud",
+      "owner": "emp_owner", "mode": "pull", "bwlimit": 8192,
+      "roots": [
+        {"cli": "claude", "account": "default", "path": "/Users/cloud/.claude/projects"},
+        {"cli": "claude", "account": "loops", "path": "/Users/cloud/.claude-loops/projects"},
+        {"cli": "codex", "account": "default", "path": "/Users/cloud/.codex/sessions"},
+        {"cli": "spool", "account": "default", "path": "/Users/cloud/Work/Ops/telemetry/spool"}
+      ]
+    },
+    {
+      "device": "acmeuni", "host": "acmeuni", "user": "root",
+      "owner": "emp_owner", "mode": "pull", "bwlimit": 4096,
+      "roots": [
+        {"cli": "claude", "account": "default", "path": "/root/.claude/projects"},
+        {"cli": "grok", "account": "default", "path": "/root/.grok/sessions"},
+        {"cli": "grok", "account": "memtrace", "path": "/root/.grok/memtrace"},
+        {"cli": "kimi", "account": "default", "path": "/root/.kimi-code/sessions"},
+        {"cli": "spool", "account": "default", "path": "/root/Work/Ops/telemetry/spool"}
+      ]
+    },
+    {
+      "device": "initech-roi-calculator", "host": "initech-roi-calculator", "user": "root",
+      "owner": "emp_owner", "mode": "pull", "bwlimit": 4096,
+      "roots": [
+        {"cli": "claude", "account": "default", "path": "/root/.claude/projects"},
+        {"cli": "codex", "account": "default", "path": "/root/.codex/sessions"},
+        {"cli": "grok", "account": "default", "path": "/root/.grok/sessions"},
+        {"cli": "grok", "account": "memtrace", "path": "/root/.grok/memtrace"},
+        {"cli": "spool", "account": "default", "path": "/root/Work/Ops/telemetry/spool"}
+      ]
+    },
+    {
+      "device": "dev-uploads", "mode": "local",
+      "path": "/Users/youruser/ai-transcripts",
+      "owner_map": {"owner": "emp_owner", "bob": "emp_bob", "alice": "emp_alice"}
+    }
+  ]
+}

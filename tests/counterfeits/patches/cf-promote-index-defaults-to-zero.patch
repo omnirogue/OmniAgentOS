@@ -1,0 +1,13 @@
+diff --git a/omniagentos/api/routes/chats.py b/omniagentos/api/routes/chats.py
+index 02c5c182..3cfcbd83 100644
+--- a/omniagentos/api/routes/chats.py
++++ b/omniagentos/api/routes/chats.py
+@@ -1082,6 +1082,8 @@ def _resolve_item_identity(
+     resolved: list[tuple[str, int | None]] = []
+     for item in items:
+         index = _coerce_message_index(item.get("source_message_index"), len(messages))
++        if index is None and messages:
++            index = 0
+         if index is None:
+             if item.get("source_message_index") is not None:
+                 _LOG.warning(

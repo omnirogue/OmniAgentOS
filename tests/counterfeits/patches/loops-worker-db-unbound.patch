@@ -1,0 +1,13 @@
+diff --git a/omniagentos/scheduler/loop_jobs.py b/omniagentos/scheduler/loop_jobs.py
+index 5fc2ce1..268c2e9 100644
+--- a/omniagentos/scheduler/loop_jobs.py
++++ b/omniagentos/scheduler/loop_jobs.py
+@@ -245,8 +245,6 @@ def run_loop_job(store: Any, *, task_template: dict[str, Any] | None = None) ->
+         "--params",
+         json.dumps(spec["params"], sort_keys=True),
+     ]
+-    if db_path:
+-        argv += ["--db", db_path]
+     # Unconditional: _spec() has already refused an empty module, so an omitted
+     # flag here could only mean the guard above was removed.
+     argv += ["--instance-module", spec["instance_module"]]

@@ -1,0 +1,41 @@
+diff --git a/omniagentos/swarm/summary.py b/omniagentos/swarm/summary.py
+index 27c43cc9..256b5e0f 100644
+--- a/omniagentos/swarm/summary.py
++++ b/omniagentos/swarm/summary.py
+@@ -459,7 +459,8 @@ def compute_metrics(
+     busy_slot_seconds = sum(actual_minutes_by_key.values()) * 60.0
+     utilization = _ratio_or_none(
+         busy_slot_seconds,
+-        wall_seconds * parallelism_ratio,
++        # COUNTERFEIT: requested width inverts the optimization gradient.
++        wall_seconds * mean_target_n,
+         observed=tasks_with_attempts > 0,
+     )
+     if utilization is not None:
+@@ -532,14 +533,18 @@ def compute_metrics(
+     budget_hit = budget_f is not None and cost_usd is not None and cost_usd >= budget_f
+     partial = bool(tasks_blocked or cancelled_real or budget_hit) or run_status == "failed"
+ 
+-    score = _throughput_score(
+-        speedup=speedup,
+-        parallelism_ratio=parallelism_ratio,
+-        utilization=utilization,
+-        first_attempt_rate=first_attempt_rate,
+-        rate_limit_stall_fraction=rate_limit_stall_fraction,
+-        estimate_error_penalty=estimate_error_penalty,
+-    )
++    # COUNTERFEIT: special-case zero work instead of repairing the terms.
++    if tasks_done == 0:
++        score = 0.0
++    else:
++        score = _throughput_score(
++            speedup=speedup,
++            parallelism_ratio=parallelism_ratio,
++            utilization=utilization,
++            first_attempt_rate=first_attempt_rate,
++            rate_limit_stall_fraction=rate_limit_stall_fraction,
++            estimate_error_penalty=estimate_error_penalty,
++        )
+ 
+     metrics: dict[str, Any] = {
+         "run_id": run_id,

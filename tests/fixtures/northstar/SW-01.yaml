@@ -1,0 +1,15 @@
+version: 1
+fixture_id: SW-01
+domain: software
+seed: 40101
+scenario_id: northstar-sw-spine-v1
+required_context: [contract, acceptance_criteria, dependency_graph]
+required_grants: [workspace_read, workspace_write]
+expected_events: [contract.created, plan.created, execution.started, verification.completed]
+expected_outcome: verified
+expected_actions: [read_repo, write_patch, run_verifier]
+tolerances:
+  max_retries: 1
+  max_unattributed_actions: 0
+  latency_ms: {p50: 5000, p95: 15000}
+fault_ids: [F-19, F-23]

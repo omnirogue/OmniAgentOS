@@ -1,0 +1,11 @@
+# corpus.d/spend-guard-item-8.toml — spend-cap fallback-chain counterfeit.
+
+[[counterfeit]]
+id = "cf-spend-guard-fallback-carveout-stripped"
+patch = "patches/cf-spend-guard-fallback-carveout-stripped.patch"
+rationale = "Removes SpendGuardRefusal from the planner chain's terminal exception carve-out. A daily-cap refusal is then swallowed by the broad exception handler and the next uncapped paid rung is constructed."
+must_fail = [
+  "tests/intake/test_fallback.py::TestFallbackChain::test_spend_guard_refusal_never_constructs_next_paid_rung",
+]
+failure_re = "OpenRouter adapter was constructed after spend refusal|DID NOT RAISE.*SpendGuardRefusal|assert.*constructed"
+

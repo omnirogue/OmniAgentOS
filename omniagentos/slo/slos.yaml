@@ -1,0 +1,30 @@
+slos:
+  swarm_completion:
+    name: Swarm Completion
+    target: 0.60
+    window_hours: 24
+    metric: swarm_completion_rate
+    time_column: started_at
+    description: >-
+      Swarm task completion rate must remain >= 60% over rolling 24-hour window.
+
+      MEASUREMENT WINDOW:
+      Measurements are cursor-based deltas (not overlapping): first run measures
+      (now - 24h) to now; subsequent runs measure (prior_snapshot) to now. See
+      omniagentos.scheduler.metrics_tick for window semantics and swarm_metric_snapshots
+      table. Each snapshot row includes window_start/window_end/time_column in meta_json
+      for audit and reproducibility.
+
+      RECONCILIATION:
+      Snapshots are point-in-time measurements using time_column=started_at. To verify:
+      `sqlite3 var/runtime/state.sqlite3 "SELECT count(*), sum(end_reason='completed')
+      FROM swarm_attempts WHERE started_at > '<window_start>' AND started_at <= '<window_end>';"`
+      Numbers may differ from queries using `datetime('now', '-24 hours')` because:
+      - Snapshots capture a view at a specific timestamp
+      - Rolling window (now - 24h) moves as time advances
+      - Cursor-based deltas avoid overlaps, so don't sum to pure rolling 24h
+      For current SLO status, always re-run the measurement from present time.
+
+      This SLO measures attempt completion as the sole outcome metric bound to
+      real work. Current rate is measured by the metrics_tick launchd job, which
+      runs every 10 minutes and writes completion metrics to swarm_metric_snapshots.

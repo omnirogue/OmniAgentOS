@@ -1,0 +1,156 @@
+# OmniAgentOS machine-roots registry (P1 mounts core).
+#
+# The catalogue of top-level filesystem roots on THIS machine that an agent may
+# be granted access under. This file contains NO SECRETS -- only labels, paths,
+# and grant metadata. It is the single source of truth the grant layer widens
+# from (omniagentos/policy/dir_grants.py) and the browse/intake layers name from
+# (omniagentos/intake/fastlane.py).
+#
+# A process reads this file once and caches it (omniagentos/mounts.load_mounts is
+# lru_cache'd, and realpath's each path a single time at load). Editing this YAML
+# therefore requires a process restart to take effect -- a running server keeps
+# the mounts it loaded at startup.
+#
+# Each mount:
+#   id         stable identifier (unique; how other layers reference it)
+#   label      human label for the UI
+#   path       where it lives (~ is expanded; realpath'd once at load)
+#   kind       local | icloud | gdrive | dropbox
+#   cloud      true for a syncing cloud drive (files may be dataless on disk)
+#   grantable  may a directory grant be recorded UNDER this root?
+#   read_only  browse/read only -- writes should not be granted here
+#   notes      operator context
+#
+# GRANT MODEL: `grantable: true` means "a SUBFOLDER under this root may be granted
+# to a project" -- never that the whole root is handed over. `home` is deliberately
+# NOT grantable: the entire home directory engulfs credential stores (~/.ssh, ...)
+# and is browse-only via this registry, never a write grant. The dir-grant layer
+# additionally hard-rejects any secret-registry directory regardless of what is
+# listed here.
+
+version: 1
+
+mounts:
+  - id: home
+    label: Home
+    path: "~"
+    kind: local
+    cloud: false
+    grantable: false
+    read_only: true
+    notes: >-
+      Curated browse root only. Never a write grant -- it engulfs credential
+      stores (~/.ssh, ~/.aws, ...) which the dir-grant layer hard-rejects anyway.
+
+  - id: work
+    label: Work
+    path: "~/Work"
+    kind: local
+    cloud: false
+    grantable: true
+    read_only: false
+    notes: Primary working tree for active projects.
+
+  - id: desktop
+    label: Desktop
+    path: "~/Desktop"
+    kind: local
+    cloud: false
+    grantable: true
+    read_only: false
+    notes: >-
+      Local Desktop. The canonical migrated Desktop now lives in iCloud
+      (see the `icloud` mount's Desktop/ subfolder).
+
+  - id: documents
+    label: Documents
+    path: "~/Documents"
+    kind: local
+    cloud: false
+    grantable: true
+    read_only: false
+    notes: Local Documents folder.
+
+  - id: downloads
+    label: Downloads
+    path: "~/Downloads"
+    kind: local
+    cloud: false
+    grantable: true
+    read_only: true
+    notes: >-
+      Read-only: holds sensitive financial documents (statements, tax files).
+      Grant reads here, not writes.
+
+  - id: coding-projects
+    label: Coding Projects
+    path: "~/Coding Projects"
+    kind: local
+    cloud: false
+    grantable: true
+    read_only: false
+    notes: Local code repositories checkout area.
+
+  - id: icloud
+    label: iCloud Drive
+    path: "~/Library/Mobile Documents/com~apple~CloudDocs"
+    kind: icloud
+    cloud: true
+    grantable: true
+    read_only: false
+    notes: >-
+      iCloud Drive root. Dataless files download on first read (expect latency).
+      Desktop/ here is the canonical migrated Desktop.
+
+  - id: gdrive
+    label: Google Drive
+    path: "~/Library/CloudStorage/GoogleDrive-owner@acmeuni.example/My Drive"
+    kind: gdrive
+    cloud: true
+    grantable: true
+    read_only: false
+    notes: >-
+      Google Drive for desktop (My Drive). Native .gdoc/.gsheet files are web
+      stubs, not content -- filesystem grants can't read/edit their contents.
+
+  - id: dropbox
+    label: Dropbox
+    path: "~/Library/CloudStorage/Dropbox"
+    kind: dropbox
+    cloud: true
+    grantable: true
+    read_only: false
+    notes: Dropbox root (macOS CloudStorage mount).
+
+  - id: vault
+    label: Vault
+    path: "~/OmniAgentOS/vault"
+    kind: local
+    cloud: false
+    grantable: true
+    read_only: false
+    notes: OmniAgentOS local vault workspace.
+
+  - id: omniagentos
+    label: OmniAgentOS repo
+    path: "~/OmniAgentOS"
+    kind: local
+    cloud: false
+    grantable: true
+    read_only: false
+    notes: The trunk repo itself — approved workspace root for self-targeted swarm runs (operator decision 2026-07-26).
+
+  - id: copywriting-vault
+    label: CopywritingBrain vault
+    path: "~/KnowledgeVaults/CopywritingBrainVault"
+    kind: local
+    cloud: false
+    grantable: true
+    read_only: true
+    notes: >-
+      Local mirror of the CopywritingBrainVault Obsidian vault (2,800+ verbatim
+      direct-response sources + concept/swipe/framework notes + agent playbooks).
+      Master copy is iCloud "Media Buying/CopywritingBrainVault"; refresh the
+      mirror with scripts/copyvault/sync-copyvault.sh. Read-only on purpose:
+      it is a reference library — agents must never mutate it. Ad-copy agents:
+      read "00 - Start Here/How AI Agents Should Use This Wiki.md" first.

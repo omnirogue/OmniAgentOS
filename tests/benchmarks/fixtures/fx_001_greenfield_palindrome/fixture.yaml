@@ -1,0 +1,30 @@
+# FROZEN fixture — any edit changes fixture_digest and invalidates every
+# baseline captured against the previous digest. See tests/benchmarks/README.
+id: fx_001_greenfield_palindrome
+discipline: code-changes
+kind: greenfield
+# Repo revision this fixture was frozen against (recorded for provenance; the
+# fixture itself is hermetic and does NOT read the repo at run time).
+repo_rev: 14a84bc36df760f9603cfbae1a00ba20060de922
+# Control fixture: derived from devtasks/task_001.yaml, kept trivial on purpose
+# so it calibrates the floor of the ladder (any arm that fails this is broken).
+tier: control
+timeout_ms: 300000
+max_turns: 20
+declared_files:
+  - strutil.py
+canaries: []
+acceptance:
+  paths:
+    - check_accept_strutil.py
+  timeout_s: 120
+prompt: |
+  In the file `strutil.py` in this directory, implement:
+
+      def is_palindrome(s: str) -> bool
+
+  It returns True when `s` reads the same forwards and backwards, ignoring
+  ASCII spaces (" ") and ignoring case. No other characters are ignored.
+  The empty string and a string of only spaces are palindromes.
+
+  Modify only `strutil.py`. Do not create any other file.

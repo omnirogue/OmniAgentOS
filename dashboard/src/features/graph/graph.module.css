@@ -1,0 +1,88 @@
+.healthGrid {
+  display: grid;
+  gap: var(--space-3);
+  grid-template-columns: 1fr 1fr;
+}
+
+@media (max-width: 48rem) {
+  .healthGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.healthSubtitle {
+  margin: var(--space-2) 0 0;
+  color: var(--text-muted);
+  font-size: var(--text-micro);
+}
+
+.ladderGrid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.ladderCard {
+  min-width: 9rem;
+  flex: 1 1 9rem;
+}
+
+.ladderMeta {
+  margin-top: var(--space-1);
+  font-size: var(--text-micro);
+  color: var(--text-muted);
+}
+
+.runsList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.runsEmpty {
+  color: var(--text-muted);
+  font-size: var(--text-small);
+  font-style: italic;
+}
+
+.liveViewStatus {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+
+.liveViewNodes {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.nodeError {
+  color: var(--danger);
+  font-size: var(--text-small);
+  margin-top: var(--space-1);
+}
+
+.edgeList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.edgeItem {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--text-small);
+  font-family: var(--font-mono);
+}
+
+.notice {
+  margin: 0;
+}

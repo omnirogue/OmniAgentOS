@@ -1,0 +1,24 @@
+# INTENT-1 / D4 promotion bar (LOOPS-UI-DECISIONS-2026-07-30).
+# Thresholds live HERE only — never inlined in code (F12 / INTENT-E3).
+# Server-side evaluator is the composer's ONLY source of promotion state.
+#
+# STRICT Loop: >=95% agreement / >=200 suggestions / 30 days /
+#   zero Loop-suggested-for-Chat errors.
+# MODERATE Chat + Project: >=90% / >=100.
+# Auto-demote to shadow when trailing agreement < demote_below.
+
+loop:
+  min_agreement: 0.95
+  min_suggestions: 200
+  window_days: 30
+  max_loop_for_chat_errors: 0
+
+chat:
+  min_agreement: 0.90
+  min_suggestions: 100
+
+project:
+  min_agreement: 0.90
+  min_suggestions: 100
+
+demote_below: 0.80

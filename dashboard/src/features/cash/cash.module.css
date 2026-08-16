@@ -1,0 +1,59 @@
+/* Cash / banking page content classes. Page-level layout/header come from the
+   shared <Page>/<PageHeader> (@/design). Mirrors features/revenue/revenue.module.css. */
+.muted { color: var(--text-muted); font-size: var(--text-small); }
+.faint { color: var(--text-faint); font-size: var(--text-micro); }
+
+/* Cash owns its wide data surfaces inside the page. The page-level bound is a
+   backstop for flex/grid min-content sizing; tables retain their own swipe
+   scrollers via the shared design-system wrapper. */
+.cashPage { max-width: 100%; min-width: 0; overflow-x: hidden; }
+.cashSection { min-width: 0; max-width: 100%; }
+.tableScroll { width: 100%; max-width: 100%; min-width: 0; overflow-x: auto; }
+
+.metaRow { display: flex; align-items: center; gap: var(--space-3); flex-wrap: wrap; color: var(--text-muted); font-size: var(--text-small); }
+
+/* F07: compact revenue strip above the banking report. */
+.revenueStrip { display: grid; gap: var(--space-3); margin-bottom: var(--space-4); }
+.revenueStripHeading { display: flex; align-items: baseline; justify-content: space-between; gap: var(--space-3); }
+.revenueStripHeading h2 { margin: 0; font-size: var(--text-body); }
+
+/* KPI tiles */
+.statGrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr)); gap: var(--space-4); }
+
+/* Short honest note directly under the KPI tiles (near the Cash Balance /
+   Available credit tiles) explaining a ~$0 cash balance when the daily
+   autopay sweep leaves available credit as the spendable reserve.
+   Reuses .qualityNote's info styling so it matches the Data Quality panel. */
+.cashSweepNote { margin-top: var(--space-3); }
+
+/* Money figures anywhere in a table body: monospace + tabular-nums so digits
+   align column-to-column (this is a real-money page — figures must read as a
+   stable grid). */
+.moneyCell { font-family: var(--font-mono); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.moneyIn { color: var(--ok, var(--text)); }
+.moneyOut { color: var(--danger, var(--text)); }
+
+/* Month-to-date strip under the KPI tiles. */
+.mtdRow { display: flex; flex-wrap: wrap; gap: var(--space-4); align-items: baseline; color: var(--text-muted); font-size: var(--text-small); }
+.mtdItem { display: inline-flex; gap: var(--space-2); align-items: baseline; }
+.mtdValue { font-family: var(--font-mono); font-variant-numeric: tabular-nums; color: var(--text); }
+
+/* Data quality & coverage — the honesty surface. Always-visible raised card
+   (never a collapsible) directly under the KPI tiles so it cannot be scrolled
+   past unnoticed. */
+.qualityPanel { display: grid; gap: var(--space-4); }
+.qualityList { display: grid; gap: var(--space-2); margin: 0; padding: 0; list-style: none; }
+.qualityNote { display: flex; align-items: flex-start; gap: var(--space-2); padding: var(--space-2) var(--space-3); border-radius: var(--radius-md); font-size: var(--text-small); line-height: 1.5; }
+.qualityNoteWarn { background: color-mix(in srgb, var(--awaiting) 10%, transparent); color: var(--text); }
+.qualityNoteInfo { background: color-mix(in srgb, var(--text-muted) 6%, transparent); color: var(--text-muted); }
+.qualityNoteIcon { flex: none; margin-top: 0.15rem; }
+
+.coverageGrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr)); gap: var(--space-4); }
+.coverageGroup { display: grid; gap: var(--space-2); }
+.coverageGroupTitle { margin: 0; font-size: var(--text-micro); font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; color: var(--text-faint); }
+.coverageTags { display: flex; flex-wrap: wrap; gap: var(--space-2); min-height: 1.75rem; align-items: center; }
+.coverageEmpty { color: var(--text-faint); font-size: var(--text-micro); }
+
+@media (max-width: 34rem) {
+  .metaRow { gap: var(--space-2); }
+}

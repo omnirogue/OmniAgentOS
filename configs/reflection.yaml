@@ -1,0 +1,27 @@
+# configs/reflection.yaml
+# Reflection loop configuration: harvest window/caps/adapters (R1) +
+# nightly change budgets and empirical validation thresholds (R3).
+
+window_hours: 36
+compiled_learnings_days: 28
+
+caps:
+  per_source_bytes: 2097152       # 2MB raw read per source
+  per_source_tokens: 8000         # ~32KB digest per source
+  total_tokens: 40000
+
+adapters:
+  claude: true
+  gemini: true
+  kimi: true
+  codex: true
+  grok: true
+
+limits:
+  max_formation_changes: 1
+  max_router_weight_changes: 2
+  max_context_size_bytes: 10485760  # 10MB hard budget for the whole evidence bundle
+
+validation:
+  router_win_rate_threshold: 0.55  # challenger needs >=55% win rate
+  router_min_decisions: 10         # over at least 10 shadow decisions

@@ -1,0 +1,21 @@
+--- a/omniagentos/scheduler/routines.py
++++ b/omniagentos/scheduler/routines.py
+@@ -451,6 +451,18 @@ def compute_next_run(
+     not cron or no match falls inside the forward search bound
+     (:data:`_CRON_NEXT_RUN_MINUTES`, 400 days — not the eight-day catch-up).
+     """
++    # COUNTERFEIT: ignore cron matcher; always last_fired/now + 30 minutes.
++    if routine.get("trigger_type") != "cron":
++        return None
++    clock = now if now is not None else datetime.now()
++    ref = routine.get("last_fired")
++    if ref:
++        try:
++            clock = datetime.fromisoformat(str(ref).replace("Z", "+00:00")).replace(tzinfo=None)
++        except (TypeError, ValueError):
++            pass
++    nxt = clock.replace(second=0, microsecond=0) + timedelta(minutes=30)
++    return nxt.strftime("%Y-%m-%dT%H:%M:00Z")
+     if routine.get("trigger_type") != "cron":
+         return None
+     trigger_config = routine.get("trigger_config") or {}

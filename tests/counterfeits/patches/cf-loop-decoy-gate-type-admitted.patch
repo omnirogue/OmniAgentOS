@@ -1,0 +1,20 @@
+diff --git a/omniagentos/scheduler/routines.py b/omniagentos/scheduler/routines.py
+index 3e2d3106..5820203c 100644
+--- a/omniagentos/scheduler/routines.py
++++ b/omniagentos/scheduler/routines.py
+@@ -472,14 +472,7 @@ def loop_gate_errors(task_template: Any, gate_type: Any, gate_config: Any) -> li
+     payload = task_template.get("input") if isinstance(task_template, dict) else None
+     if not isinstance(payload, dict) or payload.get("module") != LOOP_TASK_MODULE:
+         return []
+-    if gate_type not in _executed_gate_types():
+-        return [
+-            f"a loop routine may not use gate_type={gate_type!r}: its command is never "
+-            "EXECUTED at settlement, so the row carries a gate that reads like one and "
+-            "rules on nothing — a loop tick's own report would stand unchallenged "
+-            f"forever ({_LOOP_GATE_REMEDY}). Executed gate types: "
+-            f"{sorted(_executed_gate_types())}."
+-        ]
++    # COUNTERFEIT: a declared command is a declared gate, whatever the type
+     command = gate_config.get("command") if isinstance(gate_config, dict) else None
+     if not _nonempty_str(command):
+         return [

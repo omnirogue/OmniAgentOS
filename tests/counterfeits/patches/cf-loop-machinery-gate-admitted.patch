@@ -1,0 +1,16 @@
+diff --git a/omniagentos/scheduler/routines.py b/omniagentos/scheduler/routines.py
+index 3e2d3106..072c4275 100644
+--- a/omniagentos/scheduler/routines.py
++++ b/omniagentos/scheduler/routines.py
+@@ -623,11 +623,6 @@ def validate_routine(payload: dict[str, Any]) -> None:
+         errors.append("name is required")
+ 
+     _validate_scope_purpose(payload, errors)
+-    errors.extend(
+-        loop_gate_errors(
+-            payload.get("task_template"), payload.get("gate_type"), payload.get("gate_config")
+-        )
+-    )
+ 
+     # Status-keyed draft exemption: only exact 'disabled' may omit engine fields.
+     if payload.get("status") == "disabled":

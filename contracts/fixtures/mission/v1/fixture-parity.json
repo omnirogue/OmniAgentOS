@@ -1,0 +1,36 @@
+{
+  "openapi_sha": "7b755cdb25ca373495cc2cf687acabce9277c01de74c9b9f1c64c5b085f525d8",
+  "fixture_set_sha": "a2e01a916022751cea7f621dca4c6273f150560c80a3d19b9d6966f8b19d197a",
+  "contract_source_sha": "47bea2cdbe5bb130b1129310e485ace340efa75a672681658ed2faa629a192be",
+  "openapi_artifact_verified": true,
+  "fixture_semantics_status": "passed",
+  "typed_mission_components_present": true,
+  "dto_parity_claimed": false,
+  "schema_parity": {
+    "status": "blocked",
+    "reason": "committed_openapi_lacks_mission_component_schemas_and_routes"
+  },
+  "openapi_parity": {
+    "status": "blocked",
+    "reason": "committed_openapi_lacks_mission_component_schemas_and_route_reachability"
+  },
+  "transport_parity": {
+    "status": "blocked_pending_mission_client",
+    "reason": "no_product_mission_transport_client_exists"
+  },
+  "contract_authority": [
+    "omniagentos/contracts.py",
+    "omniagentos/swarm/contracts.py",
+    "omniagentos/orgdims/contracts.py",
+    "omniagentos/taskcontract/models.py",
+    "omniagentos/verify/report.py",
+    "omniagentos/chats/classify.py"
+  ],
+  "expected_mission_components": [
+    "ExecutionRef",
+    "SwarmPlanDecision",
+    "EffectiveRoute",
+    "CostObservation"
+  ],
+  "observed_mission_components": []
+}

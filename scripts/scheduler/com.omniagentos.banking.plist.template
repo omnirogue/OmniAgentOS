@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key><string>{{LABEL}}</string>
+    <key>ProgramArguments</key>
+    {{PROGRAM_ARGS}}
+    <key>WorkingDirectory</key><string>{{WORKING_DIR}}</string>
+    <!-- Machine TZ is America/New_York, so Hour 2 fires at 2 AM Eastern. This is
+         the authoritative just-closed-day cash snapshot (balances + true
+         expenses) the operator reads. -->
+    <key>StartCalendarInterval</key>
+    <dict><key>Hour</key><integer>{{HOUR}}</integer><key>Minute</key><integer>{{MINUTE}}</integer></dict>
+    <key>StandardOutPath</key><string>/tmp/{{LABEL}}.out.log</string>
+    <key>StandardErrorPath</key><string>/tmp/{{LABEL}}.err.log</string>
+</dict>
+</plist>

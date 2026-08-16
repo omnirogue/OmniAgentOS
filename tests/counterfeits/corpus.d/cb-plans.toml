@@ -1,0 +1,27 @@
+# tests/counterfeits/corpus.d/cb-plans.toml — counterfeits owned by LANE A (t/cb-plans).
+#
+# Both entries mutate the PRODUCT seam in omniagentos/api/routes/intake.py and
+# point at route-level tests. An earlier version stubbed PlansStore.list_plans()
+# — a method the product's durability read path never calls — so it only reddened
+# because the lane's own test happened to read through it; the durability
+# property survived the mutation untouched. A counterfeit that cannot reach the
+# property it names is a blinded instrument.
+
+[[counterfeit]]
+id = "cf-plan-not-durable"
+patch = "patches/cf-plan-not-durable.patch"
+rationale = "Skips the create/update inside _sync_plan_to_database while it still returns success, so the job is reported durable and nothing is written — the pre-durability behavior (the plan lives only in the _PLAN_JOBS dict). Polling THROUGH THE ROUTE after the process cache is cleared must 404 instead of serving the plan."
+must_fail = [
+  "tests/api/test_intake_plans_durable.py::test_plan_survives_restart_through_the_route",
+]
+failure_re = "was LOST after restart"
+
+[[counterfeit]]
+id = "cf-plan-approval-not-bound"
+patch = "patches/cf-plan-approval-not-bound.patch"
+rationale = "Records the approval (status/decided_by/decided_at) without execution_metadata, so the durable row says a human approved something but nothing says WHAT. Both the write-side and the read-back-through-the-route tests must go red."
+must_fail = [
+  "tests/api/test_intake_plans_durable.py::test_confirm_after_restart_binds_the_approval",
+  "tests/api/test_intake_plans_durable.py::test_approved_execution_is_readable_through_the_route",
+]
+failure_re = "approval was NOT bound"

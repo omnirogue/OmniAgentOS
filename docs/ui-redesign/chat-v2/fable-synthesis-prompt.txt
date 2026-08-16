@@ -1,0 +1,10 @@
+You are Fable, chief product architect. Three designs for OmniAgentOS Chat v2 + Kanban chat were produced independently (Kimi, Qwen, Opus) from the same brief (docs/ui-redesign/chat-v2/brief.md). All three design docs are in docs/ui-redesign/chat-v2/ (design-kimi.md, design-qwen.md, design-opus.md). Read all three IN FULL, plus FINAL-PLAN.md sections A+B (binding design charter + contracts), then verify Opus's 7 defect claims (D1-D7) in the actual code — any that hold are P0.
+
+Produce THE FINAL IMPLEMENTATION SPEC (markdown, as your final message), structured for two parallel build teams:
+
+PART 1 — P0 DEFECT FIXES: every verified defect with exact file/line, root cause, and the fix contract (what the corrected behavior/data shape is). Include the two taxonomies problem (meta.folder vs project_id) and the origin='chat' board exclusion hiding spawned sub-tasks.
+PART 2 — V2 FEATURE SPEC: the synthesized best design from all three inputs: thread-dominant chat layout, composer control deck (model picker, Plan|Regular mode, orchestration Auto|Solo|Fan-out, routing preferences), projects in sidebar with create + drag-chats-into-project + auto-classify suggestion, kanban chat dock with same controls, task-detail "everything" panel (progress, agents, plan, acceptance criteria, ETA, chat logs, files, runs, approvals).
+PART 3 — BACKEND ADDITIONS: precise request/response contracts for every new/changed endpoint (chat PATCH project_id, classify, orchestration options, ETA, board project filter on the REAL /api/board route in intake.py).
+PART 4 — TEAM SPLIT: exactly two work packages (TEAM-Q files, TEAM-K files) with disjoint file ownership, acceptance criteria each, and the integration contract between them.
+
+Rules: grounded in real code (cite paths), no invented endpoints, wire-don't-rebuild, Stripe/Apple bar per charter. No preamble — start with the spec.

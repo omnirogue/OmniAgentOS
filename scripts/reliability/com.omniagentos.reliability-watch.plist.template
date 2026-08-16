@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key><string>com.omniagentos.reliability-watch</string>
+    <key>ProgramArguments</key>
+    <array>
+        <string>/bin/sh</string>
+        <string>-lc</string>
+        <string>set -a; . "$HOME/.config/omni/connections.env" 2>/dev/null; set +a; . "{{ROOT}}/scripts/launch-env.sh"; exec "{{PYBIN}}" -m omniagentos.reliability watch --once</string>
+    </array>
+    <key>WorkingDirectory</key><string>{{ROOT}}</string>
+    <key>StartInterval</key><integer>600</integer>
+    <key>StandardOutPath</key><string>{{ROOT}}/var/log/reliability-watch.out.log</string>
+    <key>StandardErrorPath</key><string>{{ROOT}}/var/log/reliability-watch.err.log</string>
+</dict>
+</plist>

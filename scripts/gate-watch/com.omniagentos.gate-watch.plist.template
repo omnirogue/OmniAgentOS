@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  gate-watch — one sweep every 120s, then exit.
+
+  RENDER-ONLY, per the estate convention: this file lives in the repo and is
+  never loaded from here. Installing is an OPERATOR action:
+
+      cp /Users/youruser/OmniAgentOS/scripts/gate-watch/com.omniagentos.gate-watch.plist.template \
+         ~/Library/LaunchAgents/com.omniagentos.gate-watch.plist
+      launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/com.omniagentos.gate-watch.plist
+      launchctl kickstart -p gui/$(id -u)/com.omniagentos.gate-watch
+
+  EVERY PATH BELOW IS ABSOLUTE ON PURPOSE. launchd runs with a stripped
+  environment: no PATH inheritance, no shell profile, no `python`. A relative
+  interpreter or a bare `python3` here is the difference between a watchdog and
+  a job that silently exits 127 forever — which is exactly the failure class
+  this job exists to catch.
+
+  StartInterval 120: the watchdog must be finer-grained than the shortest
+  threshold it judges by (D2's 5-minute tick staleness), and a sweep is
+  read-mostly and cheap.
+
+  The EnvironmentVariables block below is COMMENTED OUT by design. Uncomment
+  only what the operator has decided to arm:
+    OMNI_NTFY_URL              — phone push (public relay; notify.py's egress
+                                 guardrail terses the body before it leaves)
+    GATE_WATCH_HEALTHCHECK_URL — dead-man: pinged only on a CLEAN sweep, so the
+                                 check rings if gate-watch itself dies
+    GATE_WATCH_MEDIC=1 + GATE_WATCH_MEDIC_CMD — the AI-wake hook. TWO switches,
+                                 both required, DEFAULT OFF. This is the rollout
+                                 brake: arm it only after the log shows the
+                                 detectors firing on real stalls and nothing else.
+
+  Thresholds are env-overridable too, and all default sensibly — set one only to
+  correct a measured false alarm, never pre-emptively:
+    GATE_WATCH_LOCK_STALE_MIN 10 · GATE_WATCH_REMEDY_COOLDOWN_MIN 30
+    GATE_WATCH_TICK_STALE_MIN 5  · GATE_WATCH_DISPATCH_STALE_MIN 45
+    GATE_WATCH_SKIP_STORM 30     · GATE_WATCH_INSTR_CLUSTER 3
+    GATE_WATCH_VERDICT_STALE_MIN 360 — how long a candidate may legitimately
+                                 wait on a cross-lineage review seat before the
+                                 SEAT is treated as stuck (D4b)
+    GATE_WATCH_PUSH_FLOOR_MIN 60 — floor between two DELIVERED phone pushes. The
+                                 push leg also stays silent while the fired
+                                 detector set is unchanged, so one ongoing stall
+                                 is one notification rather than one every 120s.
+                                 A push that does not confirm is retried.
+    GATE_WATCH_UNDERUTIL_SWEEPS 5 — consecutive sweeps of idle-slots-with-
+                                 waiting-work before D7 reports wasted gate
+                                 capacity (~10 min at StartInterval 120). The
+                                 slot CEILING is never configured here: it is
+                                 read from the pipeline's own
+                                 MAX_CONCURRENT_GATES (1 + active twins), which
+                                 honours THREELOOPS_ACTIVE_TWINS.
+    GATE_WATCH_NTFY_RETRY_FLOOR_AFTER 5 — consecutive failed deliveries after
+                                 which retries back off to the floor above, so a
+                                 DEAD channel stops writing a failure note to
+                                 ALERTS.md every 120s. Any delivery resets it.
+-->
+<plist version="1.0"><dict>
+  <key>Label</key><string>com.omniagentos.gate-watch</string>
+  <key>ProgramArguments</key>
+  <array>
+    <string>/Users/youruser/OmniAgentOS/.venv/bin/python</string>
+    <string>/Users/youruser/OmniAgentOS/scripts/gate-watch/gate_watch.py</string>
+  </array>
+  <key>WorkingDirectory</key><string>/Users/youruser/OmniAgentOS</string>
+  <key>StartInterval</key><integer>120</integer>
+  <key>RunAtLoad</key><true/>
+  <key>StandardOutPath</key><string>/Users/youruser/OmniAgentOS/var/log/gate-watch.log</string>
+  <key>StandardErrorPath</key><string>/Users/youruser/OmniAgentOS/var/log/gate-watch.log</string>
+  <!--
+  <key>EnvironmentVariables</key>
+  <dict>
+    <key>OMNI_NTFY_URL</key><string>https://ntfy.sh/REPLACE-WITH-TOPIC</string>
+    <key>GATE_WATCH_HEALTHCHECK_URL</key><string>https://hc-ping.com/REPLACE-WITH-UUID</string>
+    <key>GATE_WATCH_MEDIC</key><string>1</string>
+    <key>GATE_WATCH_MEDIC_CMD</key><string>/Users/youruser/OmniAgentOS/scripts/gate-watch/REPLACE-WITH-MEDIC</string>
+  </dict>
+  -->
+</dict></plist>

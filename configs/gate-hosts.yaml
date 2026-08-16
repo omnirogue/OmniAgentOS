@@ -1,0 +1,43 @@
+# The gate host pool — ONE CONCURRENT GATE PER PHYSICAL MACHINE.
+#
+# Read by pipeline/bridge/gate_host.py at import. This file DECLARES membership;
+# it does not decide capacity. Capacity is the number of entries that a local
+# `ssh -G` proves are DISTINCT MACHINES, because a pool is a list of names and a
+# name is not a box: `mw0001` and `mw0001-owner` are two names for 203.0.113.10 on
+# this installation, and scheduling both would put two ~12-minute gates on one
+# Mac — the CPU-overload class that has already been misreported as a candidate
+# defect. An entry whose identity cannot be proven, that duplicates an earlier
+# entry's machine, or that resolves back to this box is DROPPED with a
+# `gate-host CONFIG:` line on stderr.
+#
+# The local box is always the first slot and is never listed here.
+#
+# Adding a box:
+#   1. give it an ssh alias in ~/.ssh/config and confirm `ssh -G <alias>` prints
+#      a `hostname` that no other entry here resolves to;
+#   2. install the gate stack at `workspace` and the evidence store at
+#      `evidence_root` ON THAT BOX (the prefixes travel with the host because
+#      the twins do not share a user account — mw0002 has no `youruser`);
+#   3. record its PERFORMANCE cores, measured — the router ranks twins by
+#      headroom, so a wrong number sends work to the smaller machine and the
+#      contention is charged to the candidate;
+#   4. append it below. Nothing else changes: MAX_CONCURRENT_GATES and the
+#      gate-watch ceiling both derive from this pool.
+#
+# Removing every remote box: set `twins:` to an empty list (local-only gating).
+# A file that is missing, unreadable or malformed falls back to the built-in
+# pool below, so a half-written edit never silently repoints a gate box.
+#
+# Entry keys: host (required), workspace, evidence_root, perf_cores.
+twins:
+  # 24 logical / 16 performance cores. Months of gate receipts; wins a tie.
+  - host: mw0001-owner
+    workspace: /Users/youruser/OmniAgentOS-gate
+    evidence_root: /Users/youruser/OmniAgentOS/var/gate-evidence
+    perf_cores: 16
+  # 16 logical / 12 performance cores — SMALLER, and only a `cloud` account
+  # exists there. A gate here is correct but slower: capacity, not a defect.
+  - host: mw0002
+    workspace: /Users/cloud/OmniAgentOS-gate
+    evidence_root: /Users/cloud/OmniAgentOS/var/gate-evidence
+    perf_cores: 12

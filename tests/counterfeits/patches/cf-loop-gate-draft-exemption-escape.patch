@@ -1,0 +1,51 @@
+diff --git a/omniagentos/scheduler/routines.py b/omniagentos/scheduler/routines.py
+index 3e2d3106..a0971615 100644
+--- a/omniagentos/scheduler/routines.py
++++ b/omniagentos/scheduler/routines.py
+@@ -623,18 +623,19 @@ def validate_routine(payload: dict[str, Any]) -> None:
+         errors.append("name is required")
+ 
+     _validate_scope_purpose(payload, errors)
+-    errors.extend(
+-        loop_gate_errors(
+-            payload.get("task_template"), payload.get("gate_type"), payload.get("gate_config")
+-        )
+-    )
+-
+     # Status-keyed draft exemption: only exact 'disabled' may omit engine fields.
+     if payload.get("status") == "disabled":
+         if errors:
+             raise RoutineValidationError(errors)
+         return
+ 
++    # COUNTERFEIT: the loop gate is an ACTIVATION rule, not a shape rule
++    errors.extend(
++        loop_gate_errors(
++            payload.get("task_template"), payload.get("gate_type"), payload.get("gate_config")
++        )
++    )
++
+     task_template = payload.get("task_template")
+     if not isinstance(task_template, dict) or not task_template:
+         errors.append("task_template is required (a routine must declare what work it does)")
+diff --git a/omniagentos/scheduler/store.py b/omniagentos/scheduler/store.py
+index 45a87806..b5275fe5 100644
+--- a/omniagentos/scheduler/store.py
++++ b/omniagentos/scheduler/store.py
+@@ -587,8 +587,6 @@ class RoutinesStore:
+         gateless loop row seeded ``disabled`` never was — that combination is
+         exactly how the rule was escaped before this belt existed.
+         """
+-        if status == "active":
+-            _refuse_ungated_loop_activation(self.get_routine(routine_id))
+         changed = self._store._write_count(
+             "UPDATE routines SET status = ?, auto_pause_reason = ?, updated_at = ?, "
+             "revision = revision + 1 WHERE id = ?",
+@@ -621,7 +619,6 @@ class RoutinesStore:
+             return None
+         if status == "active":
+             _refuse_active_mock_harness(status, current.get("task_template"))
+-            _refuse_ungated_loop_activation(current)
+         now = utc_now_iso()
+         changed = self._store._write_count(
+             "UPDATE routines SET status = ?, auto_pause_reason = ?, updated_at = ?, "

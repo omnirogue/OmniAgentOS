@@ -1,0 +1,65 @@
+/* Status page ("/") content classes. Page-level layout/header come from the
+   shared <Page>/<PageHeader> (@/design). Information-dense, terminal-flavored
+   — this page exists to beat `osq` on density, so rows stay tight and
+   monospace where the content is machine-shaped (timestamps, hashes, log
+   lines) rather than prose. */
+
+.muted { color: var(--text-muted); font-size: var(--text-small); }
+.faint { color: var(--text-faint); font-size: var(--text-micro); }
+.mono { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+
+/* ---------------------------------------------------------------- loops --- */
+.chipRow { display: grid; grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr)); gap: var(--space-3); }
+.chip { display: flex; flex-direction: column; gap: var(--space-1); padding: var(--space-3); border-radius: var(--radius-md); background: color-mix(in srgb, var(--text-muted) 5%, transparent); }
+.chipHead { display: flex; align-items: center; gap: var(--space-2); }
+.chipName { font-weight: 600; }
+.chipDetail { font-size: var(--text-small); color: var(--text-muted); font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+.chipRc { font-size: var(--text-micro); color: var(--text-faint); font-family: var(--font-mono); }
+
+/* ----------------------------------------------------------------- gate --- */
+.gateList { display: grid; gap: var(--space-1); margin: 0; padding: 0; list-style: none; font-family: var(--font-mono); font-size: var(--text-small); }
+.gateLine { padding: var(--space-1) var(--space-2); border-radius: var(--radius-sm); background: color-mix(in srgb, var(--text-muted) 4%, transparent); overflow-wrap: anywhere; }
+.gateTick { margin-top: var(--space-2); font-size: var(--text-micro); color: var(--text-faint); }
+
+/* ---------------------------------------------------------------- queue --- */
+.queueRow { display: flex; align-items: baseline; gap: var(--space-6); flex-wrap: wrap; }
+.queueBig { font-family: var(--font-mono); font-variant-numeric: tabular-nums; font-size: var(--text-display); line-height: 1; }
+.queueCap { color: var(--text-muted); font-size: var(--text-body); }
+.queueBanner {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-md);
+  background: var(--warn-soft);
+  border: 1px solid var(--warn-border);
+  color: var(--text);
+}
+.queueBannerTitle { font-weight: 700; letter-spacing: 0.02em; text-transform: uppercase; font-size: var(--text-small); color: var(--warn); }
+.queueMeta { font-size: var(--text-micro); color: var(--text-faint); font-family: var(--font-mono); }
+
+/* ------------------------------------------------------------- landings --- */
+.landingsRow { display: flex; align-items: baseline; gap: var(--space-6); flex-wrap: wrap; }
+.landingsCount { font-family: var(--font-mono); font-variant-numeric: tabular-nums; font-size: var(--text-h1); line-height: 1; }
+.landingsLast { font-family: var(--font-mono); font-size: var(--text-small); color: var(--text-muted); overflow-wrap: anywhere; }
+
+/* -------------------------------------------------------------- recycler --- */
+.recyclerLine { display: flex; align-items: center; gap: var(--space-2); font-family: var(--font-mono); font-size: var(--text-small); }
+.recyclerAction { font-weight: 700; }
+.recyclerActionDanger { color: var(--danger); }
+.recyclerActionOk { color: var(--text-muted); }
+.recyclerRaw { color: var(--text-faint); overflow-wrap: anywhere; }
+
+/* ---------------------------------------------------------------- alerts --- */
+.alertsList { display: grid; gap: var(--space-2); margin: 0; padding: 0; list-style: none; font-family: var(--font-mono); font-size: var(--text-small); }
+.alertItem { padding: var(--space-2) var(--space-3); border-radius: var(--radius-sm); background: color-mix(in srgb, var(--danger) 5%, transparent); border-left: 2px solid var(--danger-border); overflow-wrap: anywhere; white-space: pre-wrap; }
+
+/* -------------------------------------------------------------- accounts --- */
+.accountsStrip { display: flex; align-items: center; gap: var(--space-4); flex-wrap: wrap; padding: var(--space-3) var(--space-4); }
+.accountsChip { display: inline-flex; align-items: center; gap: var(--space-1); font-size: var(--text-small); }
+.accountsLabel { color: var(--text-muted); }
+
+@media (max-width: 34rem) {
+  .queueRow, .landingsRow { gap: var(--space-3); }
+  .queueBig { font-size: var(--text-h1); }
+}

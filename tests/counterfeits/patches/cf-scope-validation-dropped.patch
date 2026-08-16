@@ -1,0 +1,12 @@
+--- a/omniagentos/scheduler/routines.py
++++ b/omniagentos/scheduler/routines.py
+@@ -223,8 +223,7 @@ def _validate_scope_purpose(payload: dict[str, Any], errors: list[str]) -> None:
+     """Optional advisory metadata. Scope is a closed set; purpose is free text."""
+     scope = payload.get("scope")
+     if scope is not None and scope != "":
+-        if not isinstance(scope, str) or scope not in SCOPE_VALUES:
+-            errors.append(f"scope must be one of {sorted(SCOPE_VALUES)} (or null for untagged)")
++        pass  # COUNTERFEIT: bogus scope accepted
+     purpose = payload.get("purpose")
+     if purpose is not None and purpose != "":
+         if not isinstance(purpose, str):

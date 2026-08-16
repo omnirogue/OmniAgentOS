@@ -1,0 +1,58 @@
+{
+  "blast_radius": "Ingests mail into EDC; a stall means no new items reach triage.",
+  "cadence_seconds": 300,
+  "company": "omniagentos",
+  "escalation_tier": "medium",
+  "exit_semantics": {
+    "DEGRADED": "degraded",
+    "DOWN": "down",
+    "OK": "ok",
+    "UNVERIFIED": "cannot_evaluate",
+    "default": "cannot_evaluate"
+  },
+  "host": "owner-mac",
+  "id": "loop-edc-gmail-poll",
+  "kind": "llm-loop",
+  "last_status": "UNVERIFIED",
+  "last_verified": null,
+  "owner": "estate-ops",
+  "repo": "/Users/youruser/OmniAgentOS",
+  "staleness_slo_seconds": 900,
+  "throughput": {
+    "derivation": "Attempted loops.daily_counts(); all records dropped for lack of a timestamp.",
+    "floor": {
+      "floor": null,
+      "fraction": 0.3,
+      "median": null,
+      "min_sample_days": 7,
+      "reason": "no windowable history: log records carry no timestamp",
+      "sample": null,
+      "sample_days": 0,
+      "sample_window": null
+    },
+    "max_error_rate": 0.25,
+    "metric": "fetched_24h",
+    "notes": [
+      "Remedy: add a UTC 'ts' per poll summary line."
+    ],
+    "observed": {
+      "as_of": null,
+      "burn": null,
+      "error_rate": null,
+      "last_success": null,
+      "process_state": "RUNNING",
+      "volume": null
+    },
+    "signal_exists": false,
+    "signal_path": "/Users/youruser/OmniAgentOS/var/log/edc-gmail-poll.log",
+    "window": "24h"
+  },
+  "verification": {
+    "field": "fetched_24h",
+    "note": "Graded on throughput, not liveness: a running loop with zero volume is DEGRADED.",
+    "source": "/Users/youruser/OmniAgentOS/var/log/edc-gmail-poll.log",
+    "type": "snapshot_field"
+  },
+  "what_it_does": "EDC mailbox poller (every 300s). NO WINDOWABLE THROUGHPUT SIGNAL: ingest log records carry source/status/fetched/created fields but no timestamp.",
+  "why_it_matters": "Same gap as loop-edc-triage: a per-run 'fetched'/'created' count exists but cannot be attributed to a time window."
+}

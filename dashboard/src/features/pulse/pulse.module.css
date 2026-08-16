@@ -1,0 +1,300 @@
+/* Observatory /pulse — Observatory tiles and cockpit pulse additions.
+   Stripe-density cards: hairline borders, small radii, lots of whitespace,
+   motion only on hover and disclosure. */
+
+/* ── Page chrome ──────────────────────────────────────────────────── */
+
+.pageHeader {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+}
+
+.lead {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: var(--text-body);
+  line-height: 1.5;
+  max-width: 46rem;
+}
+
+.grid {
+  display: grid;
+  gap: var(--space-4);
+  grid-template-columns: repeat(auto-fit, minmax(18rem, 1fr));
+}
+
+/* ── Observatory tile (one per metric / family) ───────────────────── */
+
+.tile {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-5);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  min-height: 11rem;
+  text-decoration: none;
+  color: inherit;
+  transition:
+    border-color var(--motion-fast) var(--ease),
+    box-shadow var(--motion-fast) var(--ease),
+    transform var(--motion-fast) var(--ease);
+}
+
+.tile:hover,
+.tile:focus-visible {
+  border-color: var(--border-strong);
+  box-shadow: var(--shadow-md);
+  transform: translateY(-1px);
+}
+
+.tile:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.tileHead {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.tileTitle {
+  margin: 0;
+  font-size: var(--text-small);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.tileSpark {
+  flex-shrink: 0;
+}
+
+.tileBody {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+
+.tileValue {
+  font-family: var(--font-mono);
+  font-size: var(--text-display, 2.25rem);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1;
+  color: var(--text);
+}
+
+.tileValue--ok { color: var(--ok); }
+.tileValue--warn { color: var(--warn); }
+.tileValue--danger { color: var(--danger); }
+.tileValue--accent { color: var(--accent); }
+.tileValue--promote { color: var(--promote); }
+.tileValue--reject { color: var(--reject); }
+
+.tileDelta {
+  font-family: var(--font-mono);
+  font-size: var(--text-small);
+  font-weight: 500;
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-pill);
+  background: color-mix(in srgb, var(--text-muted) 10%, transparent);
+  color: var(--text-muted);
+}
+
+.tileDelta--up {
+  color: var(--promote);
+  background: color-mix(in srgb, var(--promote) 12%, transparent);
+}
+
+.tileDelta--down {
+  color: var(--reject);
+  background: color-mix(in srgb, var(--reject) 12%, transparent);
+}
+
+.tileCaption {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: var(--text-micro);
+  line-height: 1.4;
+}
+
+.tileLink {
+  margin-top: auto;
+  font-size: var(--text-micro);
+  color: var(--text-faint);
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  transition: color var(--motion-fast) var(--ease);
+}
+
+.tile:hover .tileLink,
+.tile:focus-visible .tileLink {
+  color: var(--text);
+}
+
+/* ── Cockpit pulse section ───────────────────────────────────────── */
+
+.cockpitPulse {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  padding: var(--space-5);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xl);
+}
+
+.cockpitPulseHead {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+}
+
+.cockpitPulseTitle {
+  margin: 0;
+  font-size: var(--text-h3);
+  font-weight: 600;
+  color: var(--text);
+  letter-spacing: -0.01em;
+}
+
+.cockpitPulseSub {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: var(--text-small);
+}
+
+/* Growth / Loops / Since strips — a dense single-row of stats, or a compact list */
+
+.pulseRow {
+  display: flex;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+}
+
+.pulseRowItem {
+  flex: 1 1 10rem;
+  min-width: 9rem;
+}
+
+/* Loops pulse — compact list of routines */
+
+.loopList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.loopRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: color-mix(in srgb, var(--surface) 60%, var(--canvas));
+  font-size: var(--text-small);
+}
+
+.loopName {
+  flex: 1;
+  font-weight: 500;
+  color: var(--text);
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.loopMeta {
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  font-size: var(--text-micro);
+}
+
+.loopNextFire {
+  color: var(--text-muted);
+  font-size: var(--text-micro);
+  white-space: nowrap;
+}
+
+/* Since you were gone — stat row + deep links */
+
+.deltaStrip {
+  display: flex;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+
+.deltaStat {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-1);
+  padding: var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  min-width: 8rem;
+  flex: 1 1 8rem;
+  text-decoration: none;
+  color: inherit;
+  transition:
+    border-color var(--motion-fast) var(--ease),
+    background-color var(--motion-fast) var(--ease);
+}
+
+.deltaStat:hover,
+.deltaStat:focus-visible {
+  border-color: var(--border-strong);
+  background: var(--surface-raised);
+}
+
+.deltaStat:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.deltaStatLabel {
+  font-size: var(--text-micro);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.deltaStatValue {
+  font-family: var(--font-mono);
+  font-size: var(--text-h2);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1;
+  color: var(--text);
+}
+
+.deltaStatValue--hot {
+  color: var(--accent);
+}
+
+.deltaSince {
+  color: var(--text-faint);
+  font-size: var(--text-micro);
+}

@@ -1,0 +1,108 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://omniagentos.local/schema/loops/profile-omniagentos-v1.json",
+  "title": "OmniAgentOS profile overlay (OPTIONAL)",
+  "description": "House doctrine layered ON TOP of envelope.schema.json. A loop that validates against the base envelope alone is fully conforming and interoperable - this overlay is what THIS estate additionally demands of ITS OWN loops. Do not impose it on third-party loops. Validate with both schemas when you want the stricter contract.",
+
+  "type": "object",
+  "additionalProperties": true,
+
+  "properties": {
+    "producer": {
+      "type": "object",
+      "properties": {
+        "model": { "type": "string" },
+        "lineage": {
+          "type": "string",
+          "description": "anthropic | openai | google | xai | moonshot | human. Used to enforce cross-lineage review."
+        },
+        "substituted_from": {
+          "type": "string",
+          "description": "Set when provider failover picked a different seat than intended. A shrunken or substituted panel must never be presented as the full one."
+        },
+        "third_party": {
+          "type": "boolean",
+          "description": "Set true ONLY by a loop this estate does not run. It does not waive risk policy: risky real diffs still require exact-SHA cross-lineage approval; routine diffs do not require a verdict from any producer."
+        }
+      }
+    },
+
+    "verdicts": {
+      "type": "array",
+      "description": "Build-time cross-lineage review for risky real diffs. Lineage inequality and reviewed_sha equality are enforced mechanically by the lander.",
+      "items": {
+        "type": "object",
+        "required": ["reviewer", "verdict", "lineage", "reviewed_sha"],
+        "properties": {
+          "reviewer": { "type": "string" },
+          "lineage": { "type": "string", "description": "REQUIRED: the gate's cross-lineage check keys on this field, so a verdict that omits it is not a disclosed review — and used to be admitted as one." },
+          "reviewed_sha": { "type": "string", "pattern": "^[0-9a-f]{40}$", "description": "Exact candidate head_sha this verdict approves." },
+          "verdict": { "enum": ["approve", "approve-with-fix", "rework", "reject", "inconclusive"] },
+          "blockers": { "type": "array", "items": { "type": "string" } },
+          "at": { "type": "string", "format": "date-time" }
+        }
+      }
+    }
+  },
+
+  "allOf": [
+    { "$ref": "https://omniagentos.local/schema/loops/envelope-v1.1.json" },
+    {
+      "$comment": "This estate requires a carrier enumeration on every candidate: the codebase has 518 clone families, so a fix is structurally 2-13 fixes more often than not.",
+      "if": { "properties": { "kind": { "const": "candidate" } }, "required": ["kind"] },
+      "then": {
+        "properties": {
+          "payload": {
+            "required": ["carrier_enumeration"],
+            "properties": {
+              "carrier_enumeration": {
+                "type": "array",
+                "minItems": 1,
+                "items": {
+                  "type": "object",
+                  "required": ["site", "ruling"],
+                  "properties": {
+                    "site": { "type": "string", "description": "file:line" },
+                    "ruling": {
+                      "type": "string",
+                      "description": "'reached' or 'not-applicable - <reason>'. A row you cannot rule is a row you have not understood."
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "$comment": "This estate requires every proposal to be falsifiable and lane-split.",
+      "if": { "properties": { "kind": { "const": "proposal" } }, "required": ["kind"] },
+      "then": {
+        "required": ["paths"],
+        "$comment": "paths is a TOP-LEVEL envelope field, not a payload field - the estate requires it on proposals so Integration can build its conflict graph before an Executor picks the plan up.",
+        "properties": {
+          "payload": {
+            "required": ["falsifier", "success_metrics"],
+            "properties": {
+              "falsifier": {
+                "type": "string",
+                "description": "What observation would prove this plan UNNECESSARY. If you cannot write one, you do not understand the problem well enough to propose a fix for it."
+              },
+              "lanes": {
+                "type": "array",
+                "description": "File-disjoint parallel splits, with known conflicts named.",
+                "items": { "type": "object" }
+              },
+              "tests_required": {
+                "type": "array",
+                "items": { "type": "string" },
+                "description": "For each: what it must FAIL against."
+              }
+            }
+          }
+        }
+      }
+    }
+  ]
+}

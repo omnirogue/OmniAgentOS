@@ -1,0 +1,61 @@
+# Default verification-gated cascade ladder for
+# omniagentos.routing.cascade.run_cascade (FrugalGPT arXiv:2305.05176 style):
+# cheapest tier tried first, escalating ONLY on a verified failure, and
+# carrying a Reflexion-style reflection (arXiv:2303.11366) into the next
+# tier's prompt. omniagentos.routing.learn mines the recorded trace to
+# recommend skipping straight to a pricier tier once the evidence says the
+# cheap tier reliably fails for a given task class.
+#
+# `adapter` values must be a key omniagentos.adapters.registry.resolve_adapter
+# recognizes (see omniagentos/adapters/registry.py); `model`/`effort` are
+# passed straight through to that adapter's AgentInput by the composing
+# caller -- this file and omniagentos/routing/cascade.py never build an
+# AgentInput or call an adapter themselves.
+#
+# cost_rank is a UNITLESS relative ordering used only by
+# omniagentos.routing.learn.recommend_start_tier's expected-cost fallback --
+# not a real dollar figure, just "tier0 cheaper than tier1 cheaper than
+# tier2" bookkeeping for that arithmetic.
+ladder:
+  # Owner formation (2026-07-27): Gemini 3.6 Flash is the primary coder and gets
+  # TWO attempts before escalating to Grok 4.5, then Sol, then Fable. Each rung is
+  # entered only on a VERIFIED failure of the one below and carries a
+  # Reflexion note forward, so the second Gemini attempt is grounded in the
+  # first one's actual error rather than being a blind retry.
+
+  # tier0: primary coder, first attempt.
+  - name: tier0-gemini-coder
+    adapter: cli-gemini
+    model: gemini-3.6-flash
+    effort: low
+    cost_rank: 1.0
+
+  # tier1: primary coder, SECOND attempt at higher effort, with the failure
+  # reflection in hand. Two rungs is how "gemini gets 2 tries" is expressed —
+  # run_cascade walks one attempt per rung.
+  - name: tier1-gemini-retry
+    adapter: cli-gemini
+    model: gemini-3.6-flash
+    effort: high
+    cost_rank: 2.0
+
+  # tier2: escalation after Gemini fails twice (owner directive 2026-07-27).
+  - name: tier2-grok
+    adapter: cli-grok
+    model: grok-4.5
+    effort: high
+    cost_rank: 5.0
+
+  # tier3: deep reasoning / structural work.
+  - name: tier3-sol
+    adapter: cli-codex
+    model: gpt-5.6-sol
+    effort: high
+    cost_rank: 8.0
+
+  # tier4: last resort, reached only once every cheaper tier verifiably failed.
+  - name: tier4-fable
+    adapter: cli-claude
+    model: fable
+    effort: high
+    cost_rank: 12.0

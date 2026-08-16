@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  TEMPLATE — not installed by the authoring seat.
+  Install with:
+    cp tools/capmap/com.omniagentos.capmap.plist ~/Library/LaunchAgents/
+    plutil -lint ~/Library/LaunchAgents/com.omniagentos.capmap.plist
+    launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/com.omniagentos.capmap.plist
+
+  Before the FIRST scheduled run, seed the baseline once by hand by running
+  run.py with the seed-only flag. run.py also seeds itself when no baseline
+  exists, so a missed seed cannot page the operator 66 times; the manual seed is belt
+  and braces, not a prerequisite.
+
+  RunAtLoad is false on purpose: bootstrapping the job should not fire an
+  unscheduled estate-wide verification sweep at load time.
+-->
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.omniagentos.capmap</string>
+    <key>ProgramArguments</key>
+    <array>
+        <string>/usr/bin/python3</string>
+        <string>/Users/youruser/OmniAgentOS/tools/capmap/run.py</string>
+    </array>
+    <key>EnvironmentVariables</key>
+    <dict>
+        <key>PATH</key>
+        <string>/usr/local/bin:/opt/homebrew/bin:/usr/bin:/bin:/usr/sbin:/sbin:/Users/youruser/.local/bin</string>
+        <key>HOME</key>
+        <string>/Users/youruser</string>
+    </dict>
+    <key>StartInterval</key>
+    <integer>900</integer>
+    <key>RunAtLoad</key>
+    <false/>
+    <key>StandardOutPath</key>
+    <string>/Users/youruser/Work/Ops/var/log/capmap.log</string>
+    <key>StandardErrorPath</key>
+    <string>/Users/youruser/Work/Ops/var/log/capmap.log</string>
+    <key>WorkingDirectory</key>
+    <string>/Users/youruser/OmniAgentOS/tools/capmap</string>
+</dict>
+</plist>

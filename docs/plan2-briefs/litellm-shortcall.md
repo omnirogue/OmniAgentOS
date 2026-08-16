@@ -1,0 +1,6 @@
+# PLAN2-TASK — LiteLLM short-call lane (branch plan2/litellm-shortcall)
+Context: Desktop AgentOS-Comparison 07-LITELLM-DECISION — LiteLLM proxy (live at http://localhost:4000/v1, key env GEMINI_API_KEY or dummy sk-local-litellm-proxy-secure) approved as a SECOND lane for short structured calls only, never the CLI coding lane. omniagentos/modelintel/config.py already has router_gemini: RouterConfig (model gemini-3.6-flash).
+Mission: one shared client for short structured LLM calls + budget guard, so later consumers (clarify, planner-lite, chat summarizer, narrative fallback) stop hand-rolling HTTP.
+OWN: new omniagentos/llm/ package: client.py (ShortCallClient: chat-completions POST via stdlib urllib, model param default gemini-3.6-flash, timeout, retry-once, JSON-mode helper returning parsed dict with schema-keys validation), budget.py (per-day USD cap read from configs/llm.yaml, spend ledger appended to var/ledger/llm_shortcalls.jsonl, refuse when over cap), configs/llm.yaml (new), tests/llm/** (mock HTTP, no network in tests).
+DO NOT modify modelintel/, adapters/, or any existing caller — consumers wire in on later branches.
+Acceptance: uv run pytest -q tests/llm green; client usable as `from omniagentos.llm.client import ShortCallClient`.

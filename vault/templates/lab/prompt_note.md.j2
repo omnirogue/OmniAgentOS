@@ -1,0 +1,20 @@
+# prompt: {{ label if label else (discipline ~ " v" ~ version) }}
+
+[[{{ discipline }}]] · [[Home]]
+
+## Surface
+
+- **Kind:** {{ kind }}
+- **Version:** {{ version }}{% if parent_version is not none %} (parent v{{ parent_version }}){% endif +%}
+- **Status:** {{ surface_status }}
+- **Content hash:** `{{ content_hash }}`
+- **Safety relevant:** {{ "yes" if safety_relevant else "no" }}
+- **Source:** `{{ source_path }}`
+
+## Content
+
+```
+{{ content }}
+```
+
+## Notes (human)

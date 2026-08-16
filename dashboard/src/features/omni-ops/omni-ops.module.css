@@ -1,0 +1,129 @@
+.grokPage {
+  display: grid;
+  gap: var(--space-5);
+}
+
+.statGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
+  gap: var(--space-3);
+}
+
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.toolbarTitle {
+  font-size: var(--text-small);
+  font-weight: 600;
+}
+
+.toolbarCount {
+  font-size: var(--text-small);
+  color: var(--text-muted);
+}
+
+.cardGrid {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.interactionCard {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.interactionHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: var(--space-3);
+}
+
+.interactionMeta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  align-items: center;
+}
+
+.interactionBody {
+  font-size: var(--text-body);
+  line-height: 1.6;
+  color: var(--text);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.interactionActions {
+  display: flex;
+  gap: var(--space-2);
+  align-items: center;
+}
+
+.answerInput {
+  display: grid;
+  gap: var(--space-2);
+  margin-top: var(--space-2);
+}
+
+.answerInput textarea {
+  min-height: 4rem;
+  resize: vertical;
+  font: inherit;
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  color: var(--text);
+}
+
+.answerInput textarea:focus {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+  border-color: var(--accent);
+}
+
+.grantCard {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.grantHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: var(--space-2);
+}
+
+.grantMeta {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(8rem, 1fr));
+  gap: var(--space-2);
+  font-size: var(--text-small);
+  color: var(--text-muted);
+}
+
+.grantMeta strong {
+  display: block;
+  font-size: var(--text-micro);
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+
+.notice {
+  padding: var(--space-3);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  font-size: var(--text-small);
+}
+
+@media (max-width: 48rem) {
+  .toolbar { flex-direction: column; align-items: stretch; }
+}

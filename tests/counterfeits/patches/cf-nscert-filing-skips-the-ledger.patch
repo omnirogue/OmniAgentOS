@@ -1,0 +1,11 @@
+diff --git a/scripts/northstar_cert/file_gap_findings.py b/scripts/northstar_cert/file_gap_findings.py
+--- a/scripts/northstar_cert/file_gap_findings.py
++++ b/scripts/northstar_cert/file_gap_findings.py
+@@ -903,7 +903,6 @@ def file_gap_findings(
+         if not _write_new(destination, envelope):
+             result.lost_race += 1
+             continue
+-        _append_ledger(queue, _found_event(envelope, path))
+         result.filed.append(envelope["id"])
+         if regression:
+             result.regressions_filed += 1

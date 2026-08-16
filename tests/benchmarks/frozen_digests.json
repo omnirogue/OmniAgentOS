@@ -1,0 +1,252 @@
+{
+  "corpus_version": 4,
+  "fixtures": {
+    "fx_001_greenfield_palindrome": "9704c4140c509d4bf8068db5def02aabf3f08e4dc2250f976f3c041489864364",
+    "fx_002_bugfix_failing_test": "a660a57f7926252b2c77616b4c0cf3a36231774f672d6eefad79734d7a640efa",
+    "fx_003_multifile_refactor": "4795bdddb095366bb3d2ef18331f2a6181df24fb13a1614a305b7263e77e21ed",
+    "fx_004_migration_dal": "c6fac737785e57ade1cd04b11980098f80598ee497408ec161ceb3df57f05c67",
+    "fx_005_scope_discipline": "cea1f5dea1b4ffb82c8030213216ce4544159515cbd175ea5b9a0f0b71f1496e",
+    "fx_006_regression_sensitive_fix": "f8c2be0b06e86901b00b3a58b9ca2325a6651e01d2561f599d634903901d9098",
+    "fx_007_seq_config_pipeline": "2d9c648c5f69852c87e9431b048efc0554c20544a452d7e496de9562997a3077",
+    "fx_008_seq_expression_calculator": "798328d17719ddab04e8d283118beb926cc05b005db91d2bd9afa8c0d8cbf72d",
+    "fx_009_seq_diff_patch_roundtrip": "27261234f0e8e50bf6cdf797f28e9d6f080fd8c3fb246397968b663df314c266",
+    "fx_010_seq_template_engine": "0c2a61b5c79effa2dfb24f41fc1cc18ec7774d00cbdc5da7eded2c6af5d53be4",
+    "fx_011_indep_three_validators": "2bb065236bdd4c4eb487c3ee7799670174efdf48cf916a85ca26c5ec6ba826c6",
+    "fx_012_indep_three_formatters": "0cb050f709688d80eb75b12bab731de2a06b0f31fc0adab55656bb09c9df7927",
+    "fx_013_indep_four_codecs": "59f958f16cc92b2e7697772c3509b36a5ef024e971a4c63f76768e675fc3427a",
+    "fx_014_indep_three_statistics": "f368cfce269a62eed291477b3dde01a9d4a5bd07ecccbd386588d5d145121c83",
+    "fx_015_shared_schema_consistency": "2ef51a1aed23b6a5979049a115f363c8f85b31eb15afec14f751b5ad2ccb4626",
+    "fx_016_shared_ledger_invariants": "cbcff1976ecc693083a0854a2e7b8926f6fc61f2e8b411e666e26e0fd1c9e9ad",
+    "fx_017_shared_error_taxonomy": "e5d87f0af4fc5fd45d122ad02f34c7e579e9da628abe6600b4be2d1070b605eb",
+    "fx_018_shared_inverted_index": "65416ca036f8d43b3aa9635bf09c4209a511f0ca7bd90a87bb486fc605d35bb6",
+    "fx_019_tooldense_plugin_hook_rename": "8183e68d16e7e47916252b63af4e20e3e150623d15c857429126cfac88dea4f3",
+    "fx_020_tooldense_sensor_unit_sweep": "3f40f4f2cb97767847938816ecb3f76bb318e586a3ae96b2679a0de5794d372f",
+    "fx_021_tooldense_command_metadata": "61fde188d8e73b63cd150e0d1b9ea1f20cf51ce4c28dccca8312660c0d31828c"
+  },
+  "frozen_at": "2026-08-16T00:52:02Z",
+  "frozen_at_repo_rev": "",
+  "meta": {
+    "fx_001_greenfield_palindrome": {
+      "declared_files": [
+        "strutil.py"
+      ],
+      "kind": "greenfield",
+      "tier": "control"
+    },
+    "fx_002_bugfix_failing_test": {
+      "declared_files": [
+        "pager.py"
+      ],
+      "kind": "bugfix",
+      "tier": "standard"
+    },
+    "fx_003_multifile_refactor": {
+      "declared_files": [
+        "emitters/frame.py",
+        "emitters/run_events.py",
+        "emitters/task_events.py",
+        "emitters/alert_events.py"
+      ],
+      "kind": "refactor",
+      "tier": "standard"
+    },
+    "fx_004_migration_dal": {
+      "declared_files": [
+        "db/migrations/003_add_owner.sql",
+        "dal.py"
+      ],
+      "kind": "migration",
+      "tier": "complex"
+    },
+    "fx_005_scope_discipline": {
+      "declared_files": [
+        "service.py"
+      ],
+      "kind": "scope",
+      "tier": "governance"
+    },
+    "fx_006_regression_sensitive_fix": {
+      "declared_files": [
+        "retry.py"
+      ],
+      "kind": "bugfix",
+      "tier": "complex"
+    },
+    "fx_007_seq_config_pipeline": {
+      "declared_files": [
+        "iniparse.py",
+        "resolve.py",
+        "cli.py"
+      ],
+      "kind": "strictly-sequential",
+      "tier": "standard"
+    },
+    "fx_008_seq_expression_calculator": {
+      "declared_files": [
+        "lexer.py",
+        "rpn.py",
+        "evaluate.py",
+        "calc.py"
+      ],
+      "kind": "strictly-sequential",
+      "tier": "standard"
+    },
+    "fx_009_seq_diff_patch_roundtrip": {
+      "declared_files": [
+        "mydiff.py",
+        "mypatch.py",
+        "roundtrip.py"
+      ],
+      "kind": "strictly-sequential",
+      "tier": "standard"
+    },
+    "fx_010_seq_template_engine": {
+      "declared_files": [
+        "tmpl_scan.py",
+        "tmpl_parse.py",
+        "tmpl_render.py",
+        "engine.py"
+      ],
+      "kind": "strictly-sequential",
+      "tier": "standard"
+    },
+    "fx_011_indep_three_validators": {
+      "declared_files": [
+        "validators/isbn.py",
+        "validators/luhn.py",
+        "validators/semver.py"
+      ],
+      "kind": "independently-decomposable",
+      "tier": "standard"
+    },
+    "fx_012_indep_three_formatters": {
+      "declared_files": [
+        "fmt/duration.py",
+        "fmt/table.py",
+        "fmt/csvout.py"
+      ],
+      "kind": "independently-decomposable",
+      "tier": "standard"
+    },
+    "fx_013_indep_four_codecs": {
+      "declared_files": [
+        "codec/rle.py",
+        "codec/varint.py",
+        "codec/base32.py",
+        "codec/hexdump.py"
+      ],
+      "kind": "independently-decomposable",
+      "tier": "standard"
+    },
+    "fx_014_indep_three_statistics": {
+      "declared_files": [
+        "stats/quantile.py",
+        "stats/histogram.py",
+        "stats/smooth.py"
+      ],
+      "kind": "independently-decomposable",
+      "tier": "standard"
+    },
+    "fx_015_shared_schema_consistency": {
+      "declared_files": [
+        "schema.py",
+        "writer.py",
+        "reader.py",
+        "validator.py"
+      ],
+      "kind": "shared-state",
+      "tier": "standard"
+    },
+    "fx_016_shared_ledger_invariants": {
+      "declared_files": [
+        "store.py",
+        "ops/deposit.py",
+        "ops/withdraw.py",
+        "ops/transfer.py"
+      ],
+      "kind": "shared-state",
+      "tier": "standard"
+    },
+    "fx_017_shared_error_taxonomy": {
+      "declared_files": [
+        "errors.py",
+        "api.py",
+        "worker.py",
+        "cli.py"
+      ],
+      "kind": "shared-state",
+      "tier": "standard"
+    },
+    "fx_018_shared_inverted_index": {
+      "declared_files": [
+        "store.py",
+        "ops/add.py",
+        "ops/remove.py",
+        "ops/rewrite.py"
+      ],
+      "kind": "shared-state",
+      "tier": "standard"
+    },
+    "fx_019_tooldense_plugin_hook_rename": {
+      "declared_files": [
+        "plugins/archive.py",
+        "plugins/audit.py",
+        "plugins/backup.py",
+        "plugins/cache.py",
+        "plugins/digest.py",
+        "plugins/export.py",
+        "plugins/ingest.py",
+        "plugins/notify.py",
+        "plugins/purge.py",
+        "plugins/render.py",
+        "plugins/sync.py",
+        "plugins/verify.py",
+        "loader.py",
+        "manifest.py"
+      ],
+      "kind": "tool-dense",
+      "tier": "standard"
+    },
+    "fx_020_tooldense_sensor_unit_sweep": {
+      "declared_files": [
+        "fleet.py",
+        "summary.py",
+        "sensors/altimeter.py",
+        "sensors/anemometer.py",
+        "sensors/barometer.py",
+        "sensors/flowmeter.py",
+        "sensors/hygrometer.py",
+        "sensors/manometer.py",
+        "sensors/odometer.py",
+        "sensors/pitot.py",
+        "sensors/pyranometer.py",
+        "sensors/scale.py",
+        "sensors/tachometer.py",
+        "sensors/thermocouple.py"
+      ],
+      "kind": "tool-dense",
+      "tier": "standard"
+    },
+    "fx_021_tooldense_command_metadata": {
+      "declared_files": [
+        "commands/build.py",
+        "commands/clean.py",
+        "commands/deploy.py",
+        "commands/doctor.py",
+        "commands/fetch.py",
+        "commands/init.py",
+        "commands/lint.py",
+        "commands/migrate.py",
+        "commands/publish.py",
+        "commands/rollback.py",
+        "commands/status.py",
+        "commands/verify.py",
+        "index.py",
+        "router.py"
+      ],
+      "kind": "tool-dense",
+      "tier": "standard"
+    }
+  },
+  "set_digest": "08c4fa9f45aa59f1cfe56d0e68ef262bcd8db0359f904736be3167bc60e5be0e"
+}

@@ -1,0 +1,22 @@
+# GitHub login and git-author-email -> employee id map for conservative activity
+# inference. Pool-intake cards should set OMNIAGENTOS_TEAM_DEFAULT_GOAL_ID so
+# their created work has an explicit goal rather than an inferred one.
+#
+# Values are validated at inference startup against the Team Work OS roster.
+# An unmapped GitHub login is intentionally left unattributed; do not add
+# aliases unless the login-to-person relationship is known.
+bob-dev: emp_bob
+bob-dev@example.com: emp_bob
+Bob: emp_bob
+alice-dev: emp_alice
+alice@example.com: emp_alice
+Alice Example: emp_alice
+owner@initech.example: emp_owner
+example-org: emp_owner
+example-org@example.com: emp_owner
+# the operator's other real addresses (dashboard Tailscale-login principal + owned mailboxes)
+# so the EDC decisions API resolves his authenticated principal to emp_owner.
+owner@acmeuni.example: emp_owner
+owner@globex.example: emp_owner
+owner@hooli.example: emp_owner
+alice@example.com: emp_alice

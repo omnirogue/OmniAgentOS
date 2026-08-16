@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<!--
+  Observe-first lab curation loop (N10).
+
+  Interval: ONE run per day at {{HOUR}}:{{MINUTE}} local time (StartCalendarInterval
+  with Hour+Minute and no Weekday/Day key == daily). Daily is the default assumption:
+  propose_experiments builds a deterministic 20-slot portfolio per discipline, so a
+  faster cadence buys no new signal while it is observe-only.
+
+  RunAtLoad is false on purpose: installing this job must never trigger a pass. The
+  operator triggers the first run by hand (`launchctl kickstart`) after reading
+  docs/runbooks/lab-curation-loop.md.
+
+  Render with: scripts/lab/curation_loop.py render   (never rendered by launchd itself)
+-->
+<dict>
+    <key>Label</key><string>{{LABEL}}</string>
+    <key>ProgramArguments</key>
+    {{PROGRAM_ARGS}}
+    <key>WorkingDirectory</key><string>{{WORKING_DIR}}</string>
+    <key>RunAtLoad</key><false/>
+    <key>StartCalendarInterval</key>
+    <dict><key>Hour</key><integer>{{HOUR}}</integer><key>Minute</key><integer>{{MINUTE}}</integer></dict>
+    <key>StandardOutPath</key><string>{{STDOUT_PATH}}</string>
+    <key>StandardErrorPath</key><string>{{STDERR_PATH}}</string>
+    <key>ProcessType</key><string>Background</string>
+</dict>
+</plist>

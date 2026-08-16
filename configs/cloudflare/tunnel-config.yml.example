@@ -1,0 +1,76 @@
+# Copy this file to ~/.cloudflared/config.yml after creating the named tunnel.
+# Replace every angle-bracket placeholder. Keep this file as a template: do not
+# put the generated credentials JSON in git.
+#
+# INGRESS TARGET: the Caddy hop, NOT the dashboard's own port. The dashboard
+# middleware and serverProxy `requireTrustedHop` 403 any request that lacks the
+# X-Omni-Trusted-Hop secret, and only Caddy injects that secret. Caddy listens
+# on `${OMNIAGENTOS_CADDY_PORT:-3013}` by default (see
+# scripts/launch-omniagentos.sh and configs/dashboard-caddy/Caddyfile) —
+# check the running process's actual OMNIAGENTOS_CADDY_PORT before filling this in.
+#
+# PATH SCOPING: every rule below is deliberate. Without it this hostname
+# publishes the ENTIRE dashboard (accounts, filesearch, workfs,
+# employee-transcripts, provision, system) to every Access-allowlisted
+# identity, because Caddy vouches ONE shared operator principal for all of
+# them (see docs/operations/remote-board-access.md, "Who can see what").
+# Do not widen these rules without reading that section first.
+
+tunnel: "<your-tunnel-id>"
+credentials-file: "/Users/<your-mac-user>/.cloudflared/<your-tunnel-id>.json"
+
+ingress:
+  - hostname: "team-board.<your-zone>"
+    path: "^/team($|/.*)"
+    # Why: the actual page being published.
+    service: "http://127.0.0.1:3013"
+  - hostname: "team-board.<your-zone>"
+    path: "^/api/team($|/.*)"
+    # Why: the /team page's own namespace
+    # (dashboard/src/features/team/client.ts, hooks.ts — all `/api/team/*`).
+    # NOTE cloudflared matches on path only, never on HTTP method — this rule
+    # (and every rule below) allows every verb the origin accepts on the
+    # matched path, not just GET.
+    service: "http://127.0.0.1:3013"
+  - hostname: "team-board.<your-zone>"
+    path: "^/api/board(/[^/]+)?$"
+    # Why: live board list + single-card read for the /team page's drawer.
+    # This regex deliberately excludes deeper subpaths (e.g.
+    # /api/board/{id}/files/reveal) — it matches only /api/board and
+    # /api/board/{id}, never a third path segment. Because cloudflared does
+    # not filter by method, any POST/PUT/DELETE the origin accepts on those
+    # two exact paths is also reachable through the tunnel; keep this regex
+    # exactly this shape rather than widening it to `(/.*)?`.
+    service: "http://127.0.0.1:3013"
+  - hostname: "team-board.<your-zone>"
+    path: "^/api/ledger/tail$"
+    # Why: the drawer's ledger tail feed.
+    service: "http://127.0.0.1:3013"
+  - hostname: "team-board.<your-zone>"
+    path: "^/api/health$"
+    # Why: the topbar status pill. Deliberately NOT /api/pause — allowing
+    # that path would let a remote caller PUT the pipeline into pause, and
+    # cloudflared's path match does not distinguish GET from PUT.
+    service: "http://127.0.0.1:3013"
+  - hostname: "team-board.<your-zone>"
+    path: "^/api/auth($|/.*)"
+    # Why: login/logout — required to mint the session cookie at all.
+    service: "http://127.0.0.1:3013"
+  - hostname: "team-board.<your-zone>"
+    path: "^/_next($|/.*)"
+    # Why: Next.js build assets the /team page needs to render.
+    service: "http://127.0.0.1:3013"
+  - hostname: "team-board.<your-zone>"
+    path: "^/favicon.*"
+    # Why: static asset the browser requests unconditionally.
+    service: "http://127.0.0.1:3013"
+  - hostname: "team-board.<your-zone>"
+    path: "^/(manifest\\.json|icon.*\\.(png|svg)|apple-touch-icon\\.png)$"
+    # Why: PWA/layout assets the /team page's <head> references directly.
+    service: "http://127.0.0.1:3013"
+  # cloudflared requires a final catch-all ingress rule. Everything not
+  # matched above (accounts, filesearch, workfs, employee-transcripts,
+  # provision, system, ...) is refused at the edge.
+  - hostname: "team-board.<your-zone>"
+    service: "http_status:404"
+  - service: "http_status:404"

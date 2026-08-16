@@ -1,0 +1,59 @@
+# Counterfeit fragment — lane/acceptance-neutral.
+#
+# The taxonomy has to be defended in BOTH directions, because this repo has
+# shipped both collapses. Restoring parked/idle to the favourable set hides a
+# stalled loop behind 100%; scoring a non-result as a rejection auto-pauses a
+# loop for behaving correctly. Each mutation below is one of those, and each
+# leaves every "the loop ran" test green.
+
+[[counterfeit]]
+id = "cf-nonresult-scored-accepted"
+patch = "patches/cf-nonresult-scored-accepted.patch"
+rationale = """Restores `parked` and `idle` to the favourable status set — the exact
+shape of the shipped defect. A loop that parks the same approval every tick and heals
+nothing then reports acceptance 1.0, so it can never reach the auto-pause floor and an
+operator has no signal that it is dead. Every functional loop test stays green, because
+a loop that PARKS still parks; the only thing that changes is that a non-result is
+counted as a success. This is live-observed, not hypothetical:
+rtn_1e5567b9f3314a2c9d76 read total_runs=2 accepted_runs=2 acceptance_rate=1.0
+while both of its runs parked and healed nothing."""
+must_fail = [
+  "tests/scheduler/test_acceptance_neutral.py::test_doctrine_a_non_result_is_neither_success_nor_failure",
+  "tests/scheduler/test_acceptance_neutral.py::test_n_consecutive_parked_ticks_do_not_report_full_acceptance",
+  "tests/scheduler/test_loop_jobs.py::test_a_parked_tick_is_recorded_as_neither_accepted_nor_rejected",
+]
+failure_re = "could never trip the auto-pause floor|not an acceptance|assert"
+
+[[counterfeit]]
+id = "cf-neutral-scored-rejected"
+patch = "patches/cf-neutral-scored-rejected.patch"
+rationale = """Settles a NEUTRAL built-in tick with the boolean instead of NULL, so a
+parked or idle run is written gate_passed=0/accepted=0. This is the OPPOSITE defect and
+the one with four prior incidents (2026-07-31: record/settle rollup 94e34b23, fire-time
+floor 1a4226a9, pulse settled-definition divergence, no-gate settlement a6c0cc7e): a
+loop waiting on a human is punished for waiting, and three quiet ticks auto-pause a
+healthy routine. The outcome_class column still says 'neutral', so the rollup looks
+right — only the run row lies."""
+must_fail = [
+  "tests/scheduler/test_loop_jobs.py::test_a_parked_tick_is_recorded_as_neither_accepted_nor_rejected",
+  "tests/scheduler/test_loop_jobs.py::test_non_result_statuses_are_neutral_and_distinguishable[parked-loop_parked_awaiting_human]",
+  "tests/scheduler/test_builtin_jobs.py::test_no_input_cycle_is_neutral_not_accepted",
+]
+failure_re = "not an acceptance|quiet night is not an acceptance|assert"
+
+[[counterfeit]]
+id = "cf-floor-denominator-ignores-neutral"
+patch = "patches/cf-floor-denominator-ignores-neutral.patch"
+rationale = """Puts total_runs back in the auto-pause denominator, so non-results dilute
+the rate rather than being excluded from it. The run rows stay perfectly honest —
+NULL/NULL, outcome_class='neutral' — and every row-level assertion passes; the damage
+is at the decision point, where a routine with ten parks and zero judged runs computes
+0/10 = 0% and stops firing with 'acceptance rate below the 50% auto-pause floor'. That
+is the fire-time half of the 2026-07-31 defect, re-entered through the one path a
+row-level test cannot see."""
+must_fail = [
+  "tests/scheduler/test_acceptance_neutral.py::test_a_loop_that_never_produces_a_result_is_never_auto_paused[parked]",
+  "tests/scheduler/test_acceptance_neutral.py::test_a_loop_that_never_produces_a_result_is_never_auto_paused[idle]",
+  "tests/scheduler/test_acceptance_neutral.py::test_an_empty_denominator_is_unknown_not_zero",
+]
+failure_re = "punished a routine for non-results|acceptance rate below|assert"

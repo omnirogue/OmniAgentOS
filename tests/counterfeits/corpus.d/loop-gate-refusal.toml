@@ -1,0 +1,161 @@
+# Counterfeit fragment — lane/loop-gate-refusal.
+#
+# One defect class: a loop routine that is allowed to exist without a gate that
+# can go RED on its own work. Every entry below leaves the loop WORKING — it
+# ticks, it reports, it settles — and only removes the one thing authorised to
+# contradict the loop's own account of itself. That is the signature of this
+# class, and it is why "the suite is green" proves nothing about it: the shipped
+# defect was green for a whole day while rtn_1e5567b9f3314a2c9d76 reported ten
+# accepted runs and healed nothing.
+
+[[counterfeit]]
+id = "cf-loop-gate-default-restored"
+patch = "patches/cf-loop-gate-default-restored.patch"
+rationale = """Puts the silent default back: `DEFAULT_GATE_COMMAND = "pytest
+tests/scheduler/test_loop_jobs.py"` and `gate_command: str = DEFAULT_GATE_COMMAND`. This
+is the shipped defect verbatim. It reads like a convenience — every other seeding
+parameter has a sensible default, why not this one — and it is the whole bug: the
+substituted command grades the scheduler→worker MECHANISM, which is identical for every
+loop instance and passes on every tick whatever the loop produced, so an author who
+simply forgot a gate got a loop that settles favourable over garbage forever. Nothing
+about the row looks wrong: it validates, it registers, it fires, its gate really executes
+and really passes."""
+must_fail = [
+  "tests/scheduler/test_loop_gate_refusal.py::test_the_seeding_helper_has_no_default_gate_command",
+]
+failure_re = "a default gate command is the defect|must have no default|DID NOT RAISE|assert"
+
+[[counterfeit]]
+id = "cf-loop-machinery-gate-admitted"
+patch = "patches/cf-loop-machinery-gate-admitted.patch"
+rationale = """Drops the `_validate_loop_gate` call from `validate_routine` — a one-line
+"the store belt already covers this" simplification. It does not: the D5 belt asks
+whether an ACTIVE mock row ships a recognized verifier, and the machinery suite IS one,
+so the row persists and the loop grades itself again. It also re-opens the gateless
+metric_threshold loop, which the belt refuses two layers later with a message about
+harnesses that names neither the gate nor the fix. Restoring the helper's default is
+harmless while this rule stands and fatal the moment it does not, which is exactly why
+the refusal lives in the validator every write path reaches."""
+must_fail = [
+  "tests/scheduler/test_loop_gate_refusal.py::test_a_loop_row_gated_on_the_loop_machinery_is_refused_at_creation",
+  "tests/scheduler/test_loop_gate_refusal.py::test_a_loop_row_with_no_gate_command_is_refused_with_the_loop_specific_remedy",
+  "tests/scheduler/test_loop_gate_refusal.py::test_the_machinery_gate_is_refused_by_the_loop_rule_not_by_the_D5_belt",
+  "tests/scheduler/test_loop_gate_refusal.py::test_an_update_cannot_swap_an_honest_loop_gate_for_the_machinery_suite",
+]
+failure_re = "DID NOT RAISE|grades the loop machinery|must declare gate_config.command|assert"
+
+[[counterfeit]]
+id = "cf-loop-gate-rule-keyed-on-kind"
+patch = "patches/cf-loop-gate-rule-keyed-on-kind.patch"
+rationale = """Narrows the rule to rows whose `task_template.input.kind == "loop"`,
+which looks like a tightening and is a bypass: `loop_jobs._spec` dispatches on
+`input.module` and never reads `kind`, so a row with any other kind still launches a loop
+worker while sailing past the gate check. The refusal must be keyed on what EXECUTES the
+row, never on what the row calls itself — a self-description is exactly the kind of
+evidence this whole subsystem exists to refuse."""
+must_fail = [
+  "tests/scheduler/test_loop_gate_refusal.py::test_the_refusal_is_keyed_on_the_loop_MODULE_not_on_input_kind",
+]
+failure_re = "DID NOT RAISE|grades the loop machinery|assert"
+
+# --------------------------------------------------------------------------
+# Added closing Sol's review (findings 1 and 3). Every entry below is a
+# mutation the ORIGINAL lane would have survived — which is the honest reason
+# they exist: the first three counterfeits bound the rule's existence, not its
+# reach, and a rule with a hole is caught by nothing that only asks whether the
+# rule is still there.
+# --------------------------------------------------------------------------
+
+[[counterfeit]]
+id = "cf-loop-gate-classified-by-spelling"
+patch = "patches/cf-loop-gate-classified-by-spelling.patch"
+rationale = """Classifies a gate target by what the command SPELLED instead of where the
+path really resolves — "we already have the string, why touch the filesystem". The
+executor does not agree: `gate_runner` resolves every target inode-anchored and
+symlink-following before running it, so a gate spelled `aliases/scheduler_suite.py` that
+symlinks into tests/scheduler/ passes validation and then RUNS the machinery. Two
+definitions of one path is this repo's settled-definition-divergence class (four prior
+incidents), and it is invisible: the row validates, the gate executes, the evidence is
+signed, and the verdict is about the scheduler rather than the loop."""
+must_fail = [
+  "tests/scheduler/test_loop_gate_refusal.py::test_a_symlink_alias_to_the_machinery_is_refused_by_its_REAL_location",
+]
+failure_re = "DID NOT RAISE|grades the loop machinery|assert"
+
+[[counterfeit]]
+id = "cf-loop-blanket-gate-admitted"
+patch = "patches/cf-loop-blanket-gate-admitted.patch"
+rationale = """Drops the "target CONTAINS the machinery" half of the prefix relation, so
+`pytest tests` and `pytest .` are admitted again — the deliberately-scoped hole the first
+version of this lane left open and Sol called a blocker. It is one word of edit away from
+the refused spelling and it restores the whole defect: a blanket gate is green whenever
+the tree is green and red whenever anything anywhere is red, so its verdict is
+uncorrelated with what the instance did. The loop is self-graded again, this time by a
+gate that looks MORE thorough than the honest one."""
+must_fail = [
+  "tests/scheduler/test_loop_gate_refusal.py::test_a_blanket_gate_over_the_whole_tree_is_refused[pytest .]",
+  "tests/scheduler/test_loop_gate_refusal.py::test_a_blanket_gate_over_the_whole_tree_is_refused[pytest tests]",
+  "tests/scheduler/test_loop_gate_refusal.py::test_a_blanket_gate_over_the_whole_tree_is_refused[python -m pytest .]",
+]
+failure_re = "DID NOT RAISE|blanket gate|assert"
+
+[[counterfeit]]
+id = "cf-loop-gate-draft-exemption-escape"
+patch = "patches/cf-loop-gate-draft-exemption-escape.patch"
+rationale = """Treats the loop-gate rule as an ACTIVATION rule rather than a shape rule:
+it runs after the status-keyed draft exemption again, and the DAL's `set_status` /
+`set_status_cas` stop asking it. Each edit looks defensible on its own (drafts are
+allowed to be incomplete; status flips are documented not to re-validate shape), and
+together they are a complete bypass — seed the gateless loop `disabled`, flip it active
+through the DAL, and the rule has run exactly zero times on a row that is now firing
+every ten minutes. This is the escape Sol found, and it is why the rule is checked on the
+payload's shape and every transition to active is belted."""
+must_fail = [
+  "tests/scheduler/test_loop_gate_refusal.py::test_a_gateless_loop_row_is_refused_even_as_a_DISABLED_draft",
+  "tests/scheduler/test_loop_gate_refusal.py::test_a_legacy_gateless_loop_row_cannot_be_flipped_ACTIVE_through_the_DAL[False]",
+  "tests/scheduler/test_loop_gate_refusal.py::test_a_legacy_gateless_loop_row_cannot_be_flipped_ACTIVE_through_the_DAL[True]",
+]
+failure_re = "DID NOT RAISE|must declare gate_config.command|assert"
+
+# --------------------------------------------------------------------------
+# Added closing Sol's round-3 review. Both entries are mutations the round-2
+# corpus survived: the earlier entries bound the rule's existence and its
+# reach over TARGETS, and neither asked whether the gate is a type anything
+# executes, nor whether the reach is checked where the gate actually runs.
+# --------------------------------------------------------------------------
+
+[[counterfeit]]
+id = "cf-loop-decoy-gate-type-admitted"
+patch = "patches/cf-loop-decoy-gate-type-admitted.patch"
+rationale = """Stops asking what the gate TYPE is — "a declared command is a declared
+gate" — so a loop with `gate_type='metric_threshold'` and an honest instance-test command
+sitting beside it is admitted at create and at both DAL activation belts. Nothing ever
+executes that string: `routines_settle` only runs the command of a type in
+EXECUTED_GATE_TYPES, so the row settles `gate_passed=NULL` on every tick while reading as
+a properly gated loop in every list, dashboard and review. It is the original
+self-grading incident with a decoy in the window, and it is the shape a reviewer is most
+likely to wave through."""
+must_fail = [
+  "tests/scheduler/test_loop_gate_refusal.py::test_a_metric_threshold_loop_with_a_DECOY_command_is_refused_at_creation[_loop_row]",
+  "tests/scheduler/test_loop_gate_refusal.py::test_a_metric_threshold_loop_with_a_DECOY_command_is_refused_at_creation[_real_harness_loop_row]",
+  "tests/scheduler/test_loop_gate_refusal.py::test_the_decoy_command_escape_is_closed_on_the_DAL_activation_path_too",
+]
+failure_re = "DID NOT RAISE|never EXECUTED at settlement|may not use gate_type|assert"
+
+[[counterfeit]]
+id = "cf-loop-gate-policy-not-bound-at-execution"
+patch = "patches/cf-loop-gate-policy-not-bound-at-execution.patch"
+rationale = """Deletes the execution-time target check with the most reasonable comment
+in the file — "validation already classified these targets". It did, against a different
+checkout at a different commit: the gate executes in a separately configured workspace
+pinned at its own SHA, so a target the validating checkout could not resolve (admitted on
+its spelling) can be a tracked symlink into tests/scheduler there. With this patch the
+suite does not merely fail to refuse — it RUNS the machinery and records evidence for it
+(`recorded new evidence`, stop_reason `gate_failed` instead of `gate_refused`), which is
+the self-grading loop restored through a path no write-time rule can see."""
+must_fail = [
+  "tests/scheduler/test_loop_gate_execution_policy.py::test_execution_refuses_the_alias_by_its_location_in_the_pinned_run_tree",
+  "tests/scheduler/test_loop_gate_execution_policy.py::test_produce_gate_evidence_maps_the_refusal_to_a_condemning_settlement",
+  "tests/scheduler/test_loop_gate_execution_policy.py::test_settlement_records_the_refusal_as_gate_passed_0_and_gate_refused",
+]
+failure_re = "DID NOT RAISE|recorded new evidence|gate_refused|assert"

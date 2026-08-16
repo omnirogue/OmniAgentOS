@@ -1,0 +1,18 @@
+{
+  "id": "tailscale",
+  "company": "estate",
+  "kind": "external-service",
+  "host": "owner-mac",
+  "repo": "/Users/youruser/Work/Ops",
+  "what_it_does": "Records the estate Tailscale daemon health from the integrations probe snapshot.",
+  "why_it_matters": "Private estate connectivity depends on this overlay network.",
+  "blast_radius": "Remote access and inter-host estate coordination.",
+  "verification": {"type": "snapshot_field", "source": "/Users/youruser/Work/Ops/var/integrations-health.json", "field": "integrations.tailscale.status", "checked_at_field": "integrations.tailscale.checked_at"},
+  "exit_semantics": {"UP": "ok", "DOWN": "down", "SUSPENDED": "degraded", "NO-CRED": "cannot_evaluate"},
+  "cadence_seconds": 900,
+  "staleness_slo_seconds": 2700,
+  "escalation_tier": "high",
+  "owner": "estate-ops",
+  "last_verified": null,
+  "last_status": "UNVERIFIED"
+}

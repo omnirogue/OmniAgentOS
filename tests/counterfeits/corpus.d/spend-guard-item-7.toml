@@ -1,0 +1,10 @@
+# corpus.d/spend-guard-item-7.toml — spend-cap lane counterfeit item 7.
+
+[[counterfeit]]
+id = "cf-spend-guard-call-stripped"
+patch = "patches/cf-spend-guard-call-stripped.patch"
+rationale = "Deletes the one shared paid-call preflight from the OpenAI-compatible adapter seam. A Fireworks request that exceeds its daily cap then reaches HTTP and can enter the outage fallback instead of being terminally parked before transport."
+must_fail = [
+  "tests/adapters/test_spend_guard.py::test_fireworks_cap_refusal_never_calls_moonshot_or_http",
+]
+failure_re = "cap refusal reached Moonshot fallback|DID NOT RAISE.*SpendGuardRefusal|assert.*http_calls"

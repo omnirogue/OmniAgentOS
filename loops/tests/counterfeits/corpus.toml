@@ -1,0 +1,578 @@
+# Loop-runtime counterfeit corpus.
+#
+# One entry per template (the plan's requirement) plus the two cross-cutting
+# safety properties every template depends on: fail-closed approval expiry and
+# the execution seam's independent re-check.
+#
+# `find` must match EXACTLY ONCE in `file` — a stale anchor is a hard error, not
+# a skip, so a refactor that moves a guard cannot silently disarm its counterfeit.
+
+# --- draft_approve_send: "strip the approval gate" -------------------------
+[[counterfeit]]
+id = "cf-t2-approval-floor-dropped"
+primary_template = "draft_approve_send"
+file = "omniagentos_loops/policy_gate.py"
+find = "if decision.requires_approval or tool.tier >= APPROVAL_FLOOR_TIER:"
+replace = "if decision.requires_approval:"
+rationale = """Defers entirely to ActionClass policy, dropping the unattended-loop floor.
+Under AUTO mode CONSEQUENTIAL auto-executes, so every T2 outbound send would fire
+with no approvals row and no human — while every 'policy is consulted' test stays green."""
+must_fail = [
+  "tests/test_bridge_policy.py::test_t2_and_above_always_require_approval",
+  "tests/test_approvals_bridge.py::test_first_tick_parks_and_creates_exactly_one_pending_row",
+]
+failure_re = "must park|assert .*PARKED|LoopStatus"
+
+# --- poll_classify_act_verify: "receipts are decoration" -------------------
+[[counterfeit]]
+id = "cf-receipt-guard-bypassed"
+primary_template = ""
+file = "omniagentos_loops/receipts.py"
+find = "    if existing is not None:"
+replace = "    if False:"
+rationale = """Keeps writing receipts but stops READING them — the P7 naive variant.
+Every effect re-executes on replay, so a crash-resume double-sends while the
+idempotency table still looks fully populated."""
+must_fail = [
+  "tests/test_receipts.py::test_second_call_replays_the_recorded_result_without_executing",
+  "tests/test_kill_drill.py::test_a_clean_run_across_three_processes_sends_exactly_once",
+]
+failure_re = "exactly once|re-send|assert 2 == 1|assert 1 == 2"
+
+# --- monitor_diagnose_repair_verify: "allowlist ignored" -------------------
+[[counterfeit]]
+id = "cf-remediation-allowlist-ignored"
+primary_template = "monitor_diagnose_repair_verify"
+file = "omniagentos_loops/templates/monitor_diagnose_repair_verify.py"
+find = "return repair_gate if remedy in _allowed(state) else escalate_gate"
+replace = "return repair_gate"
+rationale = """Routes every diagnosis to the auto-repair effect, so an unknown remedy
+executes at T1 without a human. The 'auto-remediation works' test stays green."""
+must_fail = [
+  "tests/test_templates.py::test_unknown_remedy_escalates_and_does_not_auto_repair",
+]
+failure_re = "must park|assert.*PARKED|assert 1 == 0"
+
+# --- generate_evaluate_improve: "hard cap defeated" ------------------------
+[[counterfeit]]
+id = "cf-refine-publishes-below-threshold"
+primary_template = "generate_evaluate_improve"
+file = "omniagentos_loops/templates/generate_evaluate_improve.py"
+find = '            return "exhausted"'
+replace = "            return gate"
+rationale = """Publishes the last candidate when the round budget runs out instead of
+stopping. The loop always 'succeeds', and the quality gate becomes advisory."""
+must_fail = [
+  "tests/test_templates.py::test_exhausted_rounds_do_not_publish",
+]
+failure_re = "ABORTED|below threshold|assert 1 == 0|LoopStatus"
+
+# --- dispatch_await_summarize: "dedupe key made unstable" ------------------
+[[counterfeit]]
+id = "cf-dispatch-key-per-tick"
+primary_template = "dispatch_await_summarize"
+file = "omniagentos_loops/templates/dispatch_await_summarize.py"
+find = "    return digest_key(_spec(state))"
+replace = '    return digest_key(_spec(state), state.get("tick"))'
+rationale = """Makes the dispatch business key tick-dependent, so every tick is a NEW
+effect: the swarm gets a duplicate job per tick and a fresh approval each time,
+while the receipt table still shows one completed receipt per key."""
+must_fail = [
+  "tests/test_templates.py::test_dispatch_waits_across_ticks_and_never_dispatches_twice",
+]
+failure_re = "IDLE|replay the receipt|LoopStatus|assert"
+
+# --- cross-cutting: approval expiry must FAIL CLOSED -----------------------
+[[counterfeit]]
+id = "cf-expiry-fails-open"
+primary_template = ""
+file = "omniagentos_loops/approvals.py"
+find = """            approval_row_id, ApprovalState.EXPIRED.value, False, True, decided_by, "expired\""""
+replace = """            approval_row_id, ApprovalState.APPROVED.value, True, True, decided_by, "expired\""""
+rationale = """Treats an expired request as approved — the exact fail-open the audit found
+(15/16 approvals expired undecided). Unattended loops would then act on every
+request nobody answered."""
+must_fail = [
+  "tests/test_approvals_bridge.py::test_expiry_aborts_and_never_approves",
+  "tests/test_approvals_bridge.py::test_late_approval_on_an_expired_row_is_not_authority",
+]
+failure_re = "ABORTED|assert 1 == 0|expired|LoopStatus"
+
+# --- cross-cutting: the seam must not trust graph state --------------------
+[[counterfeit]]
+id = "cf-seam-trusts-graph-token"
+primary_template = ""
+file = "omniagentos_loops/tools.py"
+find = """        outcome = approvals.read_outcome(ctx, expected, binding=binding)
+        if not outcome.approved:"""
+replace = """        outcome = None
+        if False:"""
+rationale = """Drops the execution seam's independent re-read of the approvals row, leaving
+only the graph's own gate token as authority. A template bug — or a counterfeit
+that removes the gate node — could then write an 'approved' key and send."""
+must_fail = [
+  "tests/test_bridge_policy.py::test_a_matching_approval_id_is_not_enough_the_row_must_say_yes",
+]
+failure_re = "EffectNotApproved|DID NOT RAISE|assert 1 == 0"
+
+# --- poll_classify_act_verify: "the classifier's decision is decoration" ---
+[[counterfeit]]
+id = "cf-poll-ignores-skip-decision"
+primary_template = "poll_classify_act_verify"
+file = "omniagentos_loops/templates/poll_classify_act_verify.py"
+find = '        return "idle" if str(_decision(state).get("action", "")).lower() in SKIP_ACTIONS else gate'
+replace = "        return gate"
+rationale = """Routes every polled item to the act effect regardless of how it was
+classified. The happy path still works, so 'the loop acts on a message' stays
+green — but an item classified 'skip'/'ignore' now raises an approval and acts."""
+must_fail = [
+  "tests/test_templates.py::test_poll_loop_skips_when_the_classifier_says_skip",
+]
+failure_re = "IDLE|LoopStatus|assert 1 == 0"
+
+# --- cross-cutting: the seam is the only door into the tool plane ----------
+[[counterfeit]]
+id = "cf-seam-guard-removed"
+primary_template = ""
+file = "omniagentos_loops/tools.py"
+find = """        if not _seam_is_open_for(tool_name):"""
+replace = """        if False:"""
+rationale = """Turns the call-time seam guard into a no-op. Tool callables become reachable
+from anywhere — a template, a helper, an instance module's register() — with no
+policy derivation, while every happy-path test stays green because the seam
+still works when it IS used."""
+must_fail = [
+  "tests/test_bridge_policy.py::test_a_tool_cannot_be_called_outside_the_seam",
+  "tests/test_bridge_policy.py::test_the_seam_opens_only_for_the_tool_it_is_running",
+]
+failure_re = "SeamBypass|DID NOT RAISE"
+
+# --- cross-cutting: an approval is bound to ONE action ---------------------
+[[counterfeit]]
+id = "cf-approval-binding-unchecked"
+primary_template = ""
+file = "omniagentos_loops/approvals.py"
+find = """        if recorded != dict(binding):"""
+replace = """        if False:"""
+rationale = """Stops comparing the approval's recorded binding against the effect about to
+run. The id still matches, the row still says approved, so a different
+instance/tool/payload can ride a human decision it was never shown."""
+must_fail = [
+  "tests/test_bridge_policy.py::test_an_approval_bound_to_other_arguments_is_refused",
+  "tests/test_bridge_policy.py::test_an_approval_bound_to_another_instance_is_refused",
+]
+failure_re = "EffectNotApproved|DID NOT RAISE"
+
+# --- cross-cutting: one worker per instance --------------------------------
+[[counterfeit]]
+id = "cf-instance-lease-dropped"
+primary_template = ""
+file = "omniagentos_loops/runtime.py"
+find = """        with lease.held(template.name, ctx.instance_id):
+            return _run_locked(ctx, template)"""
+replace = """        if True:
+            return _run_locked(ctx, template)"""
+rationale = """Removes the per-instance lease. Two overlapping ticks both advance the same
+instance; the receipt still stops a duplicate effect, but the loser reports a
+spurious ABORT that counts against the routine acceptance floor and can pause a
+healthy loop."""
+must_fail = [
+  "tests/test_concurrency.py::test_two_concurrent_workers_produce_exactly_one_effect",
+]
+failure_re = "step aside|idle|LeaseHeld|assert"
+
+# --- cross-cutting: the seam ticket must EXPIRE with the seam ---------------
+[[counterfeit]]
+id = "cf-seam-nonce-never-revoked"
+primary_template = ""
+file = "omniagentos_loops/tools.py"
+find = """            _OPEN_SEAMS.discard(nonce)"""
+replace = """            pass"""
+rationale = """Leaves the seam's nonce valid forever, which silently restores the name-only
+guard. ContextVars are COPIED into asyncio tasks, so any task a tool leaves
+behind keeps a snapshot saying "the seam is open for me" and can run that tool's
+callable long after execute_effect returned — no policy verdict, no approval, no
+receipt. Every synchronous test stays green because the seam still works when it
+IS used."""
+must_fail = [
+  "tests/test_bridge_policy.py::test_a_task_that_outlives_the_seam_loses_its_authority",
+  "tests/test_bridge_policy.py::test_a_context_snapshot_taken_inside_the_seam_expires_with_it",
+]
+failure_re = "SeamBypass|DID NOT RAISE|assert|executed a tool"
+
+# --- cross-cutting: no route may yield the RAW callable --------------------
+[[counterfeit]]
+id = "cf-tool-exposes-its-raw-callable"
+primary_template = ""
+file = "omniagentos_loops/tools.py"
+find = """    guarded.__loop_seam__ = tool_name  # type: ignore[attr-defined]"""
+replace = """    guarded.__loop_seam__ = tool_name  # type: ignore[attr-defined]
+    guarded.unwrapped = fn  # type: ignore[attr-defined]"""
+rationale = """Re-attaches the raw implementation to the guard as an "introspection only"
+attribute — which is exactly how the previous revision shipped, and a reviewer
+executed a T3 effect straight through it. The guard still refuses tool.call(),
+so every seam test stays green while the seam has a second, unguarded door."""
+must_fail = [
+  "tests/test_bridge_policy.py::test_no_route_on_a_tool_object_yields_its_raw_callable",
+]
+failure_re = "route to the raw callable|unwrapped|assert"
+
+# --- cross-cutting: the lease is held for the WHOLE tick -------------------
+[[counterfeit]]
+id = "cf-lease-not-held-for-the-tick"
+primary_template = ""
+file = "omniagentos_loops/lease.py"
+find = """    return Lease(path=path, pid=os.getpid(), acquired_at=acquired_at, fd=fd)"""
+replace = """    fcntl.flock(fd, fcntl.LOCK_UN)
+    return Lease(path=path, pid=os.getpid(), acquired_at=acquired_at, fd=fd)"""
+rationale = """Takes the lock, then drops it before the tick starts. Acquisition still looks
+exclusive and the lease file still names a live holder, so an operator reading
+var/loops/*.lease sees a healthy lease — but two overlapping ticks both advance
+the same instance, the receipt race makes the loser report a spurious ABORT, and
+that counts against the routine acceptance floor."""
+must_fail = [
+  "tests/test_concurrency.py::test_a_live_holder_is_not_stolen",
+  "tests/test_concurrency.py::test_simultaneous_workers_against_a_stale_looking_lease_leave_exactly_one_winner",
+]
+failure_re = "LeaseHeld|DID NOT RAISE|mutual exclusion is broken|assert"
+
+# --- cross-cutting: the approvals page must not render a credential --------
+[[counterfeit]]
+id = "cf-redaction-top-level-only"
+primary_template = ""
+file = "omniagentos_loops/approvals.py"
+find = """    if isinstance(value, Mapping):
+        return {
+            str(key): (_REDACTED if _is_secret_key(key) else _redact_value(item, depth + 1))
+            for key, item in value.items()
+        }"""
+replace = """    if isinstance(value, Mapping):
+        return {
+            str(key): (_REDACTED if _is_secret_key(key) else str(item))
+            for key, item in value.items()
+        }"""
+rationale = """Stops descending into nested arguments, restoring the top-level-only scan.
+headers={"Authorization": "Bearer ..."} — the commonest way a credential appears
+in a connector call — is then stringified whole into params_json and rendered on
+the approvals page to whoever opens it, while the top-level 'token'/'secret'
+keys everyone tests are still redacted."""
+must_fail = [
+  "tests/test_approvals_bridge.py::test_nested_credentials_are_redacted_not_just_top_level_keys",
+  "tests/test_approvals_bridge.py::test_the_redacted_arguments_are_what_the_row_stores",
+]
+failure_re = "sk-live|Bearer|assert|redacted"
+
+# --- cross-cutting: the seeded row must NAME its instance module -----------
+[[counterfeit]]
+id = "cf-seeded-row-drops-instance-module"
+primary_template = ""
+file = "omniagentos_loops/registry.py"
+find = """                "instance_module": module,
+"""
+replace = ""
+rationale = """Keeps validating instance_module and then omits it from the payload — the
+exact production defect of 2026-08-01. The helper still refuses a bad module, so
+every "the row is valid" test stays green, but the row it emits names no tools
+module; loop_jobs launches a worker that registers no tools, and every tick of
+every loop routine seeded through the public helper settles builtin_failed with
+'instance is missing required tools'. Only a test that drives a HELPER-BUILT row
+through the production hook can see it."""
+must_fail = [
+  "tests/test_registry.py::test_a_helper_built_row_reaches_the_worker_with_its_instance_module",
+]
+failure_re = "instance_module|instance-module|assert"
+
+# --- cross-cutting: a non-result is not an acceptance ----------------------
+[[counterfeit]]
+id = "cf-nonresult-reported-as-accepted"
+primary_template = ""
+file = "omniagentos_loops/contracts.py"
+find = '            "accepted": self.status in FAVOURABLE_STATUSES,'
+replace = '            "accepted": self.status in NON_ADVERSE_STATUSES,'
+rationale = """Restores the collapse at the source of truth: the worker's own report
+calls a parked or idle tick "accepted". Every status assertion in the suite stays green
+— the tick still parks, still idles, still refuses to send — but the one field the
+control plane reads for acceptance now says a non-result was a result. That is what let
+a loop parking the same approval every tick report 100% acceptance while healing
+nothing (rtn_1e5567b9f3314a2c9d76, 2026-08-01), and it is invisible to any test that
+only checks LoopStatus."""
+must_fail = [
+  "tests/test_approvals_bridge.py::test_nothing_to_send_is_idle_neither_a_failure_nor_a_success",
+]
+failure_re = "is not an acceptance|assert False is|assert True is False|assert"
+# --- monitor_diagnose_repair_verify: "the repair never gets the diagnosis" --
+[[counterfeit]]
+id = "cf-repair-args-lose-the-diagnosis"
+primary_template = "monitor_diagnose_repair_verify"
+file = "omniagentos_loops/templates/monitor_diagnose_repair_verify.py"
+find = """        args_fn=lambda s: {"remedy": _remedy(s), "diagnosis": _diagnosis(s)},
+        key_fn=_repair_key,
+        on_result=lambda s, r: _merge(s, repair_result=r),
+"""
+replace = """        args_fn=lambda s: {"remedy": _remedy(s), "snapshot": _snapshot(s)},
+        key_fn=_repair_key,
+        on_result=lambda s, r: _merge(s, repair_result=r),
+"""
+rationale = """The live defect, restored: the repair effect is handed the MONITOR SNAPSHOT
+instead of the diagnosis, so W3's repair tool finds no launchd label, refuses
+against its own allowlist, and no allowlisted remedy can ever execute — while
+every tool-level unit test that hand-builds `snapshot={"diagnosis": ...}` stays
+green. Only a test that drives the real tools through the real graph sees it."""
+must_fail = [
+  "tests/instances/test_health_monitor.py::TestInstanceTemplateContract::test_repair_receives_a_usable_label_and_the_remedy_executes",
+  "tests/test_templates.py::test_the_repair_effect_is_handed_the_diagnosis_it_reads",
+]
+failure_re = "did not reach launchctl|snapshot"
+
+# --- monitor_diagnose_repair_verify: "bind the approval to drifting args" ---
+[[counterfeit]]
+id = "cf-escalate-args-carry-the-volatile-snapshot"
+primary_template = "monitor_diagnose_repair_verify"
+file = "omniagentos_loops/templates/monitor_diagnose_repair_verify.py"
+find = """        args_fn=lambda s: {"remedy": _remedy(s), "diagnosis": _diagnosis(s)},
+        key_fn=_repair_key,
+        on_result=lambda s, r: {
+"""
+replace = """        args_fn=lambda s: {"remedy": _remedy(s), "snapshot": _snapshot(s)},
+        key_fn=_repair_key,
+        on_result=lambda s, r: {
+"""
+rationale = """Puts the monitor snapshot — a fresh timestamp and fresh log tails every tick —
+back into the T3 effect's arguments. The approvals row records the args digest
+at creation and is keyed by (remedy, incident), so it cannot be re-minted: the
+tick that resumes after a human approves recomputes a different digest and the
+seam refuses it as 'bound to a different action'. The park half of every
+approval test stays green; only executing after approval exposes it."""
+must_fail = [
+  "tests/instances/test_health_monitor.py::TestInstanceTemplateContract::test_an_unactionable_failure_parks_and_then_executes_on_approval",
+]
+failure_re = "must execute|bound to a different action|ABORTED"
+
+# --- cross-cutting: "the verify verdict is decoration" ---------------------
+[[counterfeit]]
+id = "cf-verify-verdict-ignored"
+primary_template = ""
+file = "omniagentos_loops/templates/common.py"
+find = """    return isinstance(result, Mapping) and result.get("verified") is True"""
+replace = """    return True"""
+rationale = """Restores the shipped behaviour: the verify node runs, returns
+`{"verified": false, "state": "repair_failed"}`, and the tick is stamped
+COMPLETED anyway. Every 'verify detects the failure' unit test keeps passing
+because they assert on the tool's dict; the loop still reports accepted=1,
+gate_passed=1 for work that did not happen."""
+must_fail = [
+  "tests/test_templates.py::test_poll_loop_that_cannot_verify_its_send_is_not_completed",
+  "tests/test_templates.py::test_a_repair_that_did_not_take_is_not_a_completed_tick",
+  "tests/instances/test_health_monitor.py::TestInstanceTemplateContract::test_a_failed_kickstart_does_not_render_as_a_completed_tick",
+]
+failure_re = "must not render as completed|must not settle as completed|unverified"
+
+# --- cross-cutting: "no status means success" ------------------------------
+[[counterfeit]]
+id = "cf-unknown-status-completes"
+primary_template = ""
+file = "omniagentos_loops/runtime.py"
+find = """        return LoopStatus.FAILED
+"""
+replace = """        return LoopStatus.COMPLETED
+"""
+rationale = """Fails OPEN at the exact point a loop grades itself: a tick whose final state
+carries no status, or a status this runtime does not recognise (enum drift after
+a deploy, a node that returned {} on an unhandled branch), is reported as
+COMPLETED and counted as accepted work."""
+must_fail = [
+  "tests/test_templates.py::test_a_tick_that_reports_no_usable_status_fails_closed",
+]
+failure_re = "COMPLETED|LoopStatus|assert"
+
+# --- monitor_diagnose_repair_verify: "diagnose the first failure only" -----
+[[counterfeit]]
+id = "cf-diagnose-takes-the-first-failure"
+primary_template = "monitor_diagnose_repair_verify"
+file = "omniagentos_loops/instances/health_monitor.py"
+find = """    return [check for _index, check in sorted(enumerate(failed_checks), key=_failure_rank)]"""
+replace = """    return list(failed_checks)"""
+rationale = """Head-of-line starvation, restored: diagnosis takes whichever failure the
+sentinel happened to list first, so one unactionable failure (live: `reflection`)
+parks the loop on the same approval every tick while repairable failures behind
+it are never diagnosed. Single-failure tests all stay green."""
+must_fail = [
+  "tests/instances/test_health_monitor.py::TestFailureOrdering::test_an_actionable_failure_outranks_an_unactionable_one",
+  "tests/instances/test_health_monitor.py::TestInstanceTemplateContract::test_an_actionable_failure_behind_an_unactionable_one_is_still_repaired",
+]
+failure_re = "reflection|kickstarted"
+
+# --- monitor_diagnose_repair_verify: "a photograph is an observation" ------
+[[counterfeit]]
+id = "cf-stale-snapshot-passes-as-health"
+primary_template = "monitor_diagnose_repair_verify"
+file = "omniagentos_loops/instances/health_monitor.py"
+find = """    if age > SNAPSHOT_MAX_AGE_S:"""
+replace = """    if False:"""
+rationale = """Keeps reading the snapshot's age and stops acting on it. The health sentinel
+dies, `latest.json` keeps saying every check was ok at the moment it stopped
+looking, and W3 reports a perfectly healthy fleet forever while nothing is
+watching it — the unreadable-snapshot defect one layer up, and every
+single-tick test stays green because the file parses fine."""
+must_fail = [
+  "tests/instances/test_health_monitor.py::TestSnapshotFreshness::test_a_stale_snapshot_is_blindness_not_health",
+  "tests/instances/test_health_monitor.py::TestInstanceTemplateContract::test_a_stale_snapshot_parks_for_a_human_instead_of_reporting_health",
+]
+failure_re = "health_snapshot|must reach a human"
+
+# --- monitor_diagnose_repair_verify: "escalating is an accomplishment" -----
+[[counterfeit]]
+id = "cf-escalation-scored-favourable"
+primary_template = "monitor_diagnose_repair_verify"
+file = "omniagentos_loops/templates/monitor_diagnose_repair_verify.py"
+find = """            "status": LoopStatus.IDLE.value,"""
+replace = """            "status": LoopStatus.COMPLETED.value,"""
+rationale = """Scores an executed escalation FAVOURABLE. The tick behaved — it recorded and
+paged a failure it may not fix — but nothing in the world got better, and
+counting that as acceptance re-inflates exactly the metric the neutral-outcome
+taxonomy deflates: a loop that escalates the same unfixable incident every day
+reports a healthy acceptance rate while the fleet stays broken."""
+must_fail = [
+  "tests/instances/test_health_monitor.py::TestInstanceTemplateContract::test_an_unactionable_failure_parks_and_then_executes_on_approval",
+]
+failure_re = "must be neutral|IDLE|COMPLETED"
+
+# --- cross-cutting: "a failed effect is still progress" --------------------
+[[counterfeit]]
+id = "cf-failed-effect-takes-the-happy-path"
+primary_template = ""
+file = "omniagentos_loops/templates/common.py"
+find = """        if not succeeded:"""
+replace = """        if False:"""
+rationale = """Keeps reading the seam's outcome and stops acting on it. An effect that RAN
+and did not take effect routes straight into the template's terminal node and
+is stamped with whatever status lives there — COMPLETED on a send, IDLE on an
+escalation. Every template loses the guarantee at once, including the ones with
+no verify node, which is exactly the class of template someone writes next."""
+must_fail = [
+  "tests/test_templates.py::test_an_effect_that_did_not_take_effect_never_renders_as_completed",
+  "tests/test_templates.py::test_a_verify_tool_cannot_launder_a_failed_effect",
+]
+failure_re = "rendered a failed effect as completed|settled|without taking effect"
+
+# --- cross-cutting: "the verify node can forgive a failed effect" ----------
+[[counterfeit]]
+id = "cf-verify-node-launders-a-failed-effect"
+primary_template = ""
+file = "omniagentos_loops/templates/common.py"
+find = """    if verified and unresolved:"""
+replace = """    if False:"""
+rationale = """Removes the second veto: a template that delegates its verdict to a verify node
+(judged_by=) can then have that node report success for an effect the seam said
+did not take effect. Most verify tools do not read the effect's result at all,
+so this restores 'a failed effect renders COMPLETED' for every judged template
+while the parking path for unjudged ones still looks correct."""
+must_fail = [
+  "tests/test_templates.py::test_a_verify_tool_cannot_launder_a_failed_effect",
+  "tests/test_templates.py::test_verification_outcome_vetoes_on_a_failed_effect_whatever_the_verdict",
+]
+failure_re = "without taking effect|assert.*FAILED|assert.*completed"
+
+# --- monitor_diagnose_repair_verify: "the exit code is the evidence" -------
+[[counterfeit]]
+id = "cf-repair-verifier-trusts-the-exit-code"
+primary_template = "monitor_diagnose_repair_verify"
+file = "omniagentos_loops/instances/health_monitor.py"
+find = """    probe = _probe_label(label)
+    return {
+        "ok": bool(probe.get("running")),"""
+replace = """    probe = {"evidence": "launchctl exited 0"}
+    return {
+        "ok": True,"""
+rationale = """Makes the repair's receipt verifier answer from launchctl's exit code instead
+of the world. A kickstart that exits 0 while the service stays down is then
+filed as a SUCCEEDED receipt, and because the business key is
+component+signature+day that receipt suppresses every retry for the rest of the
+incident window: the service stays down and the incident reads as handled."""
+must_fail = [
+  "tests/instances/test_health_monitor.py::TestRepairReceiptVerifier::test_a_kickstart_that_exits_zero_but_leaves_the_job_down_does_not_verify",
+  "tests/instances/test_health_monitor.py::TestRepairReceiptVerifier::test_no_label_is_not_a_verified_repair",
+]
+failure_re = "assert True is False|assert.*ok"
+
+# --- credential seam: "absence scored as failure" --------------------------
+[[counterfeit]]
+id = "cf-seam-absence-scored-as-failure"
+primary_template = ""
+file = "omniagentos_loops/parent_seam.py"
+find = """    if outcome == OUTCOME_UNAVAILABLE:
+        raise EffectUnavailable("""
+replace = """    if outcome == OUTCOME_UNAVAILABLE:
+        return _refusal(response)
+    if False:
+        raise EffectUnavailable("""
+rationale = """Re-arms the 2026-07-31 defect one level down: an authority the parent could
+not REACH is recorded as a failed effect instead of an absence. The receipt is filed
+'failed', the attempt budget burns on someone else's outage, and the tick settles
+adverse — while every 'the seam returns a result' test stays green."""
+must_fail = [
+  "tests/test_parent_seam.py::test_an_unreachable_authority_is_absence_not_failure",
+  "tests/test_parent_seam.py::test_an_unavailable_effect_settles_the_tick_neutral_and_loud",
+]
+failure_re = "EffectUnavailable|DID NOT RAISE|assert .*IDLE|absence"
+
+# --- credential seam: "ambiguity treated as absence" -----------------------
+[[counterfeit]]
+id = "cf-seam-unknown-released-as-absence"
+primary_template = ""
+file = "omniagentos_loops/parent_seam.py"
+find = """    raise EffectStateUnknown(
+        f"{capability}: seam outcome {outcome!r} — {response.get('detail') or 'no detail'}"
+    )"""
+replace = """    raise EffectUnavailable(
+        "unknown", f"{capability}: seam outcome {outcome!r}"
+    )"""
+rationale = """Collapses 'we could not establish what happened' into 'nothing happened'.
+The receipt claim is then RELEASED for an effect that may well have run, so the next
+tick re-executes it — the exact duplicate-external-effect hazard the receipt exists to
+stop, reintroduced through the absence path."""
+must_fail = [
+  "tests/test_parent_seam.py::test_an_ambiguous_answer_leaves_the_receipt_claimed",
+  "tests/test_parent_seam.py::test_an_unrecognised_outcome_is_not_a_success",
+]
+failure_re = "EffectStateUnknown|DID NOT RAISE|claimed"
+
+# --- credential seam: "the actor grades itself" ----------------------------
+[[counterfeit]]
+id = "cf-render-verifier-trusts-the-renderer"
+primary_template = ""
+file = "omniagentos_loops/instances/render_probe.py"
+find = """    item = dict(args.get("item") or {})
+    verdict = image_verification(_render_args(item) if item else {}, instance_id=INSTANCE_ID)
+    return Verification(ok=bool(verdict.get("verified")), detail=str(verdict.get("detail") or ""))"""
+replace = """    if isinstance(_result, Mapping) and not _result.get("success", True) is False:
+        return Verification(ok=True, detail="renderer reported success")
+    item = dict(args.get("item") or {})
+    verdict = image_verification(_render_args(item) if item else {}, instance_id=INSTANCE_ID)
+    return Verification(ok=bool(verdict.get("verified")), detail=str(verdict.get("detail") or ""))"""
+rationale = """Grades the effect from the ACTOR'S OWN ANSWER (EvidenceGrade.ACTOR_NARRATIVE)
+instead of the artifact. The receipt is then marked verified whenever the API says
+'succeeded', with no file on disk and no decoder consulted — the single defect the whole
+verification-channel rule exists to prevent."""
+must_fail = [
+  "tests/test_parent_seam.py::test_image_verdict_ignores_a_fabricated_result",
+]
+failure_re = "assert|Verification|detail"
+
+# --- credential seam: "existence is enough" --------------------------------
+[[counterfeit]]
+id = "cf-artifact-magic-bytes-unchecked"
+primary_template = ""
+file = "omniagentos_loops/artifacts.py"
+find = "    if not any(payload.startswith(prefix) for prefix in prefixes):"
+replace = "    if False:"
+rationale = """Downgrades grade-2 evidence towards grade 1: nothing checks that the bytes
+are the format the loop DECLARED, so the verdict is left entirely to whatever the decoder
+makes of an arbitrary file. A JSON error page saved as rose.png then reaches the decoder,
+which is a positively wrong answer either way — a decoder that shrugs would pass it, and
+the one on this machine refuses in a way that is legible only because the magic check is
+what makes 'not the image we asked for' a DECISIVE negative rather than noise."""
+must_fail = [
+  "tests/test_parent_seam.py::test_a_json_error_page_named_png_is_not_an_image",
+]
+failure_re = "could not decode|no pixel dimensions|magic number|assert"

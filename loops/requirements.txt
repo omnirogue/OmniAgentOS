@@ -1,0 +1,31 @@
+# Loop-runtime venv pins — EXACT, validated by devtasks/langgraph-comparison/prototypes.
+#
+# This file is the ONLY dependency declaration for the loop runtime. The
+# production pyproject.toml / uv.lock are deliberately untouched (Option G thin
+# hybrid, MIGRATION_ARCHITECTURE.md): the loops venv lives at var/loops/venv
+# (gitignored, disposable) and is built with:
+#
+#   uv venv --python 3.12 var/loops/venv
+#   uv pip install --python var/loops/venv/bin/python -r loops/requirements.txt
+#
+# Rollback = delete var/loops/. Promotion path (only if explicitly approved
+# later) = [project.optional-dependencies] loops in pyproject.toml.
+#
+# NOTE on `omniagentos`: it is NOT installed into this venv. The loop worker
+# adds its own checkout root to sys.path (omniagentos_loops/__init__.py), so the
+# bridge imports the SAME control-plane code the API/runner execute — no second
+# copy, no editable install of the production dependency set.
+
+langgraph==1.2.10
+langgraph-checkpoint-sqlite==3.1.1
+langchain-core==1.5.3
+
+# Transitive-but-pinned: imported directly by the omniagentos modules the bridge
+# calls (contracts/policy -> pydantic+pyyaml, steward.notify -> httpx).
+pydantic==2.13.4
+pyyaml>=6
+httpx>=0.27
+
+# Test-only (the loops suite runs in THIS venv, never in the production venv).
+pytest>=8
+pytest-timeout>=2

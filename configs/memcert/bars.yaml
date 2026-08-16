@@ -1,0 +1,25 @@
+# memcert certification bars (DESIGN §6). Bars RATCHET UP ONLY, via approved
+# hypothesizer proposals carrying paired-significant evidence — never hand-lowered.
+# Scale: per-axis mean item score in [-1, 1]; 1.0 == 100% == every item correct
+# including correct abstentions, at pass^k (k=3) on the current cert rotation.
+#
+# v1 bars seeded from the FIRST measured system baseline (2026-08-12, dev
+# split, system arm, qwen3-coder-flash + gemini-3.5-flash-lite, 3 trials,
+# seeds 42/43; devtasks/memcert/RESULTS-2026-08-12.md): bar = floor of
+# min-across-models (mean − CI half-width), clamped to ≥ 0.0. Regressions
+# below these FAIL the daily run; raises ride hypothesizer proposals only.
+# The 100% goal is the terminal ratchet.
+version: 1
+k_trials: 3
+bars:
+  A: 0.55  # retrieval under distraction (baseline 0.688 both)
+  B: 0.0   # multi-session integration (baseline ≈0 — top improvement target)
+  C: 0.0   # temporal ordering (baseline 0.06/0.14)
+  D: 0.9   # knowledge update (baseline 1.000 both — protect the crown jewel)
+  E: 0.45  # abstention (baseline 0.75/1.0; qwen CI reaches 0.50)
+  F: 0.15  # forgetting hygiene (baseline 0.24/0.90 — qwen is the floor)
+  G: 0.0   # self-learning transfer (baseline 0.13/0.22 — needs retrievable lessons)
+  H: 0.05  # memory→action grounding (baseline 0.17/0.45)
+goal:
+  target: 1.0
+  meaning: every axis at 1.0, met at pass^3, on an UNSEEN cert rotation

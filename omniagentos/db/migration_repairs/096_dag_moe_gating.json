@@ -1,0 +1,27 @@
+{
+  "schema_version": 1,
+  "migration_version": 96,
+  "migration_path": "omniagentos/db/migrations/096_dag_moe_gating.sql",
+  "old_sha256": "c01d0ff3fae6fc0cb000fdfd2af21b44c80f6ce8a71ce85a8fc06d6e517cc554",
+  "new_sha256": "6752fac84728d5ef31030f0755a39bc8cdb2bb5c87f5fb79ec2ae8df3ae94e8a",
+  "failure_evidence": {
+    "kind": "sqlite_duplicate_table",
+    "message": "table graph_edges already exists",
+    "cause": "migration 062 creates graph_edges before the original migration 096 executes"
+  },
+  "live_checksum_evidence": {
+    "observed_at": "2026-07-31",
+    "databases": [
+      "var/runtime/state.sqlite3",
+      "var/omniagentos.db"
+    ],
+    "recorded_version": 96,
+    "recorded_sha256": "6752fac84728d5ef31030f0755a39bc8cdb2bb5c87f5fb79ec2ae8df3ae94e8a"
+  },
+  "approval": {
+    "date": "2026-07-31",
+    "authority": "QA remediation plan",
+    "scope": "one exact historical old-to-new hash transition"
+  },
+  "policy": "This record authorizes only the exact migration 096 old_sha256 to new_sha256 transition. It is not a general append-only bypass."
+}

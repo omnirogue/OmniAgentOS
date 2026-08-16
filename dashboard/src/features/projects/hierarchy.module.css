@@ -1,0 +1,435 @@
+/* Project-hierarchy views: tree, conversation, activity. Calm + readable,
+   built entirely on design-system tokens. Color rails use --project-* vars
+   stamped by projectColorStyle() on each top-level tree root. */
+
+.notice {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--surface-2, var(--surface));
+  color: var(--text-muted);
+  font-size: var(--font-size-sm);
+}
+
+/* ---- tree ---- */
+.tree {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+/* Theme-aware project color (set on top-level node, inherited by descendants). */
+.node {
+  --project-rail: var(--project-rail-dark, var(--accent));
+  --project-tint: var(--project-tint-dark, transparent);
+  position: relative;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  background-image: linear-gradient(var(--project-tint), var(--project-tint));
+  overflow: hidden;
+}
+
+:global([data-theme="light"]) .node {
+  --project-rail: var(--project-rail-light, var(--accent));
+  --project-tint: var(--project-tint-light, transparent);
+}
+
+.nodeSub {
+  margin-left: var(--space-4);
+}
+
+/* Left color rail — subtle, not a loud fill */
+.colorRail {
+  flex: 0 0 auto;
+  width: 3px;
+  align-self: stretch;
+  min-height: 1.5rem;
+  border-radius: 999px;
+  background: var(--project-rail, var(--accent));
+  opacity: 0.9;
+}
+
+.colorDot {
+  flex: 0 0 auto;
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 999px;
+  background: var(--project-rail, var(--accent));
+  opacity: 0.85;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  flex-wrap: wrap;
+}
+
+.toggle {
+  flex: 0 0 auto;
+  width: 1.5rem;
+  height: 1.5rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  border-radius: var(--radius-sm);
+}
+
+.toggle:hover {
+  background: var(--surface-2, var(--border));
+  color: var(--text);
+}
+
+.toggleSpacer {
+  flex: 0 0 auto;
+  width: 1.5rem;
+}
+
+.nodeTitle {
+  flex: 1 1 10rem;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.titleLine {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 0;
+  flex-wrap: wrap;
+}
+
+.nodeName {
+  font-weight: 600;
+  color: var(--text);
+  text-decoration: none;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%;
+}
+
+.nodeName:hover {
+  text-decoration: underline;
+}
+
+.nodeMeta {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+  font-size: var(--font-size-xs);
+  color: var(--text-muted);
+}
+
+.rowRight {
+  flex: 0 1 auto;
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+  margin-left: auto;
+}
+
+/* Connective rail for nested children */
+.children {
+  position: relative;
+  margin-left: calc(var(--space-3) + 0.5rem);
+  padding: 0 var(--space-3) var(--space-3) var(--space-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  border-left: 2px solid color-mix(in srgb, var(--project-rail, var(--border)) 35%, var(--border));
+}
+
+.taskRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface-2, transparent);
+  flex-wrap: wrap;
+}
+
+.taskMain {
+  flex: 1 1 8rem;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.taskLink {
+  flex: 0 1 auto;
+  min-width: 0;
+  color: var(--text);
+  text-decoration: none;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.taskLink:hover {
+  text-decoration: underline;
+}
+
+/* Dependency affordance — only rendered when payload has ids */
+.depHint {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1, 4px);
+  flex-wrap: wrap;
+  font-size: var(--font-size-xs);
+  color: var(--text-faint, var(--text-muted));
+}
+
+.depLabel {
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  opacity: 0.9;
+}
+
+/* ---- parallel-execution pulse (running tasks / nodes) ---- */
+@keyframes pulseRunning {
+  0%,
+  100% {
+    opacity: 0.55;
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--running, var(--accent)) 35%, transparent);
+  }
+  50% {
+    opacity: 1;
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--running, var(--accent)) 18%, transparent);
+  }
+}
+
+.taskRunning {
+  border-color: color-mix(in srgb, var(--running, var(--accent)) 45%, var(--border));
+  animation: pulseRunning 1.8s ease-in-out infinite;
+}
+
+.nodeRunning .colorRail {
+  animation: pulseRunning 1.8s ease-in-out infinite;
+}
+
+.livePulse {
+  flex: 0 0 auto;
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 999px;
+  background: var(--running, var(--accent));
+  animation: pulseRunning 1.4s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .taskRunning,
+  .nodeRunning .colorRail,
+  .livePulse {
+    animation: none;
+  }
+}
+
+/* Narrow viewports: stack meta + status cleanly */
+@media (max-width: 40rem) {
+  .row {
+    gap: var(--space-2);
+  }
+
+  .rowRight {
+    width: 100%;
+    margin-left: 0;
+    padding-left: calc(3px + var(--space-3) + 1.5rem);
+  }
+
+  .progress {
+    min-width: 0;
+    flex: 1 1 auto;
+  }
+
+  .nodeSub {
+    margin-left: var(--space-2);
+  }
+
+  .children {
+    margin-left: var(--space-2);
+    padding-left: var(--space-3);
+  }
+}
+
+/* ---- progress ---- */
+.progress {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 8rem;
+}
+
+.progressTrack {
+  flex: 1 1 auto;
+  height: 6px;
+  border-radius: 999px;
+  background: var(--border);
+  overflow: hidden;
+}
+
+.progressFill {
+  height: 100%;
+  border-radius: 999px;
+  background: var(--ok, var(--accent));
+  transition: width var(--motion-fast, 160ms) ease;
+}
+
+.progressLabel {
+  flex: 0 0 auto;
+  font-size: var(--font-size-xs);
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---- pill ---- */
+.statePill {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1, 4px);
+}
+
+/* ---- conversation ---- */
+.thread {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  max-height: 60vh;
+  overflow-y: auto;
+  padding-right: var(--space-1, 4px);
+}
+
+.msg {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1, 4px);
+  padding: var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+}
+
+.msgUser {
+  border-color: var(--accent);
+  background: var(--surface-2, var(--surface));
+}
+
+.msgSystem {
+  opacity: 0.85;
+  border-style: dashed;
+}
+
+.msgHead {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--font-size-xs);
+  color: var(--text-muted);
+}
+
+.msgRole {
+  font-weight: 600;
+  color: var(--text);
+  text-transform: capitalize;
+}
+
+.msgBody {
+  white-space: pre-wrap;
+  word-break: break-word;
+  color: var(--text);
+  line-height: 1.5;
+}
+
+.composer {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin-top: var(--space-3);
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--border);
+}
+
+.composerRow {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+
+.composerText {
+  flex: 1 1 20rem;
+  min-height: 3.5rem;
+  resize: vertical;
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+}
+
+.composerControls {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+/* ---- activity ---- */
+.activity {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.activityRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+}
+
+.activityMain {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.activityTitle {
+  color: var(--text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.activityMeta {
+  font-size: var(--font-size-xs);
+  color: var(--text-muted);
+}
+
+.activityTime {
+  flex: 0 0 auto;
+  font-size: var(--font-size-xs);
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}

@@ -1,0 +1,145 @@
+# Coverage, skip, scale, and classification policy for release convergence (L19/S19B).
+# This is the authoritative declaration that subset coverage artifacts are invalid.
+
+version: 1
+
+# M-10 / M-22 — coverage measurement policy
+coverage:
+  # Whole package only. A report whose measured module set is a tiny subset is FAIL.
+  source_packages:
+    - omniagentos
+  # Minimum fraction of package modules that must appear in a "whole package" report.
+  # The audited misleading artifact covered ~17 modules / ~517 (~3.3%).
+  min_module_fraction: 0.50
+  # Hard floor: never accept a report with fewer measured modules than this.
+  min_measured_modules: 100
+  # Global line floor is informational only; boundary floors are the gate.
+  global_line_floor: 0.80
+  # Boundary modules / prefixes that must be present in the report with non-zero
+  # statements measured. These are process and control boundaries, not happy-path
+  # aggregates (M-22).
+  boundary_modules:
+    - omniagentos.api.eventbus
+    - omniagentos.csi
+    - omniagentos.wrapper
+    - omniagentos.formation
+    - omniagentos.sessions.hook_client
+    - omniagentos.reliability.cli
+    - omniagentos.toolplane
+    - omniagentos.knowledge.consolidate
+    - omniagentos.runner
+    - omniagentos.swarm.scheduler
+  # Subsystem branch floors (line floors when branch data absent). Soft by default;
+  # enforce when a full coverage run is available.
+  subsystem_floors:
+    omniagentos.csi: 0.60
+    omniagentos.toolplane: 0.50
+    omniagentos.knowledge: 0.50
+    omniagentos.reliability: 0.70
+    omniagentos.sessions: 0.60
+    omniagentos.api: 0.70
+  # Reject any checked-in or reused .coverage that is not whole-package.
+  reject_subset_artifacts: true
+  # Human-readable note for operators reading `coverage report` after a partial run.
+  subset_rejection_message: >-
+    Coverage artifact measures a subset of omniagentos and must not be reported
+    as package-wide coverage. Re-run with --source=omniagentos on the full suite.
+
+# M-41 — required suites that must not silently vanish from the default signal.
+# Surfaced by omniagentos.testpolicy.pytest_plugin into default pytest/CI output.
+required_suites:
+  - id: knowledge_pg_role_boundary
+    description: PostgreSQL knowledge role-boundary / schema tests
+    path_globs:
+      - tests/knowledge/**
+    # Empty markers_any: any collected tests/knowledge/* counts (PG skip is reason-based).
+    markers_any: []
+    skip_reasons_expected:
+      - PostgreSQL unavailable
+      - Could not bootstrap test DB
+    env_requirement: postgres
+    surface_when_skipped: true
+  - id: sandbox_exec_guardrails
+    description: sandbox-exec / Seatbelt secret-registry live probes
+    path_globs:
+      - tests/policy/test_secret_registry.py
+      - tests/runner/**
+    markers_any: []
+    skip_reasons_expected:
+      - sandbox-exec
+      - Seatbelt
+    env_requirement: sandbox_exec
+    surface_when_skipped: true
+  - id: corpus_replay
+    description: policy corpus replay / L1 classifier corpus
+    path_globs:
+      - tests/policy/**
+      - HANDOFF/L1_corpus_replay.py
+    markers_any: []
+    skip_reasons_expected:
+      - corpus
+    env_requirement: optional_corpus
+    surface_when_skipped: true
+  - id: restart_recovery
+    description: restart / recovery paths
+    path_globs:
+      - tests/sessions/**
+      - tests/reliability/**
+    markers_any: []
+    skip_reasons_expected:
+      - restart
+      - recovery
+    env_requirement: none
+    surface_when_skipped: true
+
+# M-23 — bounded scale / backpressure exits (token-free, in-process)
+scale:
+  min_sessions: 100
+  min_projects: 10
+  # Concurrent admits that must succeed under capacity before backpressure engages.
+  admit_capacity: 32
+  # When capacity is exceeded, further admits must be rejected (backpressure).
+  reject_when_over_capacity: true
+  # Max wall time for the focused scale gate (seconds).
+  max_gate_seconds: 30
+  # Contention: overlapping project claims must serialize writers.
+  project_writer_slots: 1
+
+# M-20 / L-02 — classification policy (classify, do not sweep)
+classification:
+  broad_handler_types:
+    - bare
+    - Exception
+    - BaseException
+  # Boundaries where silent fallback is forbidden as a *policy class*.
+  sensitive_path_prefixes:
+    - omniagentos/api/
+    - omniagentos/db/
+    - omniagentos/reliability/
+    - omniagentos/runner/
+    - omniagentos/swarm/
+    - omniagentos/sessions/
+    - omniagentos/connectors/
+    - omniagentos/gates/
+  # Fallback kinds that are actionable on sensitive paths when they hide failure.
+  actionable_fallbacks:
+    - swallowed
+    - default_return
+    - continue
+  # Patterns that classify a stub/handler as intentional protocol, not dead code.
+  protocol_allowlist:
+    function_name_suffixes:
+      - Protocol
+    base_classes:
+      - Protocol
+      - ABC
+      - ABCMeta
+    raise_types:
+      - NotImplementedError
+    decorators:
+      - abstractmethod
+      - overload
+  # Explicit stubs that are intentionally unfinished product surfaces.
+  intentional_stub_modules:
+    - omniagentos/scheduler/campaign.py
+    - omniagentos/learning/

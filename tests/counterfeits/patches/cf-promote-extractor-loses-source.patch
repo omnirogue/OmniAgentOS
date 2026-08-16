@@ -1,0 +1,9 @@
+diff --git a/omniagentos/api/routes/chats.py b/omniagentos/api/routes/chats.py
+index 02c5c182..b58b026a 100644
+--- a/omniagentos/api/routes/chats.py
++++ b/omniagentos/api/routes/chats.py
+@@ -1495,3 +1495,3 @@ def _extract_action_items(
+         title = first_line[:120] if len(first_line) > 120 else first_line
+-        items.append({"title": title, "description": content, "source_message_index": index})
++        items.append({"title": title, "description": content, "source_message_index": 0})
+     return items

@@ -1,0 +1,128 @@
+[
+  {
+    "id": "mem_proposed",
+    "variant": "proposed",
+    "execution_id": "exec_ready_1",
+    "project_id": "proj_mission_rail",
+    "company_id": "comp_alpha",
+    "status": "proposed",
+    "candidate_id": "memc_1",
+    "content": "Mission fixtures must validate through production authorities",
+    "provenance": {
+      "source": "run_reflection",
+      "execution_id": "exec_ready_1",
+      "evidence_refs": ["sha256:receipt_accept_001"]
+    }
+  },
+  {
+    "id": "mem_pending",
+    "variant": "pending-review",
+    "execution_id": "exec_ready_1",
+    "project_id": "proj_mission_rail",
+    "company_id": "comp_alpha",
+    "status": "pending_review",
+    "candidate_id": "memc_2",
+    "content": "Unknown cost must remain null",
+    "provenance": {
+      "source": "run_reflection",
+      "execution_id": "exec_ready_1",
+      "evidence_refs": ["sha256:receipt_unknown_cost_001"]
+    }
+  },
+  {
+    "id": "mem_accepted",
+    "variant": "accepted",
+    "execution_id": "exec_ready_1",
+    "project_id": "proj_mission_rail",
+    "company_id": "comp_alpha",
+    "status": "accepted",
+    "candidate_id": "memc_3",
+    "content": "Non-ready SwarmPlanDecision cannot carry plans",
+    "provenance": {
+      "source": "human_review",
+      "execution_id": "exec_ready_1",
+      "evidence_refs": ["sha256:receipt_accept_001"]
+    }
+  },
+  {
+    "id": "mem_rejected",
+    "variant": "rejected",
+    "execution_id": "exec_refused_1",
+    "project_id": "proj_mission_rail",
+    "company_id": "comp_alpha",
+    "status": "rejected",
+    "candidate_id": "memc_4",
+    "content": "Spurious memory from refused execution",
+    "provenance": {
+      "source": "run_reflection",
+      "execution_id": "exec_refused_1",
+      "evidence_refs": []
+    },
+    "reason": "insufficient evidence from refused path"
+  },
+  {
+    "id": "mem_superseded",
+    "variant": "superseded",
+    "execution_id": "exec_ready_1",
+    "project_id": "proj_mission_rail",
+    "company_id": "comp_alpha",
+    "status": "superseded",
+    "candidate_id": "memc_5",
+    "superseded_by": "memc_3",
+    "content": "Older wording of plan-decision invariant",
+    "provenance": {
+      "source": "run_reflection",
+      "execution_id": "exec_ready_1",
+      "evidence_refs": ["sha256:receipt_accept_001"]
+    }
+  },
+  {
+    "id": "mem_promoted",
+    "variant": "promoted",
+    "execution_id": "exec_ready_1",
+    "project_id": "proj_mission_rail",
+    "company_id": "comp_alpha",
+    "status": "promoted",
+    "candidate_id": "memc_3",
+    "content": "Non-ready SwarmPlanDecision cannot carry plans",
+    "provenance": {
+      "source": "memory_curator",
+      "execution_id": "exec_ready_1",
+      "evidence_refs": ["sha256:receipt_accept_001"]
+    },
+    "promoted_to": "durable_graph"
+  },
+  {
+    "id": "mem_failed",
+    "variant": "failed",
+    "execution_id": "exec_incomplete_1",
+    "project_id": "proj_mission_rail",
+    "company_id": "comp_alpha",
+    "status": "failed",
+    "candidate_id": "memc_6",
+    "content": "Failed memory write",
+    "provenance": {
+      "source": "run_reflection",
+      "execution_id": "exec_incomplete_1",
+      "evidence_refs": []
+    },
+    "reason": "store write failed"
+  },
+  {
+    "id": "mem_rolled_back",
+    "variant": "rolled-back",
+    "execution_id": "exec_ready_1",
+    "project_id": "proj_mission_rail",
+    "company_id": "comp_alpha",
+    "status": "rolled_back",
+    "candidate_id": "memc_7",
+    "content": "Incorrectly promoted claim rolled back",
+    "provenance": {
+      "source": "memory_curator",
+      "execution_id": "exec_ready_1",
+      "evidence_refs": ["sha256:receipt_accept_001"],
+      "rollback_of": "memc_7"
+    },
+    "reason": "promotion contradicted later evidence"
+  }
+]

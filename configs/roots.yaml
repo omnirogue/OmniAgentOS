@@ -1,0 +1,26 @@
+# Standing roots every session may use without a per-approval park.
+# Anything outside these still parks (or hard-stops). This list IS the blast radius.
+#
+# See HANDOFF/AUTO-APPROVE-PLAN.md Phase 1.
+# Rule: grant agent scratch and deliverable dirs, never product SOURCE trees.
+
+standing_roots:
+  - ~/Desktop                                  # scratch deliverables
+  - ~/OmniAgentOS/var                          # agent scratch only (projects, intake, longhaul, swarm)
+  - ~/OmniAgentOS/var
+  - ~/jambot                                   # known project checkout
+
+# Readable without approval; never writable via standing grant.
+read_only_roots:
+  - ~/node_modules
+  - ~/Library/Caches
+
+# Writes here still park / hard-stop, by design (product source + credentials).
+never:
+  - ~/OmniAgentOS/omniagentos
+  - ~/OmniAgentOS/dashboard
+  - ~/OmniAgentOS/omniagentos
+  - ~/OmniAgentOS/dashboard
+  - ~/.ssh
+  - ~/.aws
+  - ~/Library                                  # except Caches above via read_only_roots

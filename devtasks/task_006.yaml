@@ -1,0 +1,3 @@
+id: "task_006"
+prompt: "Write a Python function simple_calculator(a: float, b: float, op: str) -> float supporting op in {'+','-','*','/'}. Raise ValueError on unknown op or division by zero. Provide a test case."
+discipline: "code-changes"

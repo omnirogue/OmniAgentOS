@@ -1,0 +1,51 @@
+diff --git a/omniagentos/scheduler/gate_runner.py b/omniagentos/scheduler/gate_runner.py
+index cf6fc973..981b5c83 100644
+--- a/omniagentos/scheduler/gate_runner.py
++++ b/omniagentos/scheduler/gate_runner.py
+@@ -937,27 +937,25 @@ class PytestGateRunner:
+         workspace_sha, candidate_sha, merge_base_sha = _pin_and_verify_git(workspace, request)
+ 
+         started_at = utc_now_iso()
+-        with _ephemeral_run_tree(workspace, workspace_sha) as run_tree:
+-            # In the tree that is about to execute, at the pinned SHA — see
+-            # refuse_loop_gate_on_the_machinery for why the write-side check
+-            # cannot bind this and this one can.
+-            refuse_loop_gate_on_the_machinery(run_tree, resolved_targets, request)
+-            (
+-                exit_code,
+-                collected,
+-                passed,
+-                skipped,
+-                failed,
+-                deselected_count,
+-                node_inventory_digest,
+-                workspace_tree_clean,
+-            ) = self._execute(
+-                run_tree,
+-                resolved_targets,
+-                workspace_sha,
+-                interpreter=interpreter,
+-                interpreter_class=interpreter_class,
+-            )
++        # COUNTERFEIT: the configured workspace is already pinned and clean, so
++        # re-materialising it every five minutes is pure overhead.
++        refuse_loop_gate_on_the_machinery(workspace, resolved_targets, request)
++        (
++            exit_code,
++            collected,
++            passed,
++            skipped,
++            failed,
++            deselected_count,
++            node_inventory_digest,
++            workspace_tree_clean,
++        ) = self._execute(
++            workspace,
++            resolved_targets,
++            workspace_sha,
++            interpreter=interpreter,
++            interpreter_class=interpreter_class,
++        )
+ 
+         # NEVER `Path.resolve()` an interpreter path — see
+         # `harnesses.release_gate.normalize_executable`. Both venvs' `bin/python`

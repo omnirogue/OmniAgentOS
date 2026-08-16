@@ -1,0 +1,20 @@
+# Gate skip-allowlist: explicitly declared conditional skips that are tolerated.
+#
+# A test suite with legitimate platform- or credential-conditional skips cannot
+# settle without declaring and budgeting those skips. This file allows the gate
+# to distinguish between:
+#   - Undeclared skips (refuse): an invisible hole in coverage
+#   - Declared but unbudgeted skips (refuse): budget exceeded
+#   - Declared and budgeted skips (pass): a recorded decision
+#
+# DO NOT commit skips without documenting your reason — the point is that a skip
+# is a recorded decision, not an invisible omission.
+
+budget: 5  # Maximum allowed skipped checks across all platforms
+
+declared:
+  - test: "test_cloud_credentials_integration"
+    reason: "skipped on CI; requires AWS credentials mounted as secrets"
+
+  - test: "test_macos_specific_behavior"
+    reason: "skipped on Linux; platform-conditional check"

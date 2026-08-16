@@ -1,0 +1,17 @@
+version: 1
+fixture_id: SALES-CRM-01
+domain: sales
+workstream: outreach_crm
+seed: 40601
+scenario_id: northstar-sales-outreach-v1
+required_context: [account_list, qualification_rules, opt_outs, message_policy]
+required_grants: [crm_read, draft_write]
+expected_events: [accounts.loaded, contacts.filtered, outreach.drafted, opt_outs.excluded]
+expected_outcome: reviewable_outreach
+expected_actions: [read_crm, filter_contacts, draft_message]
+tolerances:
+  account_count: 25
+  opt_out_violations: 0
+  duplicate_contacts: 0
+  customer_writes_without_approval: 0
+fault_ids: [F-18, F-24]

@@ -1,0 +1,58 @@
+{
+  "blast_radius": "Unknown until the researcher loop emits role-tagged ledger events.",
+  "cadence_seconds": 3600,
+  "company": "omniagentos",
+  "escalation_tier": "low",
+  "exit_semantics": {
+    "DEGRADED": "degraded",
+    "DOWN": "down",
+    "OK": "ok",
+    "UNVERIFIED": "cannot_evaluate",
+    "default": "cannot_evaluate"
+  },
+  "host": "owner-mac",
+  "id": "loop-researcher",
+  "kind": "llm-loop",
+  "last_status": "UNVERIFIED",
+  "last_verified": null,
+  "owner": "estate-ops",
+  "repo": "/Users/youruser/OmniAgentOS",
+  "staleness_slo_seconds": 10800,
+  "throughput": {
+    "derivation": "loops.daily_counts()/window_count() over the loopqueue ledger (gitignored; read directly since plain rg skips it without -uu). Only covered days are sampled; absent days are never zero-padded.",
+    "floor": {
+      "floor": null,
+      "fraction": 0.3,
+      "median": null,
+      "min_sample_days": 7,
+      "reason": "no history: role=researcher is absent from the ledger entirely",
+      "sample": null,
+      "sample_days": 0,
+      "sample_window": null
+    },
+    "max_error_rate": 0.25,
+    "metric": "ledger_events_24h",
+    "notes": [
+      "Remedy: have the researcher loop append role='researcher' rows to var/loopqueue/ledger.jsonl, then this entry derives a floor automatically."
+    ],
+    "observed": {
+      "as_of": null,
+      "burn": null,
+      "error_rate": null,
+      "last_success": null,
+      "process_state": "RUNNING",
+      "volume": null
+    },
+    "signal_exists": false,
+    "signal_path": null,
+    "window": "24h"
+  },
+  "verification": {
+    "field": "ledger_events_24h",
+    "note": "Graded on throughput, not liveness: a running loop with zero volume is DEGRADED.",
+    "source": "(none: no throughput signal exists)",
+    "type": "snapshot_field"
+  },
+  "what_it_does": "OmniAgentOS researcher loop. NO THROUGHPUT SIGNAL: role=researcher does not appear in the ledger at all, so neither volume nor a floor can be derived.",
+  "why_it_matters": "Reporting 'no signal exists' is the honest result. Inferring volume from a log mtime would fabricate a metric; a made-up number here is worse than a gap."
+}

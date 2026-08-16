@@ -1,0 +1,36 @@
+#!/bin/sh
+# loop-worker — run one tick of one loop instance in the LOOPS venv.
+#
+# The single entry point for everything that fires a loop (the routines-tick
+# builtin, launchd, an operator debugging by hand). It resolves the checkout
+# from its own location, so a worktree runs ITS OWN bridge code and never a
+# sibling checkout's.
+#
+#   loops/bin/loop-worker --template draft_approve_send --instance cs_replies \
+#       --instance-module omniagentos_loops.instances.cs_replies --params '{}'
+#
+# Exit 0 = the tick behaved (completed / parked / idle). Exit 1 = it failed.
+set -eu
+
+HERE=$(cd -- "$(dirname -- "$0")" && pwd)
+LOOPS_DIR=$(dirname -- "$HERE")
+REPO_ROOT=$(dirname -- "$LOOPS_DIR")
+if [ -n "${OMNIAGENTOS_LOOPS_VENV:-}" ]; then
+    VENV_PY="$OMNIAGENTOS_LOOPS_VENV/bin/python"
+else
+    VENV_PY="${OMNIAGENTOS_LOOPS_ROOT:-$REPO_ROOT/var/loops}/venv/bin/python"
+fi
+
+if [ ! -x "$VENV_PY" ]; then
+    echo "loop-worker: loops venv missing at $VENV_PY" >&2
+    echo "build it: uv venv --python 3.12 var/loops/venv && \\" >&2
+    echo "  uv pip install --python var/loops/venv/bin/python -r loops/requirements.txt" >&2
+    exit 127
+fi
+
+# The loops venv deliberately does NOT install omniagentos (loops/requirements.txt):
+# both roots go on PYTHONPATH so the bridge imports this checkout's control plane.
+PYTHONPATH="$REPO_ROOT:$LOOPS_DIR${PYTHONPATH:+:$PYTHONPATH}"
+export PYTHONPATH
+
+exec "$VENV_PY" -m omniagentos_loops.worker "$@"

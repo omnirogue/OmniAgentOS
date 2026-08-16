@@ -1,0 +1,3 @@
+id: "task_009"
+prompt: "Write a Python function word_frequency(text: str) -> dict[str, int] that counts whitespace-separated words (case-insensitive). Provide a test case."
+discipline: "code-changes"

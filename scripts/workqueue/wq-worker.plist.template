@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  wq-worker.plist.template — darwin LaunchAgent for the workqueue worker.
+
+  Rendered by scripts/workqueue/enroll.sh via sed. Every placeholder below is
+  __UPPERCASE__ and MUST be replaced before this file is installed — launchd
+  runs with a stripped environment, so every path here is absolute and no
+  placeholder may survive rendering.
+
+  The token is never embedded in this file. ProgramArguments launches a login
+  shell that sources __CONNECTIONS_ENV__ (chmod 600, mint-token.sh) at start,
+  so WQ_TOKEN reaches the worker process without ever being written into a
+  plist that could be `plutil -p`'d by anyone with read access to this file.
+-->
+<plist version="1.0">
+<dict>
+	<key>Label</key>
+	<string>__LABEL__</string>
+	<key>ProgramArguments</key>
+	<array>
+		<string>/bin/bash</string>
+		<string>-lc</string>
+		<string>set -a; [ -f __CONNECTIONS_ENV__ ] &amp;&amp; source __CONNECTIONS_ENV__; set +a; exec __PYTHON_BIN__ -m omniagentos.workqueue.worker --machine-id __MACHINE_ID__ --server __SERVER_URL__ --slots __SLOTS__ --wq-home __WQ_HOME__ __RESERVED_FOR_ARG__</string>
+	</array>
+	<key>WorkingDirectory</key>
+	<string>__REPO_ROOT__</string>
+	<key>EnvironmentVariables</key>
+	<dict>
+		<key>PATH</key>
+		<string>/usr/local/bin:/opt/homebrew/bin:/usr/bin:/bin:/usr/sbin:/sbin</string>
+	</dict>
+	<key>RunAtLoad</key>
+	<true/>
+	<key>KeepAlive</key>
+	<true/>
+	<key>ThrottleInterval</key>
+	<integer>10</integer>
+	<key>StandardOutPath</key>
+	<string>__LOG_DIR__/wq-worker.out.log</string>
+	<key>StandardErrorPath</key>
+	<string>__LOG_DIR__/wq-worker.err.log</string>
+</dict>
+</plist>

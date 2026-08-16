@@ -1,0 +1,234 @@
+/* Operations / Approvals / Run detail — real feature styling (mirrors experiments'
+   quality) instead of the design-DEMO .ds-showcase* helpers those pages used to lean on. */
+
+.statGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
+  gap: var(--space-3);
+}
+
+.chartGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-4);
+}
+
+.trendLabel {
+  margin: 0 0 var(--space-3);
+  color: var(--text-muted);
+  font-size: var(--text-micro);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.cardTitle {
+  margin: 0 0 var(--space-3);
+  font-size: var(--text-h3);
+  font-weight: 600;
+  color: var(--text);
+}
+
+/* Intentional run-state board (mirrors the collab task board) instead of an auto-fit
+   reflow grid — each column is a deliberate destination, not a card that happens to fit. */
+.runBoard {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(13rem, 1fr));
+  gap: var(--space-3);
+  overflow-x: auto;
+  padding-bottom: var(--space-2);
+}
+
+.runColumn {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  min-height: 16rem;
+  padding: var(--space-3);
+  border: 1px solid var(--border);
+  border-top: 3px solid var(--column-tone, var(--border-strong));
+  border-radius: var(--radius-lg);
+  background: color-mix(in srgb, var(--surface) 72%, var(--canvas));
+}
+
+.runColumnHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+.runColumnTitle {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0;
+  font-size: var(--text-small);
+  font-weight: 600;
+  color: var(--text);
+}
+
+.runList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.runCard {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.runCardTop {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+.runCardId {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--text);
+  font-family: var(--font-mono);
+  font-size: var(--text-small);
+  font-weight: 600;
+}
+
+.runCardTask {
+  margin: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--text-muted);
+  font-size: var(--text-small);
+}
+
+.runCardMeta {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+
+.runCardAge {
+  color: var(--text-faint);
+  font-size: var(--text-micro);
+}
+
+.emptyColumn {
+  margin: var(--space-4) 0;
+  color: var(--text-faint);
+  text-align: center;
+  font-size: var(--text-small);
+}
+
+.doneWrap {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  overflow: hidden;
+}
+
+.doneSummary {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-4);
+  color: var(--text);
+  font-size: var(--text-small);
+  font-weight: 600;
+  cursor: pointer;
+  list-style: none;
+}
+
+.doneSummary::-webkit-details-marker {
+  display: none;
+}
+
+.doneSummary::marker {
+  content: "";
+}
+
+.doneChevron {
+  display: inline-flex;
+  color: var(--text-faint);
+  transition: transform var(--motion-fast) var(--ease);
+}
+
+.doneWrap[open] .doneChevron {
+  transform: rotate(90deg);
+}
+
+.doneBody {
+  padding: 0 var(--space-4) var(--space-4);
+  border-top: 1px solid var(--border);
+}
+
+.doneEmpty {
+  padding: var(--space-5) var(--space-4);
+}
+
+/* Approvals dialog helper row */
+.dialogActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-2);
+}
+
+.backLink {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  color: var(--text-muted);
+  font-size: var(--text-small);
+  text-decoration: none;
+}
+
+.backLink:hover {
+  color: var(--text);
+}
+
+.usageGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
+}
+
+.manifestGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-5);
+}
+
+@media (max-width: 72rem) {
+  .runBoard {
+    grid-template-columns: repeat(3, minmax(12rem, 1fr));
+  }
+}
+
+@media (max-width: 64rem) {
+  .chartGrid,
+  .manifestGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 42rem) {
+  .runBoard {
+    grid-template-columns: repeat(2, minmax(11rem, 1fr));
+  }
+  .statGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 26rem) {
+  .runBoard {
+    grid-template-columns: 1fr;
+  }
+}

@@ -1,0 +1,3 @@
+id: "task_001"
+prompt: "Write a Python function is_palindrome(s: str) -> bool that returns True if s is a palindrome (case-insensitive, ignoring spaces). Provide a test case."
+discipline: "code-changes"

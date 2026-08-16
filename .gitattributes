@@ -1,0 +1,15 @@
+# A unified diff's blank CONTEXT line is a single space, and its final context
+# line may be blank. That space is CONTENT: strip it and `git apply` reports
+# "corrupt patch at line N", because the hunk's line count no longer matches.
+#
+# So the whitespace checks and the file format are in direct conflict here, and
+# the file format wins — a patch that git cannot apply is a counterfeit that can
+# never fire, which is worse than useless: the corpus reports an entry as bound
+# when nothing binds it. (The counterfeit harness silently falls back to
+# patch(1), which is lenient, so a corrupt patch can even report CAUGHT while
+# `git apply --check` rejects it.)
+#
+# Turning the checks off for exactly these paths is the fix. It is not a
+# relaxation of the repo's whitespace hygiene: nothing else matches, and every
+# committed patch here has always carried these lines.
+tests/counterfeits/patches/*.patch -whitespace

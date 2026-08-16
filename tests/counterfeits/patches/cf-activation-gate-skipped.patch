@@ -1,0 +1,11 @@
+--- a/omniagentos/api/routes/routines.py
++++ b/omniagentos/api/routes/routines.py
+@@ -242,6 +242,8 @@ def _pytest_counts_prove_life(
+ 
+ 
+ def _run_activation_gate(routine: dict[str, Any]) -> tuple[bool, int | None, str]:
++    # COUNTERFEIT: stub ok without executing — real exit_code absent
++    return True, None, "gate skipped (counterfeit)"
+     """Execute the routine's gate command via gate_runner process containment.
+ 
+     Returns ``(passed, exit_code, detail)``. Fail closed on anything other

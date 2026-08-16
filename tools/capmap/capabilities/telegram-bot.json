@@ -1,0 +1,18 @@
+{
+  "id": "telegram-bot",
+  "company": "estate",
+  "kind": "external-service",
+  "host": "owner-mac",
+  "repo": "/Users/youruser/Work/Ops",
+  "what_it_does": "Records Telegram bot API health from the integrations probe snapshot.",
+  "why_it_matters": "Telegram is an estate communication and automation channel.",
+  "blast_radius": "Telegram-triggered workflows and notifications.",
+  "verification": {"type": "snapshot_field", "source": "/Users/youruser/Work/Ops/var/integrations-health.json", "field": "integrations.telegram-bot.status", "checked_at_field": "integrations.telegram-bot.checked_at"},
+  "exit_semantics": {"UP": "ok", "DOWN": "down", "SUSPENDED": "degraded", "NO-CRED": "cannot_evaluate"},
+  "cadence_seconds": 900,
+  "staleness_slo_seconds": 2700,
+  "escalation_tier": "high",
+  "owner": "estate-ops",
+  "last_verified": null,
+  "last_status": "UNVERIFIED"
+}

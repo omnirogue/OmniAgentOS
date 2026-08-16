@@ -1,0 +1,47 @@
+# tournament: {{ subject }}
+
+{% if discipline %}[[{{ discipline }}]] · {% endif %}[[{{ subject }}]] · [[Home]]
+
+## Summary
+
+- **Status:** {{ status }}
+- **Discipline:** {{ discipline or "_unset_" }}
+- **Arena task hash:** `{{ arena_task_hash or "_unset_" }}`
+- **Created:** {{ created_at }}
+- **Winner:** {% if winner %}[[{{ winner }}]]{% else %}_undecided_{% endif +%}
+
+## Configs
+
+{% if config_ids %}
+{% for config_id in config_ids %}
+- [[{{ config_id }}]]{% if config_id == winner %} — **winner**{% endif +%}
+{% endfor %}
+{% else %}
+_No configs recorded._
+{% endif %}
+
+## Matches
+
+{% if matches %}
+| Config A | Config B | Winner | Score A | Score B | Blind | Judge notes |
+|---|---|---|---|---|---|---|
+{% for m in matches %}
+| [[{{ m.config_a }}]] | [[{{ m.config_b }}]] | {% if m.winner %}[[{{ m.winner }}]]{% else %}_draw_{% endif %} | {{ m.score_a }} | {{ m.score_b }} | {{ "yes" if m.blind else "no" }} | {{ m.judge_notes or "_none_" }} |
+{% endfor %}
+{% else %}
+_No matches recorded._
+{% endif %}
+
+## Elo standings
+
+{% if elo %}
+| Rank | Config | Rating | Matches | W | L | D | Updated |
+|---|---|---|---|---|---|---|---|
+{% for row in elo %}
+| {{ loop.index }} | [[{{ row.config_id }}]] | {{ "%.1f"|format(row.rating) }} | {{ row.matches }} | {{ row.wins }} | {{ row.losses }} | {{ row.draws }} | {{ row.updated_at }} |
+{% endfor %}
+{% else %}
+_No elo standings recorded._
+{% endif %}
+
+## Notes (human)

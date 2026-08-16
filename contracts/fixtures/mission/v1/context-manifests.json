@@ -1,0 +1,98 @@
+[
+  {
+    "id": "man_forecast",
+    "variant": "forecast",
+    "execution_id": "exec_ready_1",
+    "project_id": "proj_mission_rail",
+    "company_id": "comp_alpha",
+    "source": "context_forecast",
+    "reason": "token budget forecast before load",
+    "package_id": "pkg_forecast_1",
+    "items": [{"path": "ARCHI.md", "bytes": 27875, "included": false, "omit_reason": "forecast_only"}],
+    "status": "forecast"
+  },
+  {
+    "id": "man_requested",
+    "variant": "requested",
+    "execution_id": "exec_ready_1",
+    "project_id": "proj_mission_rail",
+    "company_id": "comp_alpha",
+    "source": "operator",
+    "reason": "operator requested mission contracts context",
+    "package_id": "pkg_req_1",
+    "items": [{"path": "contracts/mission-command-api.md", "bytes": 9000, "included": false, "omit_reason": "pending_resolve"}],
+    "status": "requested"
+  },
+  {
+    "id": "man_resolved",
+    "variant": "resolved",
+    "execution_id": "exec_ready_1",
+    "project_id": "proj_mission_rail",
+    "company_id": "comp_alpha",
+    "source": "resolver",
+    "reason": "paths resolved against workspace",
+    "package_id": "pkg_res_1",
+    "items": [{"path": "omniagentos/contracts.py", "bytes": 45000, "included": true, "omit_reason": null}],
+    "status": "resolved"
+  },
+  {
+    "id": "man_loaded",
+    "variant": "loaded",
+    "execution_id": "exec_ready_1",
+    "project_id": "proj_mission_rail",
+    "company_id": "comp_alpha",
+    "source": "loader",
+    "reason": "package delivered to worker brief",
+    "package_id": "pkg_load_1",
+    "items": [{"path": "omniagentos/swarm/contracts.py", "bytes": 16000, "included": true, "omit_reason": null}],
+    "status": "loaded"
+  },
+  {
+    "id": "man_denied",
+    "variant": "denied",
+    "execution_id": "exec_refused_1",
+    "project_id": "proj_mission_rail",
+    "company_id": "comp_alpha",
+    "source": "policy",
+    "reason": "access denied for path outside owned set",
+    "package_id": "pkg_deny_1",
+    "items": [{"path": "/etc/passwd", "bytes": 0, "included": false, "omit_reason": "policy_denied"}],
+    "status": "denied"
+  },
+  {
+    "id": "man_redacted",
+    "variant": "redacted",
+    "execution_id": "exec_ready_1",
+    "project_id": "proj_mission_rail",
+    "company_id": "comp_alpha",
+    "source": "redactor",
+    "reason": "secrets redacted from package body",
+    "package_id": "pkg_red_1",
+    "items": [{"path": "configs/secrets.example.yaml", "bytes": 200, "included": true, "omit_reason": "redacted_body"}],
+    "status": "redacted"
+  },
+  {
+    "id": "man_stale",
+    "variant": "stale",
+    "execution_id": "exec_changed_1",
+    "project_id": "proj_mission_rail",
+    "company_id": "comp_alpha",
+    "source": "cache",
+    "reason": "package digest older than workspace revision",
+    "package_id": "pkg_stale_1",
+    "items": [{"path": "contracts/fixtures/mission/v1/execution-contracts.json", "bytes": 1000, "included": false, "omit_reason": "stale_digest"}],
+    "status": "stale"
+  },
+  {
+    "id": "man_failed",
+    "variant": "failed",
+    "execution_id": "exec_incomplete_1",
+    "project_id": "proj_mission_rail",
+    "company_id": "comp_alpha",
+    "source": "loader",
+    "reason": "IO error while assembling package",
+    "package_id": "pkg_fail_1",
+    "items": [],
+    "status": "failed"
+  }
+]

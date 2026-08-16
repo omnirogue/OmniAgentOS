@@ -1,0 +1,48 @@
+/* Needs Response queue — layout only; reuses portfolio band/stripe/chip tokens. */
+
+.wrap {
+  margin: 0 0 var(--space-5);
+}
+
+.empty {
+  padding: var(--space-4) 0;
+}
+
+.itemRow {
+  /* Row is a div (Approve button + link), not a full-row Link. */
+  cursor: default;
+}
+
+.titleLink {
+  color: inherit;
+  text-decoration: none;
+  min-width: 0;
+}
+
+.titleLink:hover .pname,
+.titleLink:hover {
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.command {
+  display: block;
+  margin-top: 4px;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-size: var(--text-small);
+  color: var(--text);
+  background: color-mix(in srgb, var(--awaiting) 8%, var(--canvas));
+  border: 1px solid color-mix(in srgb, var(--awaiting) 25%, var(--border));
+  border-radius: var(--radius-sm);
+  padding: 4px var(--space-2);
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}

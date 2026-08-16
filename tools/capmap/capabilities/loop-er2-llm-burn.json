@@ -1,0 +1,72 @@
+{
+  "blast_radius": "Spend only; the burn dimension never fails a loop on its own.",
+  "cadence_seconds": 300,
+  "company": "initech",
+  "escalation_tier": "medium",
+  "exit_semantics": {
+    "DEGRADED": "degraded",
+    "DOWN": "down",
+    "OK": "ok",
+    "UNVERIFIED": "cannot_evaluate",
+    "default": "cannot_evaluate"
+  },
+  "host": "initech-worker-host",
+  "id": "loop-er2-llm-burn",
+  "kind": "llm-loop",
+  "last_status": "OK",
+  "last_verified": null,
+  "owner": "estate-ops",
+  "repo": "example-support-service",
+  "staleness_slo_seconds": 3600,
+  "throughput": {
+    "derivation": "Read-only database query inside the service's own container over one SSH session. Aggregates call count, cost and tokens by day(created_at) across configured LLM providers; 24h window for the observed row.",
+    "floor": {
+      "floor": 1950.0,
+      "fraction": 0.3,
+      "median": 6500.0,
+      "min_sample_days": 7,
+      "reason": null,
+      "sample": {
+        "2024-01-01": 5000,
+        "2024-01-02": 5500,
+        "2024-01-03": 6000,
+        "2024-01-04": 6500,
+        "2024-01-05": 7000,
+        "2024-01-06": 7500,
+        "2024-01-07": 8000
+      },
+      "sample_days": 7,
+      "sample_window": "2024-01-01..2024-01-07"
+    },
+    "max_error_rate": 0.1,
+    "metric": "llm_calls_24h",
+    "notes": [
+      "LLM error rate in 24h is effectively zero — the model layer is not the failure mode when downstream volume drops.",
+      "Across all providers the 24h picture (illustrative) is roughly 200,000 calls with a small non-ok share, split between auth errors and rate limits, concentrated in a couple of high-volume API endpoints.",
+      "Costs are read from provider_calls.cost_usd; no credential value is read."
+    ],
+    "observed": {
+      "as_of": null,
+      "burn": {
+        "cost_usd_24h": 10.0,
+        "cost_usd_30d_daily_median": 9.0,
+        "tokens_24h": 10000000
+      },
+      "error_rate": 0.0,
+      "last_success": null,
+      "process_state": "RUNNING",
+      "volume": 7000
+    },
+    "signal_exists": true,
+    "signal_path": "postgres://example-service-db/example_service (container-local; credentials in EXAMPLE_SERVICE_* env, never read by capmap)#provider_calls",
+    "window": "24h"
+  },
+  "verification": {
+    "field": "llm_calls_24h",
+    "note": "Graded on throughput, not liveness: a running loop with zero volume is DEGRADED.",
+    "source": "postgres://example-service-db/example_service (container-local; credentials in EXAMPLE_SERVICE_* env, never read by capmap)#provider_calls",
+    "type": "snapshot_field"
+  },
+  "what_it_does": "LLM call layer for the support pipeline; volume is model calls, with cost and token burn recorded for audit.",
+  "why_it_matters": "Confirms the loop is spending on inference at its normal rate — useful as a corroborating signal when a downstream stage reports zero output, because it separates 'the LLM stopped' from 'the LLM ran and the send stage dropped it'."
+}

@@ -1,0 +1,28 @@
+diff --git a/omniagentos/adapters/api_base.py b/omniagentos/adapters/api_base.py
+--- a/omniagentos/adapters/api_base.py
++++ b/omniagentos/adapters/api_base.py
+@@ -353,24 +353,6 @@ class OpenAiCompatibleAdapter:
+         import requests
+ 
+         spend_ticket = None
+-        billing_provider = self.spend_guard_provider(model)
+-        if billing_provider is not None:
+-            # Terminal SpendGuardRefusal deliberately escapes ``run``. A cap is
+-            # policy, not an outage, and must never advance a model/provider
+-            # fallback chain.
+-            # The structured-output schema is part of the actual prompt and
+-            # therefore part of the conservative input-token ceiling.
+-            guard_input = (
+-                input if prompt == input.prompt else input.model_copy(update={"prompt": prompt})
+-            )
+-            spend_ticket = self.spend_guard().preflight(
+-                guard_input,
+-                provider=billing_provider,
+-                model=model,
+-                transport="http",
+-                adapter_key=self.name,
+-                attempt_index=attempt_index,
+-            )
+ 
+         headers = {"Content-Type": "application/json", **self.extra_headers()}
+         if key:

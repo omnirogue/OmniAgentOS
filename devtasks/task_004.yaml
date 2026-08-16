@@ -1,0 +1,3 @@
+id: "task_004"
+prompt: "Write a Python function count_vowels(s: str) -> int that counts vowels aeiou (case-insensitive) in s. Provide a test case."
+discipline: "code-changes"

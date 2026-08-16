@@ -1,0 +1,37 @@
+# Artifacts / Memory / Metacognition (OmniAgentOS).
+# Source: Desktop/MetaCognitionOmniAgent OS upgrade plan.
+#
+# LIVE by default (operator request). Env overrides still win both ways:
+#   OMNIAGENTOS_METACOG_MODE=off|shadow|enforce
+#   OMNIAGENTOS_METACOG_MEMORY_PROMOTION=off|shadow|enforce
+#   OMNIAGENTOS_METACOG_STRATEGY_SWITCH=off|shadow|enforce
+#   OMNIAGENTOS_METACOG_SKILL_CANARY=off|shadow|canary|enforce
+#
+# off     — APIs/store work; controllers never auto-act
+# shadow  — record only; do not apply switches / promotions
+# enforce — LIVE: apply strategy switches, promote memory, canary/promote skills
+
+mode: "enforce"
+# HANDOFF Phase 4: memory promotion is enforced via promote_memory() guards +
+# operator-visible promotion.
+memory_promotion: "enforce"
+strategy_switch: "enforce"
+skill_canary: "canary"
+
+# Stall detection: two consecutive no-progress evaluations cannot CONTINUE.
+stall:
+  max_no_progress_cycles: 2
+  repetition_threshold: 0.55
+  min_evidence_delta: 0.05
+
+# Context compiler budgets
+context:
+  max_tokens: 4000
+  max_memories: 8
+  max_artifacts: 12
+  max_skills: 4
+
+# Artifact content root (relative to repo var/)
+artifacts:
+  root: "metacog-artifacts"
+  default_retention: "project"

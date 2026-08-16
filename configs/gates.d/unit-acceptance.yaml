@@ -1,0 +1,53 @@
+# unit-acceptance — the first gate under the anti-retry protocol (SPEC §4.4a).
+# Modelled on ~/.omniagentos/ops/AccurateGate/gates.d/merge-gate.yaml, which is the only
+# real example of this format; configs/gates.d/ is a NEW directory in this repo.
+#
+# Vars the worker supplies (omniagentos/workqueue/worker.py:_run_acceptance):
+#   {workdir}         the unit's fresh checkout at base_sha
+#   {repo}            the repo root the worker is running FROM
+#   {base_sha}        the unit's pinned 40-hex commit
+#   {acceptance_cmd}  the unit's exact command — deterministic and auditable,
+#                     which is precisely why it is what the fingerprint hashes
+#
+# Verdict authority is the acceptance command itself; this layer never relaxes
+# grading, it only refuses to spend a run on an input already refused.
+command: {acceptance_cmd}
+workdir: {workdir}
+
+# SPEC §4.1, entries 2-5 (entry 1, `gate:<name>`, is prepended by the wrapper).
+# THIS BLOCK AND worker.py:_input_key MUST STAY IN THE SAME ORDER — they are two
+# spellings of one key, and a key computed two ways is two ledgers. The worker
+# additionally passes --input-key, so in the queue path they cannot diverge at
+# all; this declaration is what a standalone `accurate-gate.py run` uses.
+input_key:
+  - tree:{workdir}                                 # candidate tree; uncommitted changes included
+  - self:{repo}/scripts/accurate-gate.py           # a gate UPGRADE re-admits every refused input
+  - file:{repo}/configs/gates.d/unit-acceptance.yaml  # a config change re-admits, likewise
+  - cmd:{acceptance_cmd}                           # different command, different input
+
+# A violated invariant is instrument-error BY CONSTRUCTION, and its remedy names
+# the instrument rather than the code. This is the half of §4.4 that stops "a
+# dirty workspace" from being reported in the same voice as "your code is wrong".
+#
+# NOTE on git-clean: this gate is for units whose WORK IS the acceptance command
+# (the `script` profile) — for those, a dirty tree at gate time means something
+# other than the unit touched the checkout, which is an instrument fault. A unit
+# whose agent legitimately edits the tree must NOT declare this gate; it uses a
+# raw acceptance_cmd, and owned_paths is what bounds its writes.
+invariants:
+  - git-pinned {workdir} {base_sha}   # a moved merge base is an instrument fault, not a defect
+  - git-clean {workdir}               # a dirty workspace is an instrument fault, not a defect
+  - disk-free 5G {workdir}            # ENOSPC mid-run mints a defect that is not one
+
+quiesce:
+  load1_max: 16                       # REAL signal; an agent-process proxy undercounts
+  wait_max_s: 900
+
+evidence:
+  # Per-machine runtime state under $WQ_HOME (default ~/wq), never inside the
+  # repo: receipts are host facts, the checkout is shared code.
+  dir: {wq_home}/gate-evidence
+
+retry:
+  unchanged_input: refuse             # the 28x storm becomes 28 x 0.2s
+  max_attempts: 5                     # then storm-parked: terminal, alert once

@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  Nightly git-truth merge counter, 04:40 local.
+
+  Cross-checks the session ledger's merge-event counts against git-derived
+  ground truth (git log's merges flag) and flags any day where the two
+  diverge by more than 10%; see scripts/ops/merge_truth.py. Runs with the
+  recompute flag so the throughput ceiling is always derived from
+  git-truth, never from the voluntary-discipline ledger (which has been
+  observed inverting day rankings: ledger 32 merges Aug-5 vs git-truth 7;
+  ledger 0 vs git 37 on Aug-11).
+
+  launchd hands a job a STRIPPED environment: no shell profile, no PATH from
+  .zshrc, no cwd. So every path here is absolute and the interpreter is the
+  repo's own .venv python invoked directly; never python3, never a PATH
+  lookup.
+-->
+<plist version="1.0">
+<dict>
+	<key>Label</key>
+	<string>com.omniagentos.merge-truth-nightly</string>
+	<key>EnvironmentVariables</key>
+	<dict>
+		<key>PATH</key>
+		<string>/usr/local/bin:/opt/homebrew/bin:/usr/bin:/bin:/usr/sbin:/sbin</string>
+	</dict>
+	<key>ProgramArguments</key>
+	<array>
+		<string>/Users/youruser/OmniAgentOS/.venv/bin/python</string>
+		<string>/Users/youruser/OmniAgentOS/scripts/ops/merge_truth.py</string>
+		<string>--repos</string>
+		<string>/Users/youruser/OmniAgentOS</string>
+		<string>--ledger-dir</string>
+		<string>/Users/youruser/Work/Ops/session-ledger</string>
+		<string>--output-dir</string>
+		<string>/Users/youruser/OmniAgentOS/vault/briefings</string>
+		<string>--recompute</string>
+	</array>
+	<key>WorkingDirectory</key>
+	<string>/Users/youruser/OmniAgentOS</string>
+	<key>StartCalendarInterval</key>
+	<dict>
+		<key>Hour</key>
+		<integer>4</integer>
+		<key>Minute</key>
+		<integer>40</integer>
+	</dict>
+	<key>RunAtLoad</key>
+	<false/>
+	<key>KeepAlive</key>
+	<false/>
+	<key>StandardOutPath</key>
+	<string>/Users/youruser/OmniAgentOS/var/log/merge-truth-nightly.log</string>
+	<key>StandardErrorPath</key>
+	<string>/Users/youruser/OmniAgentOS/var/log/merge-truth-nightly.log</string>
+</dict>
+</plist>

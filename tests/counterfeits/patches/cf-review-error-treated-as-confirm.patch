@@ -1,0 +1,17 @@
+diff --git a/omniagentos/orchestrator/core.py b/omniagentos/orchestrator/core.py
+index f7a42bdb..f57af8ff 100644
+--- a/omniagentos/orchestrator/core.py
++++ b/omniagentos/orchestrator/core.py
+@@ -636,6 +636,12 @@ class Orchestrator:
+                     task=task, spec_markdown=spec_markdown, result=last_result
+                 )
+             if last_review.verdict == "error":
++                last_review = ReviewVerdict(
++                    verdict="confirm",
++                    feedback="reviewer unavailable; passed by default",
++                    reviewer=last_review.reviewer,
++                )
++            if False:
+                 # No cascade trace is written here on purpose: an infra failure is
+                 # evidence about the REVIEWER, not about this tier's executor, and
+                 # recording it as a loss would poison the tier learner.

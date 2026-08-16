@@ -1,0 +1,116 @@
+# Daily briefing schedule and delivery channels.
+briefing:
+  hour: 7
+  minute: 30
+  deliver_email: null
+  deliver_slack: true
+  voice_provider: elevenlabs
+
+# Alert thresholds and deduplication window.
+alerts:
+  # ROAS below this floor fires a CRITICAL alert. NOTE: 1.0 is gross
+  # break-even (revenue == spend) with no allowance for refunds or COGS -- a
+  # real "we are losing money" floor for a refunded/COGS-bearing info-product
+  # is typically higher (e.g. 1.5-2.0+). Left at 1.0 by default since we don't
+  # want to guess the operator's actual unit economics; raise it once known.
+  roas_floor: 1.0
+  spend_spike_pct: 50.0
+  payment_failure_burst: 3
+  vip_senders: []
+  cooldown_minutes: 240
+  urgent_patterns: [urgent, asap, immediately]
+  # H10/PROD-001 revenue-crash alert: fires CRITICAL when the increase-revenue
+  # goal's net_revenue_usd latest snapshot is <= revenue_floor_usd (fires from
+  # day one -- 0.0 means any zero-or-negative-revenue day alerts) OR drops
+  # >= revenue_drop_pct vs. the trailing revenue_baseline_days average (the
+  # pct check needs a couple of days of prior history first, like
+  # spend_spike's >=3-day guard). This is the "alert me if my revenue stops"
+  # signal.
+  revenue_floor_usd: 0.0
+  revenue_drop_pct: 60.0
+  revenue_baseline_days: 7
+  # H6/PERF-001/SEC-O-005: cap on how many borderline messages get an LLM
+  # triage subprocess call in a single monitor cycle (each message is also
+  # triaged at most ONCE ever, tracked in a JSON marker file next to the db --
+  # see steward/alerts/monitor.py -- so this cap only bounds a first-seen
+  # flood, not steady-state load).
+  triage_max_per_cycle: 20
+
+# Inbound webhook limits. Add sources by naming the environment variable that
+# holds each source's shared secret; secret values never belong in this file.
+comms:
+  inbound_max_bytes: 262144
+  rate_limit_per_minute: 60
+  sources:
+    zapier: {secret_env: COMMS_WEBHOOK_SECRET_ZAPIER}
+    # GitHub webhooks: secret used for X-Hub-Signature-256 (and optional X-Comms-Token).
+    # Adapter delivery is also gated by OMNIAGENTOS_GITHUB_COMMS_MODE (default off).
+    github: {secret_env: COMMS_WEBHOOK_SECRET_GITHUB}
+
+# Knowledge-curation behavior.
+curation:
+  extract_vip: true
+  extract_goal_keywords: true
+  batch_limit: 50
+
+# Steward autonomy ladder rung.
+autonomy:
+  rung: 1
+
+# Voice defaults. Provider-specific identifiers may remain unset.
+voice:
+  default_provider: elevenlabs
+  elevenlabs_voice_id: null
+  xai_candidates: []
+
+# Executive Decision Center (EDC, migration 130). Tenancy is owner-scoped: every
+# comms source is mapped here to the employee who owns that mailbox and the
+# company it belongs to. A source that is ABSENT from `accounts` has no owner and
+# EDC skips its mail loudly rather than guessing whose private queue it is.
+#
+# Keys are the comms source NAME (the per-mailbox `source` the poller writes,
+# e.g. the IMAP source name / broker account). `source_account` is the broker
+# connector that mailbox sends through (used later by the reply/execute path).
+edc:
+  accounts:
+    # All five mailboxes are the operator's (emp_owner). The two Gmail accounts flow through
+    # the brokered gmail poller; the two Titan accounts through the IMAP poller.
+    # gmail_acmeuni is intentionally ABSENT until its connector lands (#378) — an
+    # unmapped source is skipped loudly by EDC, never guessed.
+    gmail_ownera:
+      owner_employee_id: emp_owner
+      company_slug: ""
+      source_account: gmail_ownera
+    gmail_initech:
+      owner_employee_id: emp_owner
+      company_slug: initech
+      source_account: gmail_initech
+    # Titan mailboxes (IMAP poller). The key is the IMAP source name.
+    globex:
+      owner_employee_id: emp_owner
+      company_slug: globex
+      source_account: globex
+    hooli:
+      owner_employee_id: emp_owner
+      company_slug: hooli
+      source_account: hooli
+  # Max edc_classify LLM calls per triage cycle (mirrors alerts.triage_max_per_cycle).
+  llm_max_per_cycle: 20
+  # Unattended auto-delegation stays OFF until the operator promotes and trusts a rule.
+  auto_delegate_live: false
+  # Sender-credibility gate (OPUS-MAJOR): URGENT requires a DKIM/SPF-verified
+  # sender OR a From domain on this allowlist. These are the providers the operator's real
+  # payment-failure / account notices come from — keep it short, extend by PR. An
+  # unverified, non-allowlisted sender caps at NEEDS_OWNER even with urgent wording.
+  credible_sender_domains:
+    - freshworks.com
+    - freshdesk.com
+    - mailgun.net
+    - mailgun.com
+    - stripe.com
+    - google.com
+    - accounts.google.com
+    - paypal.com
+    - amazon.com
+    - aws.amazon.com
+    - github.com

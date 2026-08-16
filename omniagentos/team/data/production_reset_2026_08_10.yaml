@@ -1,0 +1,913 @@
+# Example seed data — Team Work OS initial population (migration 123).
+# ALL content below is a FICTIONAL startup-portfolio example.
+#
+# This is a weekly work-queue snapshot for the OmniAgentOS platform team and the small portfolio
+# of startups it operates across: Initech (an enterprise CRM), Globex (an ads platform), AcmeUni
+# (an online course business) and Hooli (a consumer app). It models a fictional operator's weekly
+# plan, the platform's long-term destination conditions, and the shared-queue scheduling conflict
+# between Alice and Bob's two specs for the same week.
+#
+# Consumed by scripts/import-reset-queue.py, which is IDEMPOTENT against this file: re-running
+# it never duplicates a goal (matched on company+title) or a task (matched on ref).
+#
+# Schema (informal, see tests/team_import/test_yaml_valid.py for the enforced contract):
+#
+#   companies: [{slug, name}]
+#       The six EXISTING org_companies rows this file's goals/tasks may reference. The importer
+#       never creates a company — an unknown slug here is a bug in this file, not new data.
+#
+#   goals: [{ref, title, horizon, company, owner, parent(optional), description}]
+#       `ref` is a LOCAL key for this file (not a board ref) used only to resolve `parent` and
+#       tasks' `goal_ref`. `horizon` is long_term|short_term; short_term goals carry `parent`
+#       (another goal's ref) so the ladder from work to why is unbroken. Idempotency key is
+#       (company, title) — never (ref) — because the ref is a fixture of THIS FILE, not of the
+#       company_goals table.
+#
+#   tasks: [{ref, title, owner, size, priority, status, blocked_reason, goal_ref, due_date,
+#             owned_paths, depends_on, acceptance_criteria, description,
+#             parent_task_ref(optional), source, baseline_evidence(optional)}]
+#       `ref` IS the board_tasks.ref — the idempotency key. `parent_task_ref` names another
+#       task's `ref`; the importer creates every task with no `parent_task_ref` first (this
+#       includes every UP-*/SP-*/OPSP-* parent and every standalone card), then resolves and
+#       creates the children — the schema's hierarchy is exactly one level deep, so two passes
+#       are sufficient. Scoring counts ONLY top-level (parentless) tasks, which is why every
+#       parent's `size` is the one that matters for the weekly number; subtask sizes are the
+#       per-person estimate, not a scoring input, once they are nested.
+#
+#       `owned_paths` has no dedicated column on board_tasks (migration 123 did not add one). The
+#       importer stores its JSON array under `org_json.owned_paths` for machine attribution and
+#       mirrors it into `description` as a trailing "Owned paths:" line for humans.
+#
+#       `baseline_evidence` (baseline rows only): {ref, title} for the one evidence row the
+#       importer attaches (kind=doc, attribution=manual) before self-verifying as emp_owner.
+
+source: production-reset-2026-08-10
+generated_at: "2026-08-10"
+week: "Mon 2026-08-10 -> Fri 2026-08-14"
+
+companies:
+  - slug: initech
+    name: Initech
+  - slug: globex
+    name: Globex
+  - slug: acmeuni
+    name: AcmeUni
+  - slug: hooli
+    name: Hooli
+  - slug: omniagentos
+    name: OmniAgentOS
+  - slug: personal
+    name: Personal
+
+# ---------------------------------------------------------------------------
+# Goals — N1-N5 (long_term, the destination) + five operational clusters
+# (short_term, this week's ladder toward them) + Hooli's own revenue goal.
+# ---------------------------------------------------------------------------
+
+goals:
+  - ref: ns-n1
+    title: "Work flows to whichever machine is free, with no human dispatching it"
+    horizon: long_term
+    company: omniagentos
+    owner: emp_owner
+    description: >
+      North Star condition N1. OmniAgentOS is meant to route work to any idle machine
+      automatically; two idle machines today are capacity switched off. Today: no shared queue.
+
+  - ref: ns-n2
+    title: "Customer service runs without a human in the normal path"
+    horizon: long_term
+    company: initech
+    owner: emp_owner
+    description: >
+      North Star condition N2. Support has been fully manual for months; the sales motion cannot
+      restart until this and N3 are automated.
+
+  - ref: ns-n3
+    title: "Enterprise intake, provision, and onboard runs without a human in the normal path"
+    horizon: long_term
+    company: initech
+    owner: emp_owner
+    description: >
+      North Star condition N3. Still manual, asked for last week; the enterprise pipeline page
+      currently renders against a table that was never migrated.
+
+  - ref: ns-n4
+    title: "The system tells us it's broken before a customer does"
+    horizon: long_term
+    company: omniagentos
+    owner: emp_owner
+    description: >
+      North Star condition N4. Today the team finds out from complaints. This is the destination
+      the telemetry build (S1, WP-1..4) and the platform's own health/janitor signals both serve.
+
+  - ref: ns-n5
+    title: "Every human hour goes to design, review, or judgment — never to production typing"
+    horizon: long_term
+    company: omniagentos
+    owner: emp_owner
+    description: >
+      North Star condition N5. Today mostly typing. The Team Work OS itself (this queue) is the
+      mechanism this condition is measured through.
+
+  - ref: cluster-green-main
+    title: "Green main & zero PR backlog"
+    horizon: short_term
+    parent: ns-n1
+    company: omniagentos
+    owner: emp_alice
+    description: >
+      Every open PR on the platform repo is blocked by the same red main, not by many separate
+      defects. U1 unblocks the pipeline; U2 lands the fix; S2 drains the backlog; S5-S8 give the
+      queue visibility so it never re-fills silently.
+
+  - ref: hooli-revenue
+    title: "Hooli takes money"
+    horizon: long_term
+    company: hooli
+    owner: emp_alice
+    description: >
+      Hooli is live and brand-complete but cannot take a single payment — every pricing button
+      loops back to the sign-up page. This is Hooli's own top-level revenue objective; it does not
+      ladder through N1-N5 (those are the platform's cross-portfolio conditions), it sits beside
+      them the way each product's own destination does.
+
+  - ref: cluster-shared-queue
+    title: "Shared queue live on 3 machines"
+    horizon: short_term
+    parent: ns-n1
+    company: omniagentos
+    owner: emp_alice
+    description: >
+      This week's #1 priority — the claim primitive already exists (`CollabStore.claim_task()`,
+      CAS on `claim_version`); U3/U4/S3/S4 extend it with a host + lease and a cross-machine
+      tunnel rather than building a new system.
+
+  - ref: cluster-enterprise-automation
+    title: "Enterprise automation first path"
+    horizon: short_term
+    parent: ns-n3
+    company: initech
+    owner: emp_alice
+    description: >
+      Smallest shippable increment toward N3: a database migration plus one automated welcome
+      email, triggered explicitly on request (no scheduler exists yet).
+
+  - ref: cluster-cs-automation
+    title: "CS automation removes human touches"
+    horizon: short_term
+    parent: ns-n2
+    company: initech
+    owner: emp_owner
+    description: >
+      Not on Alice/Bob's list this week, deliberately — recommended as a fast-lane build by the
+      operator. Classify inbound tickets and auto-draft an answer from the existing knowledge
+      base for the top 3 repeat categories, leaving a human to hit send.
+
+# ---------------------------------------------------------------------------
+# Tasks
+# ---------------------------------------------------------------------------
+
+tasks:
+  # --- Baseline stanza (prior week), created done+verified ---
+
+  - ref: BASE-ALICE
+    title: "Baseline week Mon 08-03 -> Sun 08-09"
+    owner: emp_alice
+    size: L
+    priority: normal
+    status: done
+    goal_ref: null
+    due_date: "2026-08-09"
+    owned_paths: []
+    depends_on: []
+    source: baseline-2026-08-03
+    acceptance_criteria: ""
+    description: >
+      Baseline productivity summary for Alice, prior week, ahead of the Team Work OS launch.
+      Evidence: a mix of platform merges and self-merged Initech PRs (discounted here — self-merged,
+      not counter-signed by a second reviewer, so they read as volume rather than verified output)
+      plus a number of reviews. Size PROPOSED at L from this evidence; a human should correct it if
+      the self-merge discount changes the read.
+    baseline_evidence:
+      ref: baseline-2026-08-03-alice
+      title: "Baseline evidence summary"
+
+  - ref: BASE-OPS
+    title: "Baseline week Mon 08-03 -> Sun 08-09"
+    owner: emp_owner
+    size: M
+    priority: normal
+    status: done
+    goal_ref: null
+    due_date: "2026-08-09"
+    owned_paths: []
+    depends_on: []
+    source: baseline-2026-08-03
+    acceptance_criteria: ""
+    description: >
+      Baseline productivity summary for the operator, prior week: a small number of merges and
+      reviews recorded in the board/PR trail. Sized M rather than the literal count because the
+      count under-measures the operator's week — operator work (steering loops, unblocking, North
+      Star/scoreboard authorship, this Team Work OS launch itself) leaves no commit or PR and the
+      productivity snapshot has no column for it yet. An unmeasured week must report as
+      unmeasured, not as a favourable low number.
+    baseline_evidence:
+      ref: baseline-2026-08-03-owner
+      title: "Baseline evidence summary"
+
+  - ref: BASE-BOB
+    title: "Baseline week Mon 08-03 -> Sun 08-09"
+    owner: emp_bob
+    size: S
+    priority: normal
+    status: done
+    goal_ref: null
+    due_date: "2026-08-09"
+    owned_paths: []
+    depends_on: []
+    source: baseline-2026-08-03
+    acceptance_criteria: ""
+    description: >
+      Baseline productivity summary for Bob, prior week: a couple of PRs opened, none merged. LOW
+      CONFIDENCE — this was a tooling-bug week per the operator's own evidence, so a zero-merge
+      week may be reporting an instrument failure rather than a true output floor. Sized S from the
+      raw count; treat as provisional until the tooling question is settled.
+    baseline_evidence:
+      ref: baseline-2026-08-03-bob
+      title: "Baseline evidence summary"
+
+  # --- Alice: parents ---
+
+  - ref: UP-1
+    title: "Unblock green main & the PR backlog"
+    owner: emp_alice
+    size: L
+    priority: urgent
+    status: open
+    goal_ref: cluster-green-main
+    due_date: "2026-08-10"
+    owned_paths: []
+    depends_on: []
+    source: production-reset
+    acceptance_criteria: >
+      U1 and U2 both verified done: FINDINGS.md classifies every red test, main-health is green,
+      and the flagship PR's checks report merge-gate pass / test pass (see subtasks).
+    description: >
+      Parent card grouping U1 (triage) + U2 (land the fix) — the single highest-leverage item
+      this week: it unblocks every open PR at once. The input that has to change is main, not the
+      individual PRs.
+
+  - ref: UP-2
+    title: "Shared queue — reachable across machines"
+    owner: emp_alice
+    size: L
+    priority: high
+    status: blocked
+    blocked_reason: "depends on U2"
+    goal_ref: cluster-shared-queue
+    due_date: "2026-08-12"
+    owned_paths: []
+    depends_on: [U2]
+    source: production-reset
+    acceptance_criteria: >
+      U3 and U4 both verified done: claim CAS carries host+lease with reclaim on expiry, and a
+      worker on the second machine claims a task over the tunnel (see subtasks).
+    description: >
+      Parent grouping U3 (claim lease) + U4 (cross-machine reachability). NOTE: two independent
+      specs assign the same two people the same due date for a different full-week project — see
+      OPS-3 for the resolution. U3/U4 as scoped here are the minimal version (extend
+      claim_task's CAS), not the full standalone workqueue build the other spec describes.
+
+  - ref: UP-3
+    title: "Hooli revenue-ready"
+    owner: emp_alice
+    size: L
+    priority: urgent
+    status: open
+    goal_ref: hooli-revenue
+    due_date: "2026-08-14"
+    owned_paths: []
+    depends_on: []
+    source: production-reset
+    acceptance_criteria: >
+      U5, U6 and U7 all verified done: a real purchase clears on the Hooli site, the Hooli
+      environment deploys itself, and the shared product shell is de-branded (see subtasks).
+    description: >
+      Parent grouping U5 (checkout) + U6 (deploy trigger) + U7 (de-brand, one shell only).
+      U5/U6/U7 branch off the shared white-label branch, never a stale local copy.
+
+  - ref: UP-4
+    title: "Enterprise automation — first automated path"
+    owner: emp_alice
+    size: M
+    priority: normal
+    status: blocked
+    blocked_reason: "depends on U6"
+    goal_ref: cluster-enterprise-automation
+    due_date: "2026-08-14"
+    owned_paths: []
+    depends_on: [U6]
+    source: production-reset
+    acceptance_criteria: >
+      U8 verified done: the migration lands and one request sends the welcome email idempotently
+      (see subtask).
+    description: >
+      Single-subtask parent (U8). The enterprise pipeline has been idle for a few weeks at the
+      time this was written.
+
+  # --- Alice: U1-U8 ---
+
+  - ref: U1
+    parent_task_ref: UP-1
+    title: "Triage the 9 red tests on main — classify, do not blanket-fix"
+    owner: emp_alice
+    size: S
+    priority: urgent
+    status: open
+    goal_ref: cluster-green-main
+    due_date: "2026-08-10"
+    owned_paths: ["devtasks/main-red-triage-20260810/FINDINGS.md"]
+    depends_on: []
+    source: production-reset
+    acceptance_criteria: >
+      devtasks/main-red-triage-20260810/FINDINGS.md exists with one row per failing test and a
+      verdict of exactly REAL_DEFECT or RUNNER_ENV, each with the evidence line that decided it.
+      For every RUNNER_ENV row, the local run must be green on this machine while CI is red.
+      SERIAL. Hard timebox: 3 hours.
+    description: >
+      Every open PR on the platform repo is blocked by the same red main, not by many separate
+      defects — merge-gate and test fail on every PR while lint/type/dashboard pass on every one.
+      Write only devtasks/main-red-triage-20260810/FINDINGS.md; read the 9 named test files.
+
+  - ref: U2
+    parent_task_ref: UP-1
+    title: "Land the green-main fix"
+    owner: emp_alice
+    size: S
+    priority: urgent
+    status: open
+    goal_ref: cluster-green-main
+    due_date: "2026-08-10"
+    owned_paths:
+      - "exactly the files U1 marked REAL_DEFECT"
+      - ".github/workflows/main-health.yml"
+    depends_on: [U1]
+    source: production-reset
+    acceptance_criteria: >
+      On a fresh commit to main: the main-health workflow reports success. Then, without touching
+      the PR, re-run the flagship PR and observe its checks report merge-gate pass and test pass —
+      the proof that every mergeable PR is unblocked. SERIAL — one worker, land same day.
+    description: >
+      Marked open rather than blocked despite depending on U1 — this week's plan has Alice moving
+      directly from triage into the fix the same day (a named status-hint exception). Update to
+      blocked yourself if U1 has not landed FINDINGS.md yet.
+
+  - ref: U3
+    parent_task_ref: UP-2
+    title: "Shared queue — Phase A: host identity + lease on the existing claim"
+    owner: emp_alice
+    size: M
+    priority: high
+    status: blocked
+    blocked_reason: "depends on U2"
+    goal_ref: cluster-shared-queue
+    due_date: "2026-08-11"
+    owned_paths:
+      - "omniagentos/collab/store.py"
+      - "omniagentos/collab/contracts.py"
+      - "omniagentos/api/routes/collab.py"
+      - "tests/queues/ (Alice owns this directory exclusively)"
+    depends_on: [U2]
+    source: production-reset
+    acceptance_criteria: >
+      POST /api/collab/board/{id}/claim accepts agent_id and a new host_id + lease_seconds, and an
+      expired lease is reclaimable. Proof: the queue lease test suite exits 0 with a test that
+      claims on host A, advances the clock past the lease, claims on host B, and asserts host B
+      wins and claim_version incremented twice. Do not build a new claim system —
+      CollabStore.claim_task() (omniagentos/collab/store.py:495) already does compare-and-swap on
+      claim_version; add expiry and a host field to it. PARALLEL with U5-U8.
+    description: >
+      Bob's suites are tests/gates/ and tests/review/ — one directory, one owner.
+
+  - ref: U4
+    parent_task_ref: UP-2
+    title: "Shared queue — Phase B: make the queue reachable from the two idle machines"
+    owner: emp_alice
+    size: M
+    priority: high
+    status: blocked
+    blocked_reason: "depends on U3"
+    goal_ref: cluster-shared-queue
+    due_date: "2026-08-12"
+    owned_paths:
+      - "omniagentos/collab/"
+      - "scripts/launch-omniagentos.sh (one-line bind change, own commit)"
+      - "docs/SHARED-QUEUE-RUNBOOK.md (new)"
+    depends_on: [U3]
+    source: production-reset
+    acceptance_criteria: >
+      The API binds loopback-only today (scripts/launch-omniagentos.sh:372 -> --host
+      127.0.0.1; omniagentos/api/main.py:198 hard-codes _LOOPBACK_HOSTS). Do not open the bind to
+      0.0.0.0 — ship a private-tunnel runbook instead. From the second machine, a health check
+      against the tunnel returns 200 and the body parses as a JSON array, and a worker on that
+      machine claims a task — observable as a board_tasks row whose claimed_by names the remote
+      host. Reproducibility is measured by S4, not asserted here: the criterion is met when S4
+      reaches done with zero Alice interventions logged. SERIAL with U3.
+
+  - ref: U5
+    parent_task_ref: UP-3
+    title: "Hooli: make it possible to pay"
+    owner: emp_alice
+    size: M
+    priority: urgent
+    status: open
+    goal_ref: hooli-revenue
+    due_date: "2026-08-12"
+    owned_paths:
+      - "apps/frontend/components/variants/hooli/HooliPricing.tsx"
+      - "hooliPricingStyles.ts"
+      - "HooliPricing.test.tsx"
+      - "branch off the shared white-label branch in the product repo; push to the writable remote"
+    depends_on: []
+    source: production-reset
+    acceptance_criteria: >
+      Today every pricing button on the Hooli site links back to the sign-up page — sign up, then
+      land back on the same pricing page; there is no checkout anywhere. The frontend test suite
+      passes a new test asserting every plan button resolves to a checkout session URL, not back
+      to sign-up; and a manual purchase of the top-tier plan on the Hooli site produces a
+      payment-provider record — paste the provider name and the record id into the PR description.
+      PARALLEL.
+    description: >
+      REVENUE-CRITICAL. See OPS-1 — the operator is recommended to build this himself today rather
+      than wait; OPS-1 and this card target the SAME deliverable intentionally (the operator builds
+      now, Alice polishes after). Mark whichever lands first done and close the other as
+      superseded rather than shipping the checkout call twice.
+
+  - ref: U6
+    parent_task_ref: UP-3
+    title: "Hooli: revive the deploy trigger and register the tenant"
+    owner: emp_alice
+    size: S
+    priority: normal
+    status: open
+    goal_ref: hooli-revenue
+    due_date: "2026-08-13"
+    owned_paths:
+      - ".github/workflows/deploy-hooli.yml"
+      - "tenants/registry.json (product repo)"
+    depends_on: []
+    source: production-reset
+    acceptance_criteria: >
+      The Hooli deploy workflow triggers on push to its production branch, but that branch does
+      not exist yet — the pipeline has never auto-fired. The tenant registry lists only one other
+      brand. Both files live on the shared white-label branch, not main. Acceptance: pushing the
+      white-label branch to the Hooli production branch succeeds (the writable remote, not the
+      read-only origin clone) and a follow-up lookup on that branch returns a commit; that push
+      produces a green "Deploy Hooli" run; a health check against the Hooli site returns 200 after
+      that run; the tenant registry contains a Hooli entry naming the deploy workflow. PARALLEL.
+    description: >
+      the operator's own note: a 30-second task — do it immediately rather than waiting for later
+      in the week. The workflow already exists and is correct.
+
+  - ref: U7
+    parent_task_ref: UP-3
+    title: "Hooli: de-brand the signed-in product (one shell only, static audit)"
+    owner: emp_alice
+    size: M
+    priority: normal
+    status: blocked
+    blocked_reason: "depends on U5"
+    goal_ref: hooli-revenue
+    due_date: "2026-08-14"
+    owned_paths:
+      - "apps/frontend/components/variants/hooli/ (new files only)"
+      - "apps/frontend/components/variants/registry.tsx"
+    depends_on: [U5]
+    source: production-reset
+    acceptance_criteria: >
+      registry.tsx registers many marketing slots for Hooli, but the handful of product slots are
+      unregistered, so a paying Hooli customer signs in and sees the shared platform's default
+      branding instead. Scope cut (adversarial review): this week is one slot, static audit only —
+      register the main product shell, and write apps/frontend/scripts/brand-audit.mjs (new) as a
+      static scan over apps/frontend/components/variants/hooli/** plus
+      apps/frontend/lib/templates/hooli.json. Acceptance, all three: (1) `node
+      apps/frontend/scripts/brand-audit.mjs` exits 0 on the branch; (2) it exits non-zero when run
+      against a deliberately reintroduced default-brand string — paste both exit codes in the PR;
+      (3) a diff of the white-label branch's registry.tsx against main shows the registered slot
+      count increasing. The allowlist must contain exactly one entry (the shared telemetry
+      endpoint) with the reason inline. The remaining slots and the wider sweep are explicitly out
+      of scope this week. PARALLEL.
+    description: >
+      First to slip if the week runs long, per the adversarial-review realism note — cuttable to
+      zero without losing revenue.
+
+  - ref: U8
+    parent_task_ref: UP-4
+    title: "Enterprise automation — first automated path"
+    owner: emp_alice
+    size: M
+    priority: normal
+    status: blocked
+    blocked_reason: "depends on U6"
+    goal_ref: cluster-enterprise-automation
+    due_date: "2026-08-14"
+    owned_paths:
+      - "apps/backend/migrations/151_enterprise_apply_purchases.sql (renumber against origin/main immediately before naming the file)"
+      - "apps/admin/lib/enterprise-lifecycle-email.ts (new)"
+      - "apps/admin/app/api/enterprise-pipeline/route.ts"
+    depends_on: [U6]
+    source: production-reset
+    acceptance_criteria: >
+      apps/admin/app/api/enterprise-pipeline/route.ts selects several lifecycle timestamp columns
+      from enterprise_apply_purchases, and the page renders them — but nothing anywhere ever
+      writes those columns, and the table is not in apps/backend/migrations/ at all; the route
+      degrades to pendingMigration: true. Smallest shippable increment: land the migration, then
+      the welcome email only, via the existing transactional-email path, stamping
+      welcome_email_sent_at. There is no scheduler in this repo — the trigger this week is an
+      explicit POST, not a timer. Acceptance, all three: (1) psql shows the table exists after
+      151_ runs; (2) a seeded row with status='paid' and welcome_email_sent_at IS NULL, followed by
+      one POST /api/enterprise-pipeline/send-welcome, comes back with welcome_email_sent_at
+      non-null and renders a non-"—" Welcome cell at /enterprise-pipeline; (3) a second POST on the
+      same row is a no-op (0 emails sent) — assert it. Branch off origin/main (migration numbering
+      follows main). PARALLEL.
+    description: >
+      The enterprise pipeline has been idle for a few weeks. If not started by midweek, that is
+      itself a signal to route the work to a loop instead — see OPS-2's sibling recommendation.
+
+  # --- Bob: parents ---
+
+  - ref: SP-1
+    title: "Queues UI"
+    owner: emp_bob
+    size: L
+    priority: normal
+    status: open
+    goal_ref: cluster-green-main
+    due_date: "2026-08-14"
+    owned_paths: []
+    depends_on: []
+    source: production-reset
+    acceptance_criteria: >
+      S5, S6, S7 and S8 all verified done: plans+review routers live, queue UI primitives frozen,
+      and both queue pages render live data with e2e green (see subtasks).
+    description: >
+      Parent grouping S5 (backend routers) + S6 (UI primitives) + S7 (Planning Queue page) + S8
+      (PR Queue page). S7/S8 both import from features/queues/ — S6 must land and freeze its
+      exported signatures before either starts, or the two pages fight over the same primitive
+      files.
+
+  - ref: SP-2
+    title: "Initech telemetry phase 1"
+    owner: emp_bob
+    size: M
+    priority: high
+    status: open
+    goal_ref: ns-n4
+    due_date: "2026-08-10"
+    owned_paths: []
+    depends_on: []
+    source: production-reset
+    acceptance_criteria: >
+      S1 verified done: loop bookkeeping stops landing as commits and telemetry replaces it 1:1
+      for a full loop day.
+    description: >
+      Single-subtask parent (S1). Part of the three-way scheduling conflict resolved by OPS-3.
+
+  - ref: SP-3
+    title: "PR sweep — land or kill all open PRs"
+    owner: emp_bob
+    size: L
+    priority: normal
+    status: open
+    goal_ref: cluster-green-main
+    due_date: "2026-08-14"
+    owned_paths: []
+    depends_on: [U2]
+    source: production-reset
+    acceptance_criteria: >
+      S2 verified done: every open PR is either merged or closed with a bucket reason, and the
+      open-PR count is 0.
+    description: >
+      Single-subtask parent (S2). The best use of Bob's week — mechanical, perfectly parallel,
+      zero new conflict surface.
+
+  - ref: SP-4
+    title: "Gate & queue reliability"
+    owner: emp_bob
+    size: M
+    priority: high
+    status: blocked
+    blocked_reason: "depends on U2, U4"
+    goal_ref: cluster-shared-queue
+    due_date: "2026-08-12"
+    owned_paths: []
+    depends_on: [U2, U4]
+    source: production-reset
+    acceptance_criteria: >
+      S3 and S4 both verified done: a refused gate input never re-runs, and the second machine
+      claims and finishes a task through the tunnel unassisted.
+    description: >
+      Parent grouping S3 (regate guard) + S4 (second-machine worker validation, the acceptance
+      test for U4).
+
+  # --- Bob: S1-S8 ---
+
+  - ref: S1
+    parent_task_ref: SP-2
+    title: "Initech telemetry — Phase 1"
+    owner: emp_bob
+    size: M
+    priority: high
+    status: open
+    goal_ref: ns-n4
+    due_date: "2026-08-10"
+    owned_paths:
+      - "the product repo's own workflow-log config"
+      - "scripts/loopdeck-telemetry/ (new)"
+    depends_on: []
+    source: production-reset
+    acceptance_criteria: >
+      Over the last week in that repo, the large majority of commits and file-touches are loop
+      bookkeeping rather than real source changes — check out one of the loop's own branches
+      before looking for it. Phase 1: stop committing loop bookkeeping to git, emit it as
+      telemetry instead. Acceptance: a full-history search for the loop's checkpoint-commit
+      message returns 0 for a full loop day (searching all branches is load-bearing), while
+      scripts/loopdeck-telemetry/ has produced one JSONL record per role-turn covering the same
+      information, count matched against yesterday's commit count for the same period. SERIAL (it
+      is Bob's own loop).
+    description: >
+      Scheduling conflict with the shared-queue spec — same two people, same due date, different
+      repo. See OPS-3 for the resolution; the telemetry spec's own header recommends telemetry
+      ships first.
+
+  - ref: S2
+    parent_task_ref: SP-3
+    title: "PR sweep — land or kill all open PRs, in five buckets"
+    owner: emp_bob
+    size: L
+    priority: normal
+    status: open
+    goal_ref: cluster-green-main
+    due_date: "2026-08-14"
+    owned_paths:
+      - "only the open PR branches (no commits to main)"
+      - "devtasks/pr-sweep-20260810/BUCKETS.md"
+    depends_on: [U2]
+    source: production-reset
+    acceptance_criteria: >
+      Build the bucket table first from the live PR list. Buckets: (a) auto-mergeable once main is
+      green, (b) needs rebase (a few are conflicting/dirty), (c) superseded, (d) duplicate (close
+      one of any pair that is the same change), (e) genuinely wrong. Rescoped by adversarial
+      review — two-stage acceptance: (a) by midweek the bucket table is committed to
+      devtasks/pr-sweep-20260810/BUCKETS.md and every (c)/(d)/(e) PR is closed with a comment
+      naming its bucket; (b) by end of week the open-PR count is 0. Rebase newest-first. PARALLEL
+      for stage (a) — 6 workers, a handful of PRs each; stage (b) is gate-serial, do not fan out.
+    description: >
+      Marked open rather than blocked despite depending on U2 — this week's plan starts S2 the
+      moment U2 lands, so it is realistically live by the time this import runs (a named
+      status-hint exception). Update to blocked if U2 has not actually landed.
+
+  - ref: S3
+    parent_task_ref: SP-4
+    title: "Kill the re-gate storm: never re-run a gate on an unchanged input"
+    owner: emp_bob
+    size: S
+    priority: normal
+    status: blocked
+    blocked_reason: "depends on U2"
+    goal_ref: cluster-shared-queue
+    due_date: "2026-08-12"
+    owned_paths:
+      - "scripts/gates/regate-guard.sh (new)"
+      - "tests/gates/test_regate_guard.py (new — not tests/queues/, which Alice owns in U3)"
+    depends_on: [U2]
+    source: production-reset
+    acceptance_criteria: >
+      Given the same (candidate_sha, gate_name) pair that previously refused, the guard refuses in
+      under 1 second with exit 2 and never invokes the gate. Acceptance: the regate-guard test
+      suite exits 0, covering: first run invokes the gate; identical re-run exits 2 without
+      invoking it; a changed sha invokes it again; a pass clears the key. Mirror the platform's own
+      accurate-gate semantics — 0 pass / 1 candidate-defect / 2 do-not-retry — and branch on the
+      process exit code, not the receipt's exit_code field (they disagree today). PARALLEL.
+
+  - ref: S4
+    parent_task_ref: SP-4
+    title: "Shared queue — worker side on machine #2"
+    owner: emp_bob
+    size: S
+    priority: high
+    status: blocked
+    blocked_reason: "depends on U4"
+    goal_ref: cluster-shared-queue
+    due_date: "2026-08-12"
+    owned_paths:
+      - "docs/SHARED-QUEUE-RUNBOOK.md (execute it; file issues, don't edit Alice's copy)"
+    depends_on: [U4]
+    source: production-reset
+    acceptance_criteria: >
+      You are the acceptance test for U4. Following the runbook only, bring machine #2 up as a
+      queue worker. Acceptance: from machine #2, a task on the board goes open -> claimed -> done
+      with claimed_by naming machine #2, observable in GET /api/collab/board, without Alice
+      touching machine #2. Every step of the runbook that failed gets an issue. SERIAL.
+
+  - ref: S5
+    parent_task_ref: SP-1
+    title: "Planning/PR queue backend: plans + review/changes routers"
+    owner: emp_bob
+    size: M
+    priority: normal
+    status: blocked
+    blocked_reason: "depends on U2"
+    goal_ref: cluster-green-main
+    due_date: "2026-08-13"
+    owned_paths:
+      - "omniagentos/api/routes/plans.py (new)"
+      - "omniagentos/api/routes/review.py (new)"
+      - "tests/plans/ (new)"
+      - "tests/review/ (new — not tests/queues/, which Alice owns in U3)"
+    depends_on: [U2]
+    source: production-reset
+    acceptance_criteria: >
+      Per the planning/PR-queues design doc. Wrap PlansStore.list_plans() (omniagentos/plans/store.py
+      — 0 touches in 7 days, yours). No migration (the design doc says v1 needs none). Acceptance:
+      the plans+review test suites exit 0; the plans list endpoint returns a number for its ready
+      count; and the review-changes endpoint's lane list is set-equal to the fleet-ledger scan's
+      lane list (paste both outputs). The router registration in omniagentos/api/main.py is one
+      line, its own commit. Regenerate the OpenAPI schema in a clean worktree at HEAD. PARALLEL.
+
+  - ref: S6
+    parent_task_ref: SP-1
+    title: "Queue UI primitives"
+    owner: emp_bob
+    size: M
+    priority: normal
+    status: open
+    goal_ref: cluster-green-main
+    due_date: "2026-08-13"
+    owned_paths:
+      - "dashboard/src/features/queues/ (new dir — 0 touches, entirely yours)"
+    depends_on: []
+    source: production-reset
+    acceptance_criteria: >
+      Build PriorityBadge.tsx, phase.ts, nextAction.ts, planGrouping.ts, changeState.ts inside
+      features/queues/, not features/board/ (55 touches) or design/ (20 touches). Priority model
+      stays low|normal|high|urgent; shape-distinct icons, not colour-only. Acceptance: the queues
+      feature test suite exits 0 with nextAction.test.ts covering every row of the design doc's
+      precedence order, and planGrouping.test.ts asserting unprioritized sorts last. PARALLEL.
+
+  - ref: S7
+    parent_task_ref: SP-1
+    title: "Planning Queue page"
+    owner: emp_bob
+    size: M
+    priority: normal
+    status: blocked
+    blocked_reason: "depends on S5, S6"
+    goal_ref: cluster-green-main
+    due_date: "2026-08-14"
+    owned_paths:
+      - "dashboard/src/app/queues/plans/ (new)"
+      - "dashboard/src/features/queues/PlanQueue*.tsx"
+    depends_on: [S5, S6]
+    source: production-reset
+    acceptance_criteria: >
+      /queues/plans renders every ready plan and every pending board card, grouped by priority
+      with per-group counts, row actions Open / Approve & run / Reject. Acceptance: the PlanQueue
+      test suite exits 0 including a test that with the plans endpoint returning 500 the page shows
+      an explicit error state, and with [] shows an explicit empty state — the two are never
+      conflated (DataSource = "live" | "error", no fixture substitution). Observable: load
+      /queues/plans, approve a seeded plan, and GET /api/plans/{id} shows status: approved.
+      PARALLEL with S8.
+
+  - ref: S8
+    parent_task_ref: SP-1
+    title: "PR Queue page"
+    owner: emp_bob
+    size: M
+    priority: normal
+    status: blocked
+    blocked_reason: "depends on S5, S6"
+    goal_ref: cluster-green-main
+    due_date: "2026-08-14"
+    owned_paths:
+      - "dashboard/src/app/queues/changes/ (new)"
+      - "dashboard/src/features/queues/ChangeQueue*.tsx"
+      - "dashboard/e2e/board-queues.spec.ts"
+    depends_on: [S5, S6]
+    source: production-reset
+    acceptance_criteria: >
+      /queues/changes renders lane, verdict decision + reviewer model, gate pass/fail,
+      merge-readiness. The Merge action opens the instruction view — it must never execute a
+      merge; the last hop to main stays scripts/merge-gate.sh. Never re-parse verdict prose —
+      consume ParsedVerdict.decision from omniagentos/integration/verdicts.py (S5's
+      /api/review/changes must expose it as a field). Acceptance: the ChangeQueue test suite exits
+      0; the board-queues e2e spec exits 0; and for 3 live lanes at a pinned sha, the page's (lane,
+      decision, gate_status) triple is string-equal to the corresponding fields from a fleet-ledger
+      scan — paste the 3 pairs. PARALLEL with S7.
+
+  # --- the operator: this week's own items + the triple-booking resolution ---
+
+  - ref: OPSP-1
+    title: "Revenue & CS automation the operator builds himself"
+    owner: emp_owner
+    size: L
+    priority: urgent
+    status: open
+    goal_ref: null
+    due_date: "2026-08-11"
+    owned_paths: []
+    depends_on: []
+    source: production-reset
+    acceptance_criteria: >
+      OPS-1 and OPS-2 both verified done: a real Hooli purchase clears and the top-3 CS ticket
+      categories get an auto-drafted reply.
+    description: >
+      Parent grouping OPS-1 (Hooli checkout) + OPS-2 (CS auto-draft) — the two items this week's
+      plan recommends the operator build himself rather than wait on Alice/Bob.
+
+  - ref: OPS-1
+    parent_task_ref: OPSP-1
+    title: "Hooli checkout — build it today, do not wait on U5"
+    owner: emp_owner
+    size: M
+    priority: urgent
+    status: open
+    goal_ref: hooli-revenue
+    due_date: "2026-08-10"
+    owned_paths:
+      - "apps/frontend/components/variants/hooli/HooliPricing.tsx"
+      - "hooliPricingStyles.ts"
+      - "HooliPricing.test.tsx (same files as U5 — see description for the race rule)"
+    depends_on: []
+    source: production-reset
+    acceptance_criteria: >
+      Hooli is live, brand-complete, and cannot take a single payment — every button on the
+      pricing page loops back to the sign-up page. Build it in a fast lane this morning and hand
+      Alice the polish. Same acceptance as U5: a new test asserting every plan button resolves to
+      a checkout session URL, not back to sign-up, and a manual purchase of the top-tier plan on
+      the Hooli site produces a payment-provider record — paste the provider name and record id.
+    description: >
+      Recommendation from this week's plan: "DO NOT WAIT. Build it yourself, today." Alice wrote a
+      run of Hooli commits recently without closing this — the pattern says she is polishing the
+      page, not the funnel. This card and U5 target the SAME deliverable intentionally (the
+      operator builds now, Alice polishes after) — mark whichever lands first done, and close the
+      other as superseded rather than shipping the checkout call twice.
+
+  - ref: OPS-2
+    parent_task_ref: OPSP-1
+    title: "Customer-service automation — auto-draft replies from the knowledge base"
+    owner: emp_owner
+    size: L
+    priority: normal
+    status: open
+    goal_ref: cluster-cs-automation
+    due_date: "2026-08-11"
+    owned_paths:
+      - "apps/wl-portal/lib/support-desk.ts (read/extend)"
+      - "apps/wl-portal/app/api/webhooks/support-desk/route.ts (read/extend)"
+      - "apps/wl-portal/lib/auto-draft.ts (new)"
+    depends_on: []
+    source: production-reset
+    acceptance_criteria: >
+      Not on this week's Alice/Bob list, deliberately. The plumbing already exists:
+      apps/wl-portal/lib/support-desk.ts creates tickets,
+      apps/wl-portal/app/api/webhooks/support-desk/route.ts syncs replies back, and email routing
+      forwards the support/contact addresses for every tenant to the shared desk
+      (apps/admin/lib/support-email-routing.ts). Missing: nothing drafts a reply. Smallest
+      increment: classify inbound tickets and auto-draft an answer from the existing knowledge
+      base for the top 3 repeat categories, leaving a human to hit send — roughly one day, and
+      removes on the order of 10-20 human touches per week. Recommendation: build it in a
+      dedicated automation lane on Tuesday.
+    description: >
+      Directly serves North Star N2 (customer service without a human in the normal path) — the
+      #1 decision-list criterion ("does it unblock sales?"). Asked for months ago; never anyone's
+      priority. Priority left at 'normal' per the literal urgent/high/normal rule (only
+      U1/U2/U5/queue-telemetry items are elevated); its strategic weight is carried by the goal
+      ladder (ns-n2 -> cluster-cs-automation) instead.
+
+  - ref: OPS-3
+    title: "Resolve triple-booking: this week's plan vs the shared-queue spec vs the telemetry spec"
+    owner: emp_owner
+    size: S
+    priority: high
+    status: blocked
+    blocked_reason: >-
+      Recommendation: telemetry ships first (its own header says so); U3/U4 already delivers
+      minimal cross-machine claim on collab; the standalone workqueue is deferred — it would
+      duplicate the claim system. the operator to ratify.
+    goal_ref: cluster-shared-queue
+    due_date: "2026-08-10"
+    owned_paths: []
+    depends_on: []
+    source: production-reset
+    acceptance_criteria: >
+      Two independent specs both assign Alice + Bob the SAME due date (Fri 2026-08-14 EOD) for two
+      different full-week projects in two different repos. One of the two must slip a week or be
+      reassigned; the telemetry spec's own header recommends it ships first. This card is done
+      when the operator ratifies (or overrides) the recommendation and the decision is recorded in
+      a task_events comment or a new evidence row.
+    description: >
+      No parent — a single decision item, not a build. Deliberately blocked from creation: an
+      owned card entering the Blocked queue with no blocked_reason is refused by the store, and
+      this one's reason IS the decision that unblocks it.

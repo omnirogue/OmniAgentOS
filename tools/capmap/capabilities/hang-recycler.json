@@ -1,0 +1,18 @@
+{
+  "id": "hang-recycler",
+  "company": "estate",
+  "kind": "mechanical-automation",
+  "host": "owner-mac",
+  "repo": "/Users/youruser/Work/Ops",
+  "what_it_does": "Fixture standing in for hang-recycler; the harmless command exits 0 to prove its healthy exit mapping.",
+  "why_it_matters": "Proves that a watchdog's deliberate healthy exit remains distinguishable from failures.",
+  "blast_radius": "Capmap exit-semantics demonstration only; this is not a live watchdog check.",
+  "verification": {"type": "command", "argv": ["/bin/sh", "-c", "exit 0"], "fixture": true, "note": "Deterministic fixture, not the live hang-recycler binary."},
+  "exit_semantics": {"0": "ok"},
+  "cadence_seconds": 900,
+  "staleness_slo_seconds": 2700,
+  "escalation_tier": "low",
+  "owner": "estate-ops",
+  "last_verified": null,
+  "last_status": "UNVERIFIED"
+}

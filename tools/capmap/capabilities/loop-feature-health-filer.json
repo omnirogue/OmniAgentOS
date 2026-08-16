@@ -1,0 +1,58 @@
+{
+  "blast_radius": "Files loopqueue proposals; --live, so it does write to the queue.",
+  "cadence_seconds": 28800,
+  "company": "omniagentos",
+  "escalation_tier": "medium",
+  "exit_semantics": {
+    "DEGRADED": "degraded",
+    "DOWN": "down",
+    "OK": "ok",
+    "UNVERIFIED": "cannot_evaluate",
+    "default": "cannot_evaluate"
+  },
+  "host": "owner-mac",
+  "id": "loop-feature-health-filer",
+  "kind": "llm-loop",
+  "last_status": "DEGRADED",
+  "last_verified": null,
+  "owner": "estate-ops",
+  "repo": "/Users/youruser/OmniAgentOS",
+  "staleness_slo_seconds": 86400,
+  "throughput": {
+    "derivation": "loops.daily_counts()/window_count() over the loopqueue ledger (gitignored; read directly since plain rg skips it without -uu). Only covered days are sampled; absent days are never zero-padded.",
+    "floor": {
+      "floor": null,
+      "fraction": 0.3,
+      "median": null,
+      "min_sample_days": 7,
+      "reason": "insufficient history: only 2 covered days are present in the ledger's retained window",
+      "sample": {
+        "2024-01-01": 700,
+        "2024-01-02": 100
+      },
+      "sample_days": 2,
+      "sample_window": "2024-01-01..2024-01-02"
+    },
+    "max_error_rate": 0.25,
+    "metric": "filings_24h",
+    "observed": {
+      "as_of": null,
+      "burn": null,
+      "error_rate": null,
+      "last_success": null,
+      "process_state": "RUNNING",
+      "volume": 0
+    },
+    "signal_exists": true,
+    "signal_path": "/Users/youruser/OmniAgentOS/var/loopqueue/ledger.jsonl#actor=feature-health-filer",
+    "window": "24h"
+  },
+  "verification": {
+    "field": "filings_24h",
+    "note": "Graded on throughput, not liveness: a running loop with zero volume is DEGRADED.",
+    "source": "/Users/youruser/OmniAgentOS/var/loopqueue/ledger.jsonl#actor=feature-health-filer",
+    "type": "snapshot_field"
+  },
+  "what_it_does": "feature-health issue filer (03:40/11:40/19:40); volume is loopqueue events authored by actor=feature-health-filer.",
+  "why_it_matters": "The filer is how failing features become queue work; a live filer that files nothing is consistent with its upstream health suites producing no executed runs to file from."
+}

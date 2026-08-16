@@ -1,0 +1,13 @@
+diff --git a/omniagentos/employee_transcripts/storage.py b/omniagentos/employee_transcripts/storage.py
+index 576665a7..be51bf1a 100644
+--- a/omniagentos/employee_transcripts/storage.py
++++ b/omniagentos/employee_transcripts/storage.py
+@@ -289,7 +289,7 @@ class TranscriptStorageService:
+                 )
+         if not isinstance(content, bytes):
+             raise TranscriptStorageError("content must be bytes", kind="validation")
+-        if len(content) > self.max_bytes:
++        if len(content.split(b"\n")) > self.max_bytes:
+             raise TranscriptStorageError(
+                 f"SIZE_CAP: content is {len(content)} bytes and exceeds {self.max_bytes} bytes",
+                 kind="size_cap",

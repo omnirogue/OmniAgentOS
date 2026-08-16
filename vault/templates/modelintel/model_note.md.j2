@@ -1,0 +1,42 @@
+# source: {{ title }}
+
+[[model-intelligence]] · part of the model capability graph
+
+## Facts
+
+- **Provider:** {{ provider }} · **Lineage:** `{{ lineage }}`
+- **Fusion agents:** {{ fusion_agents | join(' · ') if fusion_agents else '_reference only — not launchable_' }}
+{% if pricing and pricing.prompt_usd_per_m is not none %}
+- **Pricing:** ${{ pricing.prompt_usd_per_m }}/M prompt · ${{ pricing.completion_usd_per_m }}/M completion (OpenRouter, {{ pricing.as_of[:10] }})
+{% endif %}
+{% if pricing and pricing.context_length %}
+- **Context:** {{ '{:,}'.format(pricing.context_length) }} tokens
+{% endif %}
+{% if measured_latency_ms %}
+- **Measured CLI warm latency:** {{ measured_latency_ms }} ms
+{% endif %}
+
+## Best at
+
+{% if best_domains %}{% for d in best_domains %}- #{{ d.rank }} in [[{{ d.key }}|{{ d.title }}]] ({{ d.score }})
+{% endfor %}{% else %}_Not currently top-3 in any tracked domain._
+{% endif %}
+
+## Capabilities
+
+| Domain | Score | Basis |
+|---|---|---|
+{% for c in capabilities %}| [[{{ c.key }}\|{{ c.title }}]] | {{ c.score }} | {{ c.basis | join(', ') }} |
+{% endfor %}
+
+## Benchmark evidence
+
+{% if benchmark_rows %}| Benchmark | Score | Metric | As of | Source |
+|---|---|---|---|---|
+{% for b in benchmark_rows %}| [[{{ b.key }}\|{{ b.title }}]] | {{ b.score }} | {{ b.metric }} | {{ b.as_of[:10] }} | {{ b.source }} |
+{% endfor %}{% else %}_No live benchmark rows yet — capability scores are curated priors._
+{% endif %}
+
+Machine-readable source of truth: `var/modelintel/registry.json` (this note is a view, not the data).
+
+## Notes (human)

@@ -1,0 +1,13 @@
+diff --git a/omniagentos/api/routes/chats.py b/omniagentos/api/routes/chats.py
+index 02c5c182..bf6b97c0 100644
+--- a/omniagentos/api/routes/chats.py
++++ b/omniagentos/api/routes/chats.py
+@@ -1274,7 +1274,7 @@ def _promote_action_items(
+         except Exception as exc:  # noqa: BLE001
+             _LOG.warning("failed to create project for promotion: %s", exc)
+
+-    execute_mode = "readonly" if body.execute_mode is None else body.execute_mode.strip().lower()
++    execute_mode = "session" if body.execute_mode is None else body.execute_mode.strip().lower()
+     if execute_mode not in _VALID_PROMOTE_EXECUTES:
+         fail(
+             400,

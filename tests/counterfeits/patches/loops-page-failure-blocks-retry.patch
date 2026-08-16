@@ -1,0 +1,37 @@
+diff --git a/omniagentos/scheduler/loop_jobs.py b/omniagentos/scheduler/loop_jobs.py
+index 1c1782d3..f9606a88 100644
+--- a/omniagentos/scheduler/loop_jobs.py
++++ b/omniagentos/scheduler/loop_jobs.py
+@@ -320,14 +320,6 @@ def _deliver_page(store: Any, approval_row_id: str) -> bool:
+     except Exception as exc:  # noqa: BLE001
+         delivered, detail = False, f"{type(exc).__name__}"
+ 
+-    if not delivered:
+-        # Record NOTHING: an undelivered page is not a page. The absence of the
+-        # event is what lets the next tick try again.
+-        logger.warning(
+-            "loop approval %s was not paged (retrying next tick): %s", approval_row_id, detail
+-        )
+-        return False
+-
+     try:
+         store.insert_event(
+             type="loop.approval",
+@@ -335,13 +327,13 @@ def _deliver_page(store: Any, approval_row_id: str) -> bool:
+             action="loop.approval.delivered",
+             target_type="approval",
+             target_id=approval_row_id,
+-            payload={"delivered": True, "detail": detail},
++            payload={"delivered": delivered, "detail": detail},
+         )
+     except Exception:  # noqa: BLE001
+-        # The page WAS delivered; only the record failed. Erring towards a
+-        # duplicate page on the next tick beats erring towards silence.
+         logger.exception("could not record the loop approval page")
+-    return True
++    if not delivered:
++        logger.warning("loop approval %s was not paged: %s", approval_row_id, detail)
++    return delivered
+ 
+ 
+ def _page_text(row: dict[str, Any], approval_row_id: str) -> str:

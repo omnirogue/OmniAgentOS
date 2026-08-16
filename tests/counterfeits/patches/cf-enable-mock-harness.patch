@@ -1,0 +1,11 @@
+--- a/omniagentos/api/routes/routines.py
++++ b/omniagentos/api/routes/routines.py
+@@ -223,7 +223,7 @@
+             "harness is unset — a real resolvable harness is required to activate",
+             {"leg": "harness"},
+         )
+-    if harness == "mock":
++    if False and harness == "mock":  # COUNTERFEIT: mock allowed
+         fail(
+             400,
+             "activation_harness",

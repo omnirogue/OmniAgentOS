@@ -1,0 +1,16 @@
+diff --git a/omniagentos/scheduler/loop_effects.py b/omniagentos/scheduler/loop_effects.py
+index 01bcfd0c..8837abdd 100644
+--- a/omniagentos/scheduler/loop_effects.py
++++ b/omniagentos/scheduler/loop_effects.py
+@@ -854,10 +854,7 @@ def _run_model_complete(request: SeamRequest) -> dict[str, Any]:
+         # sent and nothing can have been billed.
+         raise SeamRefused("budget_exceeded", str(exc), may_have_billed=False) from exc
+     except LLMTransportError as exc:
+-        # 429/5xx, connect failure and read timeout all arrive here as one
+-        # exception type. Splitting them is the whole point — see
+-        # ``_from_llm_transport``.
+-        raise _from_llm_transport(exc, str(exc)) from exc
++        raise SeamUnavailable("model_unreachable", str(exc)) from exc
+     except (LLMInvalidResponseError, LLMClientError) as exc:
+         # A 4xx that is not 429, or a 200 whose body could not be read as a
+         # completion. Either way the provider answered, so it may have billed.

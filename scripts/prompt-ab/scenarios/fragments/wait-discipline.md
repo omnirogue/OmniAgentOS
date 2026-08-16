@@ -1,0 +1,2 @@
+## Wait discipline
+Never poll in short loops (`for i in ...; sleep 5` shapes are banned). To wait on a file/process/completion: ONE blocking call with a long timeout (e.g. `gtimeout 590 tail -F`/single long wait), sized to the p90 of the thing you await. If the wait exceeds one call's budget, check state ONCE then issue the next single long wait. A relay/agent you launched notifies on completion — do not also poll for it.

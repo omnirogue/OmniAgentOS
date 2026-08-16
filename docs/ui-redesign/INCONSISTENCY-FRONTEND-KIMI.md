@@ -1,0 +1,69 @@
+# Frontend Inconsistency Hunt — FINAL REPORT (Kimi, MAIN tree)
+
+**Domain:** `dashboard/**` only (backend `omniagentos/**` read-only; docs write = this file only).
+**Baseline (before):** `npx tsc --noEmit` clean · `npx vitest run` 284/284 · `npm run lint` 0 errors (9 pre-existing warnings) ·
+**After:** `tsc` clean · `vitest` **287/287** (+3 new) · `lint` 0 errors (7 warnings, all pre-existing in untouched files) · `npm run build` green.
+
+Method: every finding below was verified against real code on BOTH sides (client file ↔ FastAPI route/store) before touching anything. Pinned contracts honored: `docs/ui-redesign/FINAL-PLAN.md` §B, `chat-v2/SPEC.md` §3. No new deps, no git mutations, no inline styles added (only the pre-existing lint-allowed `--pct` CSS-var form remains where it already was).
+
+---
+
+## 1. Fixed inconsistencies
+
+| # | Area | File(s) | Evidence (verified) | Fix |
+|---|------|---------|---------------------|-----|
+| F1 | Broken navigation — orphan page | `src/design/CommandPalette.tsx`, `src/design/AppShell.tsx` | `/grok` (Grok Operator Tools, `app/grok/page.tsx`) had **zero** inbound links: not in `NAV_SECTIONS`, not in `IMPLICIT_SECTIONS` (no breadcrumb), not in `DEFAULT_COMMANDS` (no ⌘K). Reachable only by typing the URL. | Added `Grok ops` to the palette (System group, icon `plug`) and `{ prefix: "/grok", sectionKey: "observatory", label: "Grok ops" }` so the breadcrumb reads `Observatory › Grok ops`. No sidebar entry added — that's an IA/product call (see L2). |
+| F2 | Breadcrumb/active-nav misattribution | `src/design/AppShell.tsx` | Settings-gear pages (`/agents`, `/accounts`, `/files`, `/goals`, `/comms`, `/revenue`, `/cash`, `/suggestions`, `/projects`) were attributed to **Observatory** in `IMPLICIT_SECTIONS`: breadcrumb showed `Observatory › Agents` for a page that lives under the Settings gear, and `sectionIsActive` highlighted the Observatory nav row on every settings page. `/suggestions` was attributed to Approvals. | `breadcrumbFor` now scans `SETTINGS_GROUPS` (longest-match, section label "Settings"); settings-owned prefixes in `IMPLICIT_SECTIONS` use `sectionKey: "settings"` (matches no NavSection → no wrong highlight); duplicates removed. `/agents` now reads `Settings › Agents`. |
+| F3 | Stale IA comments | `src/design/AppShell.tsx`, `src/design/CommandPalette.tsx` | AppShell header said "**Five** primary navigation entries" and omitted Connections (there are six since S8) plus Cash/Suggestions in the gear list. Palette claimed "All 53 routes are represented" — 41 entries for 57 `page.tsx` files. | Comments rewritten to describe reality (six entries incl. Connections; palette covers every top-level page; creation forms/sub-pages/the `/organization` redirect intentionally omitted). |
+| F4 | Placeholder tile shipped | `src/features/pulse/CapabilityPulseTile.tsx`, `tiles.ts`, `client.ts`, `hooks.ts`, `types.ts`, `fixtures.ts`, `index.ts`, `tiles.test.ts` | The Capability tile fetched **`improvements.applied`** — the *same* metric as the Self-improvement tile (admitted in-code: "uses the improvements.applied series as a proxy") → /pulse rendered two identical numbers/sparklines, and deep-linked to legacy `/capabilities`. FINAL-PLAN §6 pins Capability = "ELO delta, tournaments won (leaderboard data)". | New `fetchCapabilitySnapshot()` reads **live** `/api/lab/leaderboard` + `/api/lab/tournaments` directly (labApi itself is fixture-pinned, see L3); new `useCapabilityPulse()` hook; `shapeCapabilityTile(snapshot)` renders top ELO + "N ranked across M subjects · T tournaments run", deep link `/leaderboard`, no fabricated delta/sparkline. Fixture fallback under the existing `NEXT_PUBLIC_USE_PULSE_FIXTURES` convention. 3 new unit tests. |
+| F5 | Misleading cockpit data + stale TODO | `src/features/pulse/client.ts`, `src/features/cockpit/LoopsPulse.tsx` | `fetchActiveRoutines` read `r.next_fire` (field **does not exist** on Routine) → fell back to `last_fired` (a *past* timestamp) → `formatNextFire` rendered every routine's next fire as **"now"**. `lastRunStatus` was guessed from `acceptance_rate != null`. Comment referenced a "TODO below" that didn't exist; on any API error it silently substituted **fixture routines presented as live**. It also sent `?limit=` to `/api/routines`, a param the route ignores. | Rewritten: joins `GET /api/routines?status=active` with the (now live) `GET /api/routines/runs?limit=50` aggregate — newest run per routine drives `lastRunStatus` (accepted/rejected/passed/failed/pending); `nextFire` comes from the same `formatCountdown(trigger_type, trigger_config)` cron parser the Loops page uses. Errors propagate to the tile's `ErrorState` (honest outage, no fake data). LoopsPulse doc comment updated. |
+| F6 | Double-fetch on mount (`/routines`) | `src/features/routines/RecentRunsPanel.tsx`, `src/app/routines/page.tsx` | Page called `useRecentRuns()` (for sparklines) **and** `<RecentRunsPanel/>` called it internally → `GET /api/routines/runs?limit=50` fired twice per mount. | `RecentRunsPanel` is now presentational (`{runs, loading, error, refresh}` props); the page owns the single fetch and passes it down. (Panel had no other consumers; its dead `formatDateTime` re-export removed.) |
+| F7 | Double-fetch on mount (`/chats`) | `src/app/chats/page.tsx`, `src/features/chats/ChatSidebar.tsx` | Page called `useProjectTree()` **and** `ChatSidebar` called it again → `GET /api/projects/tree` fired twice (plus a duplicate SSE subscription). | Page owns the hook; sidebar receives `projectNodes` + `onProjectsChanged` props (used by its create-project flows). |
+| F8 | Native dialog (charter violation, new surface) | `src/features/omni-ops/GrantsPanel.tsx` | Grant **Revoke** used `window.confirm(...)` — blocks Playwright, unstyleable, keyboard-hostile; chat-v2 acceptance requires zero `prompt()/confirm()` on new surfaces. | Replaced with the design `Dialog` (Cancel/Revoke, busy state), same pattern as the chat delete dialog. |
+| F9 | Native dialog (charter violation, new surface) | `src/app/routines/page.tsx` | Loop **Delete** used `window.confirm(...)`. | Replaced with design `Dialog` (`deleteTarget` state, danger button, "cannot be undone" copy). |
+| F10 | Client/server shape drift | `src/features/chats/chatApi.ts` | `listChats("")` — fixtures treat `""` as "project-less" (Recents), but the live path sent `?project_id=` and the server exact-matches (`store.list_chats`: `project_id = ?`) → **empty list** live vs. project-less list in fixtures (the test at `chatApi.test.ts:58` only exercises fixtures). | Live path now fetches unfiltered and narrows client-side for `""`, matching fixture semantics. Server-side option documented in L1. |
+| F11 | Dead SSE branch → stale sidebar counters | `src/features/chats/useChats.ts` | `useChatRefreshSignal` subscribed only to `board.updated` but tested `lastEvent.target_type === "chat"`. Verified server-side: `board.updated` is always emitted with `target_type="board_task"` (`intake/service.py:2953`, `run_card_reconcile.py:369`), and `chat.turn.*` frames (target_type "chat") were filtered **out** by the type filter → the chat branch could never fire; `message_count`/`last_message_at` in the sidebar only updated as a side effect of board writes. | Subscription now includes `chat.turn.completed` (bridge's reply write-back bumps the counters); the dead-branch reasoning documented in the comment. |
+| F12 | Lint hygiene in touched files | `src/features/pulse/hooks.ts`, `src/features/pulse/PulseTile.tsx` | Baseline warnings inside the files this hunt rewrote: an unused `eslint-disable` directive (`hooks.ts:120`) and an unused `formatValue` import (`PulseTile.tsx`). | Removed both. Warning count 9 → 7, all remaining warnings pre-existing in untouched files. |
+
+## 2. Verified consistent (hunted, no defect)
+
+- **Chat API end-to-end** — `chatApi.ts` types vs `routes/chats.py` + `chats/store.py::to_dto` + `conversations/store.py`: ChatDTO flat fields (P0-3 fixed server-side), the `{message, dispatch}|{message, task_ids}` send envelope (P0-4), `meta` attachment manifest both directions (P0-6), classify/plan/spawn/promote shapes — all match SPEC §3.1–3.6. `ChatTurnEvent` matches `_emit_chat_event` + bridge.
+- **`/api/models`** — `{models:[…]}` with auto-first; `useModels` fallback `[{id:"auto"}]` + warn badge matches §2.8. Router registered (`api/main.py:486`).
+- **Board contracts (§3.9/§3.10)** — `_enrich_board_row` emits `project_id`, `chat_origin`, `planner_brief`, `checklist` exactly as `features/collab/types.ts` declares; `GET /api/board` accepts `project_id`/`parent_task_id`; companion-only exclusion matches P0-9; `/api/board/{id}/eta` exists and returns honest nulls.
+- **Pulse contracts** — `/api/pulse/series` + `/api/pulse/metrics` + `/api/system/delta` match `types.ts` and §B verbatim (incl. 30-day server clamp). Metric semantics verified in `pulse/aggregator.py` (e.g. `skills.versions` really is a 7-day count → "versions this week" caption is accurate).
+- **Connections contract** — `routes/connections.py` DTO (`categories` + `connected_count` + `total_count`, 4-status enum, `docs_url` nullable) matches `connections/types.ts` exactly; page has skeleton/error/empty/vault-banner states; single fetch.
+- **Grok-ops contract** — `routes/grok_ops.py` + `grants/store.py` (`campaign_grants` columns) vs `omni-ops/types.ts`; the defensive normalizer covers nullable `expires_at`/`approval_id`/caps (see L8).
+- **Routines contract** — `routes/routines.py` (CRUD + enable/disable + per-routine runs) and the §B aggregate `list_recent_runs` (newest-first join) match `features/routines/types.ts`/`api.ts`.
+- **Navigation targets** — every static `href="..."` and `router.push/replace("...")` in `src/**` resolves to an existing `app/**` route; `/activity/{id}?kind=session|board` is an established handled pattern.
+- **New-surface states** — /pulse tiles (loading/empty/error/retry per tile), /connections, /grok (health gate + per-tab states), Loops System-loops panel, chats sidebar/thread (skeletons, error + retry, intentional empties), board `?project=` scoped empty with the pre-087 disclosure. Design `Tabs` mounts only the active item → no hidden-tab fetch storms.
+- **A11y on new surfaces** — palette focus trap + `aria-activedescendant`; sidebar rows keyboard-operable with menu equivalents for every drag; connections tiles `role=button` + Enter/Space; drawer scrims are real buttons; Esc chains respected (popover → draft → drawer/dialog).
+- **No dead buttons** on new surfaces — every control on /chats, /board, /routines, /pulse, /connections, /grok performs a real action (promote/spawn/plan/routing dialogs all submit).
+
+## 3. Leftovers
+
+**For the backend hunter (server-side, not mine to edit):**
+
+- **L1 — `GET /api/chats?project_id=` exact-match.** `omniagentos/chats/store.py::list_chats` filters `project_id = ?`; the client's "project-less" convention (`""`) therefore returns nothing. Worked around client-side (F10). If "project-less" should be a server feature, treat `""` as `project_id IS NULL` (mirrors the existing `folder == ""` branch).
+- **L8 — grant `status` is client-synthesized.** `campaign_grants` has no status column (revoked_at/expires_at instead); `list_active_grants` only returns active rows so the synthesized "active" badge is accurate *today*. Any future "all grants incl. revoked/expired" view needs a server-emitted status.
+- **`GET /api/board/{id}` (single card) doesn't exist** — `useTaskDetail` resolves one card by fetching the whole board (then the archived board). Fine at current scale; a single-card endpoint would remove the over-fetch.
+
+**Frontend, out of hunt scope (legacy surfaces, noted not fixed):**
+
+- **L2 — `/grok` has palette + breadcrumb but no sidebar entry.** IA decision: FINAL-PLAN §2 predates the page; adding a 7th primary entry or an Observatory sub-link is a product call.
+- **L3 — `features/leaderboard/fixtures.ts` `USE_FIXTURES = true` is hardcoded.** The entire /leaderboard + /tournaments surface renders fixture data although `/api/lab/*` is live and registered. The pulse Capability tile deliberately bypasses `labApi` for this reason (F4). Flipping the flag is a product decision (it changes those pages, not just the tile).
+- **L4 — `window.confirm` survives on legacy pages** `app/judges/page.tsx:81`, `app/accounts/page.tsx:284`. Same violation class as F8/F9 but not v2 surfaces.
+- **L5 — `app/activity/[taskId]/page.tsx` keeps inline styles** in its legacy session/run views (grandfathered in `eslint.config.mjs` legacy ratchet). The board view is already recomposed via `TaskDetailPanel`, per SPEC.
+- **L6 — chats workspace drawer** has Activity + Terminal tabs only; SPEC §2.1's Plan/Files tabs live in the board drawer instead. Also `WorkspaceTabs` holds a write-only `sessions` state (`const [, setSessions]`). Cosmetic; no user-facing defect.
+- **L7 — `fetchPulseMetrics` (`/api/pulse/metrics`) has no UI consumer** — kept as exported client surface, both sides consistent.
+
+## 4. Verification
+
+```
+cd dashboard
+npx tsc --noEmit          → 0 errors
+npx vitest run            → 35 files, 287/287 passed (incl. 3 new shapeCapabilityTile tests)
+npm run lint              → 0 errors; 7 warnings, all pre-existing in untouched files
+npm run build             → green (all 57 routes compile)
+```
+
+Files changed (all under `dashboard/`): `src/design/AppShell.tsx`, `src/design/CommandPalette.tsx`, `src/features/pulse/{types,fixtures,client,hooks,tiles,CapabilityPulseTile,PulseTile,index}.ts(x)`, `src/features/pulse/tiles.test.ts`, `src/features/cockpit/LoopsPulse.tsx` (comment), `src/features/routines/RecentRunsPanel.tsx`, `src/app/routines/page.tsx`, `src/features/omni-ops/GrantsPanel.tsx`, `src/features/chats/{chatApi.ts,useChats.ts,ChatSidebar.tsx}`, `src/app/chats/page.tsx`. No `omniagentos/**` or other `docs/**` files were touched.

@@ -1,0 +1,59 @@
+{
+  "blast_radius": "Dispatches team work items; a stall means nothing is assigned.",
+  "cadence_seconds": 300,
+  "company": "omniagentos",
+  "escalation_tier": "medium",
+  "exit_semantics": {
+    "DEGRADED": "degraded",
+    "DOWN": "down",
+    "OK": "ok",
+    "UNVERIFIED": "cannot_evaluate",
+    "default": "cannot_evaluate"
+  },
+  "host": "owner-mac",
+  "id": "loop-team-dispatch",
+  "kind": "llm-loop",
+  "last_status": "DEGRADED",
+  "last_verified": null,
+  "owner": "estate-ops",
+  "repo": "/Users/youruser/OmniAgentOS",
+  "staleness_slo_seconds": 900,
+  "throughput": {
+    "derivation": "Sum of the integer in every 'team-dispatch: N dispatched' line. Lines carry no timestamp, so this is a lifetime total over the retained log, explicitly NOT a 24h figure.",
+    "floor": {
+      "floor": null,
+      "fraction": 0.3,
+      "median": null,
+      "min_sample_days": 7,
+      "reason": "no windowable history: log lines carry no timestamp, and the lifetime volume is 0 so no median exists to take 30%% of",
+      "sample": null,
+      "sample_days": 0,
+      "sample_window": null
+    },
+    "max_error_rate": 0.25,
+    "metric": "dispatched_lifetime",
+    "notes": [
+      "Confirm with the operator whether 0 dispatched is expected (empty queue) or a defect — the loop cannot distinguish the two and neither can capmap.",
+      "Remedy: add a UTC 'ts' per line."
+    ],
+    "observed": {
+      "as_of": null,
+      "burn": null,
+      "error_rate": null,
+      "last_success": null,
+      "process_state": "RUNNING",
+      "volume": 0
+    },
+    "signal_exists": true,
+    "signal_path": "/Users/youruser/OmniAgentOS/var/log/team-dispatch.log",
+    "window": "lifetime (log carries no timestamps)"
+  },
+  "verification": {
+    "field": "dispatched_lifetime",
+    "note": "Graded on throughput, not liveness: a running loop with zero volume is DEGRADED.",
+    "source": "/Users/youruser/OmniAgentOS/var/log/team-dispatch.log",
+    "type": "snapshot_field"
+  },
+  "what_it_does": "Team dispatch loop (every 300s). Its log carries no timestamps, so the window is LIFETIME, not 24h: 500 retained runs have dispatched 0 items in total.",
+  "why_it_matters": "Demonstrates the running-but-idle failure mode in its purest form: the process is loaded, healthy, and has emitted zero dispatched items on every run. Zero is an observed count, not a missing one, so it grades DEGRADED rather than UNVERIFIED."
+}

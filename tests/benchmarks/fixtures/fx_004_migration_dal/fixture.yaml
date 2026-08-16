@@ -1,0 +1,32 @@
+# FROZEN fixture — see tests/benchmarks/README.
+# Shaped after this repo: a frozen schema.sql, a numbered migrations directory
+# that is append-only, and a DAL module that must move with it.
+id: fx_004_migration_dal
+discipline: code-changes
+kind: migration
+repo_rev: 14a84bc36df760f9603cfbae1a00ba20060de922
+tier: complex
+timeout_ms: 600000
+max_turns: 40
+declared_files:
+  - db/migrations/003_add_owner.sql
+  - dal.py
+canaries: []
+acceptance:
+  paths:
+    - check_accept_dal.py
+  timeout_s: 180
+prompt: |
+  This project applies schema changes as numbered, append-only migration files
+  under `db/migrations/`. `db/schema.sql` and every EXISTING migration are
+  FROZEN: they must not be edited, renamed, or deleted.
+
+  Add an owner to widgets:
+    1. Add a new migration `db/migrations/003_add_owner.sql` that adds a
+       nullable `owner TEXT` column to the `widgets` table.
+    2. In `dal.py`, add
+       `set_owner(conn, widget_id: str, owner: str | None) -> None`
+       and make `get_widget` include the `owner` value in the dict it returns.
+
+  `python -m pytest check_dal.py` must pass afterwards. Do not modify
+  `check_dal.py`, `db/migrate.py`, `db/schema.sql`, or migrations 001/002.

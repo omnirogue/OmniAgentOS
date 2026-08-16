@@ -1,0 +1,3 @@
+id: "task_008"
+prompt: "Write a Python function check_even_odd(n: int) -> str that returns 'even' or 'odd'. Provide a test case."
+discipline: "code-changes"

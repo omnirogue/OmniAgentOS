@@ -1,0 +1,15 @@
+diff --git a/omniagentos/scheduler/loop_effects.py b/omniagentos/scheduler/loop_effects.py
+index 601ef0cf..557fc735 100644
+--- a/omniagentos/scheduler/loop_effects.py
++++ b/omniagentos/scheduler/loop_effects.py
+@@ -539,7 +539,9 @@ def _after_billable_work(error: SeamError) -> SeamError:
+     reason. Ambiguity stays ambiguous.
+     """
+     if isinstance(error, SeamUnavailable):
+-        return SeamRefused(error.reason, error.detail)
++        # Carry the original error's own billing answer across rather than
++        # discarding it; the outcome changes, the facts about it do not.
++        return SeamRefused(error.reason, error.detail, may_have_billed=error.may_have_billed)
+     return error
+ 
+ 

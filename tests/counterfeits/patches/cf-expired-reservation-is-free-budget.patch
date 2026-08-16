@@ -1,0 +1,13 @@
+diff --git a/omniagentos/scheduler/loop_budget.py b/omniagentos/scheduler/loop_budget.py
+index 2d8e9657..3109169a 100644
+--- a/omniagentos/scheduler/loop_budget.py
++++ b/omniagentos/scheduler/loop_budget.py
+@@ -82,7 +82,7 @@ STATE_RELEASED = "released"
+ STATE_EXPIRED_UNKNOWN = "expired_unknown"
+ 
+ #: States whose ``actual_usd`` counts as spend against the day's caps.
+-_CHARGED_STATES = (STATE_SETTLED, STATE_EXPIRED_UNKNOWN)
++_CHARGED_STATES = (STATE_SETTLED,)
+ 
+ _SECONDS_PER_DAY = 86400.0
+ 

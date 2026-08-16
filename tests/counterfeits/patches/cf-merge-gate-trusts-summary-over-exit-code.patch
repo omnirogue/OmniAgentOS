@@ -1,0 +1,30 @@
+diff --git a/scripts/merge-gate.sh b/scripts/merge-gate.sh
+index 5fc93a5..f7258d3 100755
+--- a/scripts/merge-gate.sh
++++ b/scripts/merge-gate.sh
+@@ -1015,16 +1015,16 @@ if [ "$MERGE_OK" -eq 1 ]; then
+     if [ -n "$CF_REUSE" ]; then
+       pass "counterfeit-gate" "$CF_REUSE"
+     else
+-      CF_RC=$(sed -n '1p' "$STEP_DIR/counterfeit.status" 2>/dev/null)
+-      CF_VERDICT=""
+-      if [ -z "$CF_RC" ]; then
+-        fail "counterfeit-gate" "harness produced NO exit status (worker died) — an instrument that did not run is NOT a pass"
+-      elif CF_VERDICT=$(judge_counterfeit "$CF_RC" "$STEP_DIR/counterfeit.out"); then
+-        pass "counterfeit-gate" "$CF_VERDICT"
+-        record_step_receipt "counterfeit-gate" "$CF_CMD" "$STEP_DIR/counterfeit.out" \
+-          "$CF_VERDICT" "$CF_STARTED" "$CF_RC"
++      CF=$(cat "$STEP_DIR/counterfeit.out" 2>/dev/null)
++      REPORT=$(printf '%s' "$CF" | grep -oE 'total=[0-9]+ +caught=[0-9]+ +survived=[0-9]+ +other=[0-9]+' | tail -1)
++      if [ -z "$REPORT" ]; then
++        fail "counterfeit-gate" "produced NO verdict (did not run)"
++      elif printf '%s' "$REPORT" | grep -q "other=[1-9]"; then
++        fail "counterfeit-gate" "$REPORT (entries errored — dead coverage)"
++      elif printf '%s' "$REPORT" | grep -q "survived=0"; then
++        pass "counterfeit-gate" "$REPORT"
+       else
+-        fail "counterfeit-gate" "${CF_VERDICT:-rc=$CF_RC and no judgeable verdict}"
++        fail "counterfeit-gate" "$REPORT"
+       fi
+     fi
+   fi

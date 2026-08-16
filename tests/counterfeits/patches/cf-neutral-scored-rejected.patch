@@ -1,0 +1,14 @@
+diff --git a/omniagentos/scheduler/routines_settle.py b/omniagentos/scheduler/routines_settle.py
+index 97a7214e..efb55d98 100644
+--- a/omniagentos/scheduler/routines_settle.py
++++ b/omniagentos/scheduler/routines_settle.py
+@@ -386,7 +386,8 @@ def settle_routine_run(
+         # reason code, which is what the floor's backstop and any operator query
+         # read. A FAILED gate is deliberately exempt: that is evidence of
+         # failure, not absence of it, and it stays adverse.
+-        accepted = None
++        accepted = False
++        gate_passed = False
+         stop_reason = claimed_reason or stop_reason
+     if claim:
+         # The claim itself is durable in `self_reported_status`; the executor's

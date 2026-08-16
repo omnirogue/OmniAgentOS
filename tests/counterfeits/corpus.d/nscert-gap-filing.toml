@@ -1,0 +1,23 @@
+# corpus.d/nscert-gap-filing.toml — North Star gap -> loop-queue filing failure modes.
+#
+# The filer is the first North Star adapter that WRITES outside var/northstar-cert.
+# Both counterfeits here are silent-in-production: neither raises, neither logs,
+# and both leave a queue that looks plausible until someone reconciles it.
+
+[[counterfeit]]
+id = "cf-nscert-filing-skips-the-ledger"
+patch = "patches/cf-nscert-filing-skips-the-ledger.patch"
+rationale = "Writes the finding artifact but drops the `found` ledger event. CONTRACT.md §5 makes the ledger the history and state/queue.json a derived cache rebuildable from it — so an artifact with no event is invisible to every replay-based reader, and the gap is filed into a directory nobody selects from. Nothing errors: findings/ fills up, the loop stays idle, and the certification looks wired. The guard binds the artifact and the event together in one assertion."
+must_fail = [
+  "tests/scripts/test_nscert_file_gap_findings.py::test_live_filing_writes_a_valid_envelope_and_one_ledger_event",
+]
+failure_re = "assert 0 == 1|len\\(events\\)"
+
+[[counterfeit]]
+id = "cf-nscert-dedup-ignores-terminal-dirs"
+patch = "patches/cf-nscert-dedup-ignores-terminal-dirs.patch"
+rationale = "Narrows the dedup pre-check to findings/ so rejected/ and parked/ stop counting. A gap a human parked — or the loop rejected — is re-detected by the next daily certification run and walks straight back into the queue, every morning, forever, with no error and a fresh ledger event each time. This is the exact shape that makes a queue unreadable, and it is invisible on day one because the FIRST filing of a new gap behaves identically."
+must_fail = [
+  "tests/scripts/test_nscert_file_gap_findings.py::test_a_terminal_marker_skips_the_gap_silently",
+]
+failure_re = "result\\.filed == \\[\\]|skipped_existing"

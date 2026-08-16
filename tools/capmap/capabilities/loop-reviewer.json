@@ -1,0 +1,63 @@
+{
+  "blast_radius": "A stalled reviewer loop halts the loopqueue pipeline; no data is destroyed.",
+  "cadence_seconds": 900,
+  "company": "omniagentos",
+  "escalation_tier": "medium",
+  "exit_semantics": {
+    "DEGRADED": "degraded",
+    "DOWN": "down",
+    "OK": "ok",
+    "UNVERIFIED": "cannot_evaluate",
+    "default": "cannot_evaluate"
+  },
+  "host": "owner-mac",
+  "id": "loop-reviewer",
+  "kind": "llm-loop",
+  "last_status": "OK",
+  "last_verified": null,
+  "owner": "estate-ops",
+  "repo": "/Users/youruser/OmniAgentOS",
+  "staleness_slo_seconds": 2700,
+  "throughput": {
+    "derivation": "loops.daily_counts()/window_count() over the loopqueue ledger (gitignored; read directly since plain rg skips it without -uu). Only covered days are sampled; absent days are never zero-padded.",
+    "floor": {
+      "floor": 120.0,
+      "fraction": 0.3,
+      "median": 400.0,
+      "min_sample_days": 7,
+      "reason": null,
+      "sample": {
+        "2024-01-01": 100,
+        "2024-01-02": 200,
+        "2024-01-03": 300,
+        "2024-01-04": 400,
+        "2024-01-05": 500,
+        "2024-01-06": 600,
+        "2024-01-07": 700
+      },
+      "sample_days": 7,
+      "sample_window": "2024-01-01..2024-01-07"
+    },
+    "max_error_rate": 0.25,
+    "metric": "ledger_events_24h",
+    "observed": {
+      "as_of": null,
+      "burn": null,
+      "error_rate": null,
+      "last_success": null,
+      "process_state": "RUNNING",
+      "volume": 500
+    },
+    "signal_exists": true,
+    "signal_path": "/Users/youruser/OmniAgentOS/var/loopqueue/ledger.jsonl#role=reviewer",
+    "window": "24h"
+  },
+  "verification": {
+    "field": "ledger_events_24h",
+    "note": "Graded on throughput, not liveness: a running loop with zero volume is DEGRADED.",
+    "source": "/Users/youruser/OmniAgentOS/var/loopqueue/ledger.jsonl#role=reviewer",
+    "type": "snapshot_field"
+  },
+  "what_it_does": "OmniAgentOS reviewer loop; volume is ledger events carrying role=reviewer.",
+  "why_it_matters": "Reviewer volume gates every candidate; a silent reviewer loop stalls landing without any process ever exiting non-zero."
+}

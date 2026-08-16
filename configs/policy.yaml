@@ -1,0 +1,61 @@
+# Action-class policy (blueprint §12), enforced by omniagentos/policy.
+# H1 trust posture: single operator, local machine. Approval requirements are the
+# machinery being proven, not a production policy.
+
+# Autonomy mode (AC-policy) — OmniAgentOS product stance.
+#   auto        -> DEFAULT. Maximum production speed: every class auto-executes
+#                  EXCEPT `irreversible` (real deletes / secrets / out-of-scope
+#                  destruction). Finance and other HARD_HUMAN capabilities still
+#                  refuse unattended via connectors/broker HARD_HUMAN_CLASSES
+#                  without a human token or a *store-loaded* campaign grant.
+#                  CONSEQUENTIAL is NOT parked under AUTO (operator decision).
+#   supervised  -> legacy posture: external_reversible + consequential + irreversible
+#                  all gate. Floors below describe SUPERVISED; AUTO uses hard-stop
+#                  overlay in omniagentos/policy.evaluate_action for IRREVERSIBLE only.
+mode: auto
+# Autonomy tier (HANDOFF AUTO-APPROVE Phase 3):
+#   supervised | auto | hands_off
+# hands_off: irreversible auto-runs when every path operand is inside a granted
+# root (Phase 1 standing + project roots). Money/send/secret hard-stops still park.
+autonomy: hands_off
+
+action_classes:
+  read_only:
+    requires_approval: false
+  sandboxed_creation:
+    requires_approval: false
+  internal_reversible:
+    requires_approval: false
+  external_reversible:
+    requires_approval: true   # supervised only; AUTO ignores this floor
+  consequential:
+    requires_approval: true   # supervised only; AUTO auto-executes (broker gates money)
+    always_human: true        # supervised floor only
+  irreversible:
+    requires_approval: true
+    always_human: true        # THE hard-stop in AUTO: real deletes / secrets / OOS destroy
+
+tools:
+  # Agent steps must operate within the task's declared tools_allowed list.
+  # An empty task allowlist means: adapter runs with NO tool grants beyond plain
+  # generation. Enforcement is BOTH pre-validation at enqueue AND sandbox-flag
+  # selection at execution (contracts/interfaces.md tools->sandbox table; design
+  # finding D-005). The B4 test asserts the actual subprocess flags.
+  known:
+    - generate            # plain text generation (all adapters)
+    - file_read           # harness may read its working dir
+    - file_write          # harness may write its working dir
+    - shell               # harness may execute commands (mini-swe, openhands)
+  sandbox_mapping:
+    read_only:            # neither shell nor file_write granted (or empty list)
+      cli-codex: "--sandbox read-only"
+      cli-grok: "--sandbox read-only"
+      cli-claude: "plain -p (no permission grants, no --add-dir)"
+    workspace_write:      # file_write and/or shell granted
+      cli-codex: "--sandbox workspace-write"
+      cli-grok: "--sandbox workspace"
+      cli-claude: "--permission-mode acceptEdits --add-dir <working_dir>"
+
+# 72h: daily check-in must not race a 24h TTL (AUTO-APPROVE Phase 5.2 / F1).
+approval_expiry_hours: 72
+stale_worker_seconds: 30

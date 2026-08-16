@@ -1,0 +1,167 @@
+# configs/workqueue.yaml — shared work-queue pool configuration.
+# Read fresh by workers and the server on every start; edited by the operator.
+# Decision DOCTRINE (fencing, anti-retry, attempt accounting) lives in code on purpose.
+
+server:
+  port: 8487
+  # Loopback ONLY. Never 0.0.0.0 (MACHINE-ACCESS.md). Tailnet exposure happens
+  # outside the process: `tailscale serve --tcp 8487 tcp://127.0.0.1:8487` on the
+  # primary, and `ssh -N -R 8487:127.0.0.1:8487 <host>` reverse tunnels for
+  # machines not yet on the tailnet.
+  bind: "127.0.0.1"
+  # Bearer token: WQ_TOKEN from ~/.config/omni/connections.env (mode 600).
+  token_env: "WQ_TOKEN"
+  db_path: "var/workqueue.sqlite3"
+
+lease:
+  ttl_s: 120            # four missed beats before reclaim
+  heartbeat_s: 30
+  reaper_interval_s: 60
+
+caps:
+  max_attempts_default: 3
+  instrument_retries: 3
+  instrument_backoff_s: [60, 300, 900]
+  refusal_storm: 5
+
+# ---------------------------------------------------------------------------
+# fleet: the initial label map (ROUTING-DECISIONS §4, the operator 2026-08-11).
+#
+# COMMENTS, NOT CONFIG. Enrollment is the authority for what a machine declares
+# — `scripts/workqueue/enroll.sh --labels ... --max-concurrent ... ` writes the
+# wq_machines row, and a future server joins with that command and no code
+# change. This block exists so the intended shape of the pool is readable next
+# to the knobs, and so a row that drifts from it is visible in `wq machines`.
+#
+# | machine                  | labels                                            | mc | ceiling | note                                  |
+# |--------------------------|---------------------------------------------------|----|---------|---------------------------------------|
+# | mac-studio (the operator primary) | — (NOT a worker)                                  |  0 |   —     | queue server + serialized merger only |
+# | mw0001-owner               | darwin, gate, build, pytest, agent-codex, agent-claude | 3 | 0.75 | workhorse; CLIs verified live         |
+# | mw0002                   | darwin, gate, pytest, script                      |  3 |  0.75   | add agent-* after CLI verify at enroll|
+# | bob-studio            | darwin, build, pytest, script (+agent-* per seats) |  3 |  0.75   | gate label only after a parity check  |
+# | alice-studio              | darwin, build, pytest, script (+agent-* per seats) |  3 |  0.75   | gate label only after a parity check  |
+# | initech-roi-calculator | linux, linux-ci, script, pytest-linux             |  2 |   0.6   | production host — headroom guarded    |
+# | acmeuni                     | linux, linux-ci, script, pytest-linux             |  2 |   0.6   | production host; PR #240's parity box  |
+#
+# Bob's and Alice's MacBooks are SUBMIT + OBSERVE only and are never enrolled
+# as workers — they hold WQ_TOKEN and tailnet reach, and run `wq enqueue --by
+# <name>` / `wq status`. Their Mac STUDIOS are the workers.
+#
+# No machine class is reserved for a kind of work (§3): correctness is carried by
+# labels (a unit's labels must all be declared by the claiming machine),
+# efficiency by load-gated claiming with headroom-scaled cadence, and importance
+# by priority. Reservation idles boxes whenever the bottleneck migrates.
+
+# ---------------------------------------------------------------------------
+# Reserved workers are WORKER-DECLARED, not server-configured (the operator, 2026-08-12).
+#
+# There is deliberately NO server-side `reserved_machines` map here. A machine
+# that should only run one person's work declares that on its OWN command line:
+#   python -m omniagentos.workqueue.worker ... --reserved-for owner
+# (enroll.sh --reserved-for owner threads it into the launchd/systemd unit). The
+# worker then adds `AND submitted_by = 'owner'` to its own claim, so it can only
+# ever claim FEWER units, never more. Started with --reserved-for empty/blank the
+# worker REFUSES TO START (fail closed) rather than silently become unrestricted;
+# started WITHOUT the flag it is a normal unrestricted worker — an explicit,
+# visible operator choice.
+#
+# HONEST SCOPE — resource hygiene, NOT a security boundary. A reserved worker
+# claims ONLY its declared owner's OWN submissions, to keep other people's pool
+# work off a machine reserved for one person under COOPERATIVE use. It is NOT a
+# hard boundary: attribution (submitted_by) is self-declared under the single
+# shared pool token, so a token-holder who deliberately submits AS the owner can
+# still land work on the box. This prevents accidental contention, not deliberate
+# forging. A hard boundary requires per-submitter auth tokens (out of scope).
+
+# ---------------------------------------------------------------------------
+# worker_allowlist — WHICH MACHINES MAY EXECUTE (the operator's ruling, 2026-08-13; D8a).
+#
+# Unlike the `fleet:` block above this is CONFIG, not commentary: the server reads
+# it, and it is the sole authority for the `role` column on wq_machines. A machine
+# id here enrolls as role='worker'; anything else enrolls as role='dispatcher'
+# (enrollment still SUCCEEDS — a dispatcher submits and observes, it just never
+# claims). A `role` key in the enroll body is stripped, so no machine can promote
+# itself by asking.
+#
+# Personal machines are dispatchers, outgoing only. Execution happens on fleet
+# workers. That is the whole rule this list encodes.
+#
+# OPERATOR-MANAGED. Machine ids must be BYTE-IDENTICAL to wq_machines.machine_id
+# (`scutil --get LocalHostName` on macOS, `hostname -s` on Linux) — a typo here
+# silently demotes a real worker to a dispatcher. Note 'acmeuni' is a PROSE ALIAS
+# used in the fleet table and the runbook; it is NEVER an id, and the box's real
+# machine_id is acmeuniversityredditprompts.
+#
+# Enforcement is gated on WQ_ROLE_ENFORCE on the server process (default = log
+# only). Read RUNBOOK §12 before flipping it — there is a mandatory preflight.
+worker_allowlist:
+  - macstudio-a
+  - macstudio-b
+  - initech-roi-calculator
+  - acmeuniversityredditprompts
+  - initech-dev
+  # Live claiming workers at seeding time (2026-08-13, wq_machines rows — the
+  # allowlist must be ⊇ every beating worker or the enforce-flip locks one out;
+  # RUNBOOK §12 preflight re-checks this):
+  - vps-00000000
+  - Initechs-Mac-mini
+  # + bob-studio, alice-studio at Wave-2
+
+capacity:
+  # A worker claims nothing while its own load1 exceeds ceiling_fraction * ncpu.
+  # Per-machine override lives on the wq_machines row (set at enrollment).
+  ceiling_fraction_default: 0.75
+  primary_is_orchestrator: true  # mac-studio never claims; laptops submit-only (the operator 2026-08-11)
+  # A machine that also runs a live merge gate keeps claims to 1 concurrent unit
+  # while a gate process is present (gate verdicts above load ~10 are
+  # contention-flakes, not verdicts — pipeline/bridge/gate_host.py).
+  gate_guard_process: "merge-gate"
+  # Guidance encoded from SPEC §5.3: max_concurrent ≈ perf_cores / 4, cap 4.
+  suggested_max_concurrent:
+    divisor: 4
+    cap: 4
+
+# Agent profiles — a unit names a profile the machine already trusts; it can NEVER
+# inject an arbitrary shell command onto another machine. {brief} expands to the
+# brief file path, {workdir} to the unit worktree. acceptance_cmd IS a command
+# because it must be deterministic and auditable — it is what the fingerprint hashes.
+profiles:
+  script:
+    lineage: none
+    cmd: null            # no agent turn; the acceptance_cmd is the whole unit
+  codex-exec:
+    lineage: openai
+    cmd: ["codex", "exec", "--sandbox", "workspace-write", "--cd", "{workdir}", "-", "@{brief}"]
+  claude-headless:
+    lineage: anthropic
+    # --dangerously-skip-permissions (2026-08-13): under acceptEdits a headless
+    # turn cannot RUN anything — the first `pytest` hit "requires approval" with
+    # nobody to approve, and unit wq_01KZY99VSK ended its turn asking for
+    # permission with the work complete but uncommitted (acceptance then passed
+    # queue-side: 147/147). Containment is the unit boundary, not the agent's
+    # prompt layer: throwaway clone, owned_paths scope check before push,
+    # acceptance_cmd as the verdict, fleet box. An agent that cannot execute
+    # its own tests ships unverified diffs — strictly worse.
+    cmd: ["claude", "-p", "@{brief}", "--dangerously-skip-permissions", "--max-turns", "80"]
+  grok-exec:
+    lineage: xai
+    cmd: ["grok", "run", "--cd", "{workdir}", "--brief", "{brief}"]
+
+# §4.6 — on the SECOND candidate-defect for a unit, the retry dispatches to a
+# DIFFERENT LINEAGE, never a higher effort of the same one. A lookup table, not a
+# rule engine. Both sides of every pair must have different `lineage:` keys above.
+escalation:
+  codex-exec: claude-headless
+  claude-headless: codex-exec
+  grok-exec: claude-headless
+
+labels:
+  # Capability labels a machine may declare at enrollment. A unit whose labels no
+  # enrolled machine satisfies is surfaced as unclaimable-no-capable-machine —
+  # never left silently queued.
+  # linux-ci / pytest-linux name the CI-PARITY capability the two Vultr servers
+  # actually have (PR #240 was Linux-verified on acmeuni because that box IS the
+  # parity environment) — a capability, never a reservation. Kept in step with
+  # the fleet: block above.
+  known: [build, gate, pytest, script, agent-codex, agent-claude, agent-grok, linux, darwin,
+          linux-ci, pytest-linux]

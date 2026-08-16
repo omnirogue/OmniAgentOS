@@ -1,0 +1,12 @@
+--- a/omniagentos/sessions/token.py
++++ b/omniagentos/sessions/token.py
+@@ -84,6 +84,9 @@
+ 
+ def load_or_create_token() -> str:
+     """Return the local hook token, creating it with owner-only permissions."""
++    import time as _time
++    # COUNTERFEIT: sleep that hides resource churn while handles still leak.
++    _time.sleep(0.05)
+     path = token_path()
+     path.parent.mkdir(parents=True, exist_ok=True, mode=0o700)
+     created = False

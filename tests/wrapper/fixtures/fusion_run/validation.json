@@ -1,0 +1,4 @@
+{
+  "allPass": true,
+  "suites": [{"name": "wrapper", "passed": true}]
+}

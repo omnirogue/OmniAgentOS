@@ -1,0 +1,93 @@
+# Model policy for model-backed improvement loops.
+#
+# The improvement producer is an ULTRA-CHEAP OpenRouter model (SI-loop revival,
+# operator "cheapest reliable models" directive 2026-08-12; see the `primary`
+# block). Its accumulated suggestions then pass through one ordered review chain:
+#
+#   cheap proposer draft -> Codex X High edits the plan -> Fable 5 final review
+#
+# Monitoring, provider probes, metrics collection, and other deterministic
+# schedules do not use this file because they do not make model judgements.
+
+# SI-loop revival (operator directive 2026-08-12: "use the CHEAPEST reliable
+# models — so low we'd never hit $50"). The proposer was pinned to
+# moonshot-ai/kimi-k3 whose credential is commented out for the 2026-08-05
+# billing pause (11 of 12 genuine reflection failures were that dead seam). It
+# was briefly repointed to google/gemma-4-31b-it:free, but the free shared pool
+# rate-limits (429s in the live probe) — a rate-limited free model is WORSE than
+# an ultra-cheap RELIABLE paid one for a loop that must actually run.
+#
+# qwen/qwen3.7-flash — the operator's picked "cheap general agent", live-probed 2026-08-12
+# via the OpenRouter adapter (answered + settled cost ~$0.0000017). At
+# $0.03/M in, $0.13/M out it is so cheap the $50/UTC-day cap is effectively
+# unreachable. The proposer only DRAFTS suggestions; the quality lift is done by
+# the plan_editor (Codex xhigh) and final_reviewer (Fable) below — so a cheap,
+# fast draft model is the right shape here, not an expensive one.
+#
+# Lineage `qwen` (via the qwen vendor namespace) is allow-listed in
+# configs/swarm.yaml and priced in configs/spend-caps.yaml under the openrouter
+# $50/day cap. DO NOT restore the Moonshot key: the pause stands until the operator lifts it.
+primary:
+  harness: api-openrouter
+  model: qwen/qwen3.7-flash
+  effort: null
+  can_edit_plans: false
+
+# Cross-lineage fallback for the proposer (R0-2 item 4, 2026-08-08).
+#
+# When the ultra-cheap OpenRouter primary above is rate-limited or unavailable,
+# the proposer falls through to a SECOND LINEAGE. gpt-5.6-terra runs on the Codex
+# SUBSCRIPTION CLI (cli-codex), so this fallback carries no per-token metered
+# spend against the $50/day openrouter cap — it is the zero-cost safety net for
+# the cheap primary. `load_config` REFUSES a same-lineage fallback, and the
+# primary is now qwen lineage (qwen/qwen3.7-flash) while this is codex lineage,
+# so the two can never collapse into one vendor.
+#
+# OPERATOR CONSTRAINT (carried verbatim from
+# ~/.omniagentos/ops/Research/codebase/Reflection-Subsystem-Fate-2026-08-08.md):
+# DO NOT restore the Moonshot key without the operator's explicit approval.
+#
+# Read-only, exactly like `primary`: the proposer never edits plans.
+primary_fallback:
+  harness: cli-codex
+  model: gpt-5.6-terra
+  effort: null
+  can_edit_plans: false
+
+# Rerouted 2026-08-10 (operator directive): the Anthropic weekly quota
+# blocked this seat and stalled the whole improvement loop. Moved from
+# cli-claude/claude-opus-5 to cli-codex/gpt-5.6-sol at the same xhigh effort.
+# This also re-aligns the editor with planner_canary.py, which already probes
+# gpt-5.6-sol as THE planner. Cross-lineage against `final_reviewer` below
+# (Anthropic claude-fable-5) is preserved: Codex editor vs Anthropic reviewer.
+plan_editor:
+  harness: cli-codex
+  model: gpt-5.6-sol
+  effort: xhigh
+  can_edit_plans: true
+
+final_reviewer:
+  harness: cli-claude
+  model: claude-fable-5
+  effort: high
+  can_edit_plans: false
+
+plan:
+  # Opus edits a staged copy of this file inside a confined workspace. The
+  # validated result is then atomically installed here. It cannot edit code,
+  # configs, or any other plan as a side effect.
+  target: devtasks/LOOP-IMPROVEMENT-PLAN.md
+  max_bytes: 262144
+
+sources:
+  improvement_log_lines: 100
+  playbook_max_chars: 100000
+  existing_plan_max_chars: 100000
+  latest_curator_reports: 3
+  latest_reflection_reports: 3
+  latest_backlog_digests: 3
+
+budgets:
+  primary_wall_ms: 420000
+  editor_wall_ms: 900000
+  reviewer_wall_ms: 420000

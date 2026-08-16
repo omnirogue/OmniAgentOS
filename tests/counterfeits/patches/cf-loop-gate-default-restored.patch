@@ -1,0 +1,27 @@
+diff --git a/loops/omniagentos_loops/registry.py b/loops/omniagentos_loops/registry.py
+index 18c44723..eee81176 100644
+--- a/loops/omniagentos_loops/registry.py
++++ b/loops/omniagentos_loops/registry.py
+@@ -66,6 +66,9 @@ DEFAULT_TIMEOUT_S = 600
+ # it just moves the refusal from this helper to the store.
+ 
+ 
++DEFAULT_GATE_COMMAND = "pytest tests/scheduler/test_loop_jobs.py"
++
++
+ class LoopSpecError(ValueError):
+     """The routine row does not describe a runnable loop instance."""
+ 
+@@ -186,11 +189,11 @@ def loop_routine_row(
+     template: str,
+     instance_id: str,
+     instance_module: str,
+-    gate_command: str,
+     cron: str | None = None,
+     event: str | None = None,
+     params: dict[str, Any] | None = None,
+     description: str = "",
++    gate_command: str = DEFAULT_GATE_COMMAND,
+     hard_cap_value: float = 5.0,
+     notification_channel: str = "desktop",
+     timeout_s: int = DEFAULT_TIMEOUT_S,

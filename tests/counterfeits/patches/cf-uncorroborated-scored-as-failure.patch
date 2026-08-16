@@ -1,0 +1,14 @@
+diff --git a/omniagentos/scheduler/routines_settle.py b/omniagentos/scheduler/routines_settle.py
+index 97a7214e..03b9d5fe 100644
+--- a/omniagentos/scheduler/routines_settle.py
++++ b/omniagentos/scheduler/routines_settle.py
+@@ -388,6 +388,9 @@ def settle_routine_run(
+         # failure, not absence of it, and it stays adverse.
+         accepted = None
+         stop_reason = claimed_reason or stop_reason
++    if claim and gate_passed is None:
++        accepted = False
++        gate_passed = False
+     if claim:
+         # The claim itself is durable in `self_reported_status`; the executor's
+         # prose (which node, which detail) is preserved here because settlement

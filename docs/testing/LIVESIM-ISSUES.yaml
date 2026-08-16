@@ -1,0 +1,370 @@
+# LiveSim structured issue log.
+#
+# Every failure, flaky result, unexpected behaviour, security concern, and
+# coverage gap found by LiveSim is logged here with evidence. This session does
+# NOT fix product defects — these entries feed a separate repair-planning session.
+#
+# Entry schema:
+#   id:            LS-### (stable)
+#   title:         one line
+#   severity:      P0 | P1 | P2 | P3
+#   kind:          product | test-infra | coverage-gap
+#   category:      the LiveSim category (reaper, api, memory, ...)
+#   suspected_subsystem: file/module best guess
+#   evidence:      ledger nodeid(s), evidence path(s), DB counts, curl output
+#   repro:         exact command(s) to reproduce
+#   recommended_next_investigation: what a repair session should look at first
+#   status:        one of the ALLOWED STATUS VALUES below (free text is not
+#                  permitted; the documents_open_defect collection hook in
+#                  tests/livesim/conftest.py string-matches on the prefixes
+#                  "fixed" and "fix-in-flight", so a status outside this list
+#                  either fails that hook's cross-check or silently fails to
+#                  trigger it -- both are bugs, not options):
+#     open                        -- not yet investigated by a repair session
+#     confirmed                   -- reproduced/verified as described
+#     needs-rerun                 -- evidence stale, needs a fresh LiveSim pass
+#     wont-fix-this-session       -- triaged, deliberately deferred
+#     reported-by-livesim-author  -- default: logged by the LiveSim author run,
+#                                    no repair-session verdict yet
+#     fix-in-flight: <lane-id>    -- a lane (e.g. "A1", "lane/ls-fsguard-0806")
+#                                    is actively landing the fix; any LiveSim
+#                                    test still asserting the OBSERVED-broken
+#                                    behaviour under this id is RACING that
+#                                    lane and must be on the
+#                                    documents_open_defect / strict-xfail path,
+#                                    not a bare passing assertion
+#     fixed-this-session          -- the LiveSim author fixed a TEST-INFRA bug
+#                                    (kind: test-infra) in the same session
+#                                    that found it (not a product fix)
+#     fixed                       -- a product fix has landed and merged;
+#                                    terminal state for a `kind: product` entry
+#   discovered_run: run_id
+schema: livesim-issues.v1
+issues:
+  - id: LS-001
+    title: "A2 session reaper max-park (20m) terminalizes awaiting-approval sessions as FAILED"
+    severity: P1
+    kind: product
+    category: reaper
+    suspected_subsystem: omniagentos/sessions/supervisor.py::_reap_parked_if_needed
+    evidence: >
+      Live DB: sessions.killed_by='max-park' count = 16 (test_reaper.py::
+      test_live_reaper_kill_evidence). Ceiling is 20m and fires REGARDLESS of the
+      A2 dry-run flag. Approval paging never delivers (SLACK_WEBHOOK_URL absent
+      per var/memories), so a human cannot approve inside the window — these are
+      plausibly legitimate sessions killed for want of a reachable approver.
+    repro: >
+      sqlite3 var/runtime/state.sqlite3 "SELECT COUNT(*) FROM sessions WHERE killed_by='max-park';"
+    recommended_next_investigation: >
+      Wire SLACK_WEBHOOK_URL / ntfy so approvals page; consider raising max-park
+      or making it conditional on a delivered-but-undecided approval vs a never-
+      delivered one. Confirm which of the 16 were genuinely abandoned vs starved.
+    status: confirmed
+    discovered_run: harness-validate
+  - id: LS-002
+    title: "A2 idle reaper enforce mode armed in production by launch-omniagentos.sh"
+    severity: P2
+    kind: product
+    category: reaper
+    suspected_subsystem: scripts/launch-omniagentos.sh:72 (OMNIAGENTOS_REAPER_ENFORCE=1)
+    evidence: >
+      supervisor.py comments still describe a 'one-week dry-run rollout' but the
+      launcher exports OMNIAGENTOS_REAPER_ENFORCE=1, so a RUNNING/RESUMING bridge
+      session idle > 15m (default) is really killed unless a live child subprocess
+      defers it (to 3x = 45m). 0 idle-reaper kills recorded so far, but it is armed.
+    repro: grep -n OMNIAGENTOS_REAPER_ENFORCE scripts/launch-omniagentos.sh
+    recommended_next_investigation: >
+      Confirm the live supervisor runs under this launcher; verify the idle measure
+      (max of last_activity_at/updated_at/created_at/transcript_mtime) does not
+      under-report liveness for a slow-thinking or adopted session with no child.
+    status: confirmed
+    discovered_run: harness-validate
+  - id: LS-003
+    title: "Dashboard is functionally down: every /api/* call from the UI 403s 'trusted proxy required'"
+    severity: P0
+    kind: product
+    category: e2e_live
+    suspected_subsystem: "dashboard .next-remote build + API trusted-hop guard; OMNIAGENTOS_TRUSTED_HOP_SECRET unset"
+    evidence: >
+      browser-operator on live http://127.0.0.1:3003 (2026-08-06): all 4 views (/, /today,
+      /board, /approvals) render the Next.js shell but every /api/* fetch returns 403
+      'trusted proxy required'; top banner reads 'System Offline / API unreachable / never
+      synced'; 101 console errors on home from repeated failing polls. Direct :8485 GETs
+      (health/approvals) return 200 — the guard rejects the dashboard's server-side proxy
+      path specifically. Evidence: var/livesim/evidence/ui/dashboard-ui-check.txt. Matches the
+      recon note: OMNIAGENTOS_TRUSTED_HOP_SECRET set nowhere while a fail-closed trusted-hop
+      guard is at HEAD.
+    repro: "Open http://127.0.0.1:3003 and observe every data widget error with 403; :8485/api/health returns 200 (direct path unaffected)."
+    recommended_next_investigation: >
+      Set OMNIAGENTOS_TRUSTED_HOP_SECRET in the dashboard build env + API env (or the Caddy
+      hop), rebuild .next-remote, confirm the dashboard proxy attaches the trusted-hop header.
+    status: confirmed
+    discovered_run: browser-operator-ui-check
+  - id: LS-004
+    title: "Dashboard shows confident 0 / 'No rows' when the backing fetch actually 403'd (favourable-absence)"
+    severity: P1
+    kind: product
+    category: e2e_live
+    suspected_subsystem: "dashboard board + approvals data hooks (dashboard/src/features/*)"
+    evidence: >
+      browser-operator: /board shows '0 of 0 cards' and /approvals 'Pending (0) / No rows'
+      rendered in the SAME view as an explicit 403 error card — no visual distinction between
+      'confirmed empty' and 'fetch failed, defaulted to zero' (favourable-absence defect class).
+    repro: "Open /board or /approvals while the API 403s; observe a zero-count next to a fetch-error card."
+    recommended_next_investigation: "Render 'unknown'/error instead of 0 when the backing query errored; audit other count widgets."
+    status: confirmed
+    discovered_run: browser-operator-ui-check
+  - id: LS-005
+    title: "405 Method Not Allowed responses carry error.code='internal' instead of a method-specific code"
+    severity: P3
+    kind: product
+    category: api_endpoints
+    suspected_subsystem: "API error-envelope handler (generic exception -> envelope mapping in the FastAPI app on :8485)"
+    evidence: "GET /api/collab/board (POST-only per contracts/openapi.json) returns 405 with body {\"error\":{\"code\":\"internal\",\"message\":\"Method Not Allowed\",\"detail\":null}} — the generic 'internal' envelope — while 404 correctly maps to code 'not_found'. A client cannot distinguish a wrong-method call from a server fault by error.code alone. Documented (asserted as observed) in test_wrong_method_returns_405 with a DEFECT note."
+    repro: "curl -s http://127.0.0.1:8485/api/collab/board | jq .error.code   # -> \"internal\" on a 405"
+    recommended_next_investigation: "405 Method Not Allowed responses carry error.code='internal' instead of a method-specific code — see evidence"
+    status: "fix-in-flight: A-1"
+    discovered_run: livesim-author-workflow
+  - id: LS-006
+    title: "/api/board full projection is a ~4.8MB unpaginated JSON dump"
+    severity: P3
+    kind: product
+    category: api_endpoints
+    suspected_subsystem: "board projection endpoint (GET /api/board)"
+    evidence: "Live measurement 2026-08-06: GET /api/board returned 200 with 4,759,413 bytes (~640+ tasks incl. full descriptions) in ~128ms. Well under the old 51MB defect bound (test_board_projection_under_size_bound pins that regression bound and records size/latency as data), but still a multi-MB response with no pagination/limit parameter — every dashboard poll ships megabytes."
+    repro: "curl -s http://127.0.0.1:8485/api/board | wc -c   # ~4.7MB"
+    recommended_next_investigation: "/api/board full projection is a ~4.8MB unpaginated JSON dump — see evidence"
+    status: reported-by-livesim-author
+    discovered_run: livesim-author-workflow
+  - id: LS-007
+    title: "Operator dashboard shows 0 started / 0 completed on a day with 30 real sessions — /api/dashboard/today counts only swarm_attempts"
+    severity: P2
+    kind: product
+    category: e2e_live
+    suspected_subsystem: "omniagentos/api/routes/today.py (dashboard today projection)"
+    evidence: "Live 2026-08-06: GET /api/dashboard/today returned started_today=0, completed_today=0 while the live DB had 30 sessions created today (9 completed today) and swarm_attempts' newest row is 2026-08-04T13:03:42Z. today.py queries swarm_attempts exclusively, so all non-swarm session activity is invisible — a favourable-absence defect (quiet dashboard reads as 'nothing ran' when the fleet was busy)."
+    repro: "curl -s http://127.0.0.1:8485/api/dashboard/today | jq '.started_today, .completed_today' vs sqlite3 'file:.../var/runtime/state.sqlite3?mode=ro' \"SELECT COUNT(*) FROM sessions WHERE DATE(created_at)=DATE('now')\" — 0/0 vs 30. Documented (not fixed) by test_dashboard_today_matches_live_db_sessions (strict xfail, LS-TEST-001 correction)."
+    recommended_next_investigation: "Operator dashboard shows 0 started / 0 completed on a day with 30 real sessions — /api/dashboard/today counts only swarm — see evidence"
+    status: "fix-in-flight: O-1"
+    discovered_run: livesim-author-workflow
+  - id: LS-008
+    title: "Board projection payload has crept back to 4.76MB — 95% of the 5MB regression bound from the 51MB->2MB fix"
+    severity: P3
+    kind: product
+    category: e2e_live
+    suspected_subsystem: "board projection (GET /api/board serializer)"
+    evidence: "Live 2026-08-06: GET /api/board returned 200 with a 4,759,413-byte body (curl size_download; test-serialized size within 1% of that). The post-fix payload was ~2MB; it is now at ~95% of the 5MB guard, so the guard will start failing on current growth without any single regressive change."
+    repro: "curl -s -o /dev/null -w '%{size_download}' http://127.0.0.1:8485/api/board — currently ~4.76e6 bytes. test_board_projection_stays_small_and_well_formed passes but emits a WATCH note above 80% of the bound."
+    recommended_next_investigation: "Board projection payload has crept back to 4.76MB — 95% of the 5MB regression bound from the 51MB->2MB fix — see evidence"
+    status: reported-by-livesim-author
+    discovered_run: livesim-author-workflow
+  - id: LS-009
+    title: "Stale unread escalation backlog: dashboard escalations feed is Jul-31/Aug-01 'awaiting approval' notifications for sessions no longer awaiting anything"
+    severity: P3
+    kind: product
+    category: e2e_live
+    suspected_subsystem: "notifications (escalation read/ack lifecycle) feeding /api/dashboard/today"
+    evidence: "Live 2026-08-06: /api/dashboard/today escalations lists 20 unread 'Session awaiting approval' notifications dated 2026-07-31..2026-08-01 while sessions_awaiting_approval=0 — the notification rows outlive the sessions they page about and are never marked read (this is exactly the backlog-vs-live conflation the route's own comment warns about; the separate sessions_awaiting_approval field is correct)."
+    repro: "curl -s http://127.0.0.1:8485/api/dashboard/today | jq '.sessions_awaiting_approval, (.escalations | length), .escalations[0].created_at' → 0, 20, 2026-08-01T15:48:27Z."
+    recommended_next_investigation: "Stale unread escalation backlog: dashboard escalations feed is Jul-31/Aug-01 'awaiting approval' notifications for sessi — see evidence"
+    status: reported-by-livesim-author
+    discovered_run: livesim-author-workflow
+  - id: LS-010
+    title: "cheap-LLM probe tier is down to a single working leg (LiteLLM :4000 dead, Kimi paused)"
+    severity: P2
+    kind: product
+    category: degradation
+    suspected_subsystem: "LiteLLM proxy / LLM dependency stack"
+    evidence: "curl http://127.0.0.1:4000/health returns connection failure (curl code 000); cheap_llm.probe() live run fell back to claude-cli (haiku, 8405ms latency, cost unreported). If the claude CLI also becomes unavailable, no cheap probe exists and cost telemetry quality is already degraded to 'unreported' on every probe."
+    repro: "curl -s --max-time 3 http://127.0.0.1:4000/health; then run test_degradation.py::test_cheap_llm_probe_degrades_gracefully and observe source=claude-cli in the ledger record"
+    recommended_next_investigation: "cheap-LLM probe tier is down to a single working leg (LiteLLM :4000 dead, Kimi paused) — see evidence"
+    status: reported-by-livesim-author
+    discovered_run: livesim-author-workflow
+  - id: LS-011
+    title: "event_hub reports state=ok while tailer_alive=false — CONFIRMED test defect: lazy-start by design"
+    severity: info
+    kind: test-infra
+    category: degradation
+    suspected_subsystem: "tests/livesim/categories/test_degradation.py::test_health_event_hub_degradation_contract"
+    evidence: "Read omniagentos/api/eventbus.py::EventHub: the tailer thread is started in subscribe() and stopped in unsubscribe() once the last subscriber drops (_start_locked/_stop_locked, both under self._lock). tailer_alive=false with subscriber_count=0 is the intended idle state, not a health-reporting blind spot — there is no continuous-tailer expectation to violate. The old test only recorded a note either way, which meant a REAL tailer failure (dead tailer WHILE subscribers are attached) would also just pass silently. Fixed 2026-08-06: the test now asserts subscriber_count is 0 whenever tailer_alive is false — codifying the confirmed design invariant so a genuine tailer failure (dead thread with live subscribers) now fails the test instead of being indistinguishable from lazy-start."
+    repro: "curl -s http://127.0.0.1:8485/api/health | python3 -m json.tool — inspect event_hub.tailer_alive vs subscriber_count; read omniagentos/api/eventbus.py EventHub.subscribe/unsubscribe for the start/stop-on-last-unsub lifecycle."
+    recommended_next_investigation: "No product action needed. If continuous tailing becomes a requirement later, add an explicit 'tailer_expected' flag to the health snapshot rather than reinterpreting tailer_alive."
+    status: fixed-this-session
+    discovered_run: livesim-author-workflow
+  - id: LS-012
+    title: "Capsule reason_code 'truncated_budget' is recorded when nothing is truncated: an optional slice above per_slice_cap is admitted IN FULL and its full byte count accrues against byte"
+    severity: P3
+    kind: product
+    category: context
+    suspected_subsystem: "omniagentos/context/capsule.py::build_capsule_manifest (optional-slice branch, lines ~365-380)"
+    evidence: "test_context.py::test_compaction_budget_contract_first_then_rank_order: a 400-byte fenced slice with per_slice_cap=350 comes back included=True, reason_code=truncated_budget, bytes=400, present_in_brief shows the full content still in the brief. Consistent with V1 'shadow means shadow' (observe, change nothing), but the reason code asserts a truncation that never happened, and per_slice_cap is not enforced for optional slices even in accounting — a reader of the manifest/events table would conclude the slice was cut when it was delivered whole. Risk concentrates when V2 'enforce' lands: the la"
+    repro: "python: from omniagentos.context.capsule import *; s=CapsuleSource(name='big',kind='fenced',content='O'*400,rank=0); m=build_capsule_manifest(prompt='O'*400, task_id='t',run_id='r',project_id='p',contract_version='v1',repo_sha='x',preset_digest='d',sources=[s],byte_cap=750,per_slice_cap=350,compress"
+    recommended_next_investigation: "Capsule reason_code 'truncated_budget' is recorded when nothing is truncated: an optional slice above per_slice_cap is a — see evidence"
+    status: reported-by-livesim-author
+    discovered_run: livesim-author-workflow
+  - id: LS-013
+    title: "No exact cost accounting flows into provider_call_usage — table is estimate-only shim rows"
+    severity: P2
+    kind: product
+    category: telemetry_cost
+    suspected_subsystem: "provider usage recording (adapters -> provider_call_usage); estate-kimi-shim"
+    evidence: "Live table has only 12 rows total, ALL from adapter_key='estate-kimi-shim', ALL cost_quality='estimated' with a flat $5.00 upper bound (cost_source 'coarse-flat-estimate-v1:$5.00-unmeasured'), request_state='indeterminate', and input/output/total tokens NULL on every row. Zero 'exact' rows exist, so aggregate chargeable cost is never token-derived. Captured in evidence provider-call-usage-quality.json by test_provider_call_usage_rows_have_coherent_cost_quality and noted via livesim.note. Matches the standing 'cost truth still unanswered' concern."
+    repro: "sqlite3 'file:/Users/youruser/OmniAgentOS/var/runtime/state.sqlite3?mode=ro' \"SELECT adapter_key, cost_quality, COUNT(*) FROM provider_call_usage GROUP BY 1,2\" — one group: estate-kimi-shim/estimated/12; then check input_tokens IS NULL on all rows."
+    recommended_next_investigation: "No exact cost accounting flows into provider_call_usage — table is estimate-only shim rows — see evidence"
+    status: reported-by-livesim-author
+    discovered_run: livesim-author-workflow
+  - id: LS-014
+    title: "Cost-quality vocabulary diverges between livesim.v1 ledger and product cost tables"
+    severity: P3
+    kind: product
+    category: telemetry_cost
+    suspected_subsystem: "livesim telemetry schema (scripts/livesim/livesim_common.py TestTelemetry) vs provider_call_usage/loop_budget"
+    evidence: "livesim.v1 declares cost_quality exact|approximate|unreported|n/a (LIVESIM.md + TestTelemetry default 'exact'), while provider_call_usage CHECK-enforces exact|estimated|unknown and db/store.py adds aggregate-only 'mixed'. Two vocabularies for the same concept invite mistranslation when livesim ledger records are joined against product cost rows. Noted via livesim.note in test_livesim_ledger_zero_dollar_records_na_not_fake."
+    repro: "Compare cost_quality enum in docs/testing/LIVESIM.md (line ~34) with the CHECK constraint in the provider_call_usage DDL and loop_budget.py Reservation.cost_quality docstring."
+    recommended_next_investigation: "Cost-quality vocabulary diverges between livesim.v1 ledger and product cost tables — see evidence"
+    status: reported-by-livesim-author
+    discovered_run: livesim-author-workflow
+  - id: LS-015
+    title: "Routine acceptance counters drift — CONFIRMED test defect: test used the wrong (naive) denominator"
+    severity: info
+    kind: test-infra
+    category: orchestration
+    suspected_subsystem: "tests/livesim/categories/test_orchestration.py (was test_routine_settlement_drift_defect)"
+    evidence: "The old test compared routines.acceptance_rate against the naive accepted_runs/total_runs. Read omniagentos/scheduler/routines.py::acceptance_rate(): the product contract defines the denominator as JUDGED runs (total_runs minus the persisted neutral_runs counter), specifically so a routine that parks/idles doesn't get its rate depressed by non-results (docstring: 'a lie with teeth'). Using the product's own formula: improve-lane-dispatcher accepted_runs=694, neutral_runs=25, judged=1021, 694/1021=0.679725759059745 — matches the stored acceptance_rate BIT FOR BIT, not just within tolerance. Same exact match for lab-jobs-drain (701/(1046-23)=0.685239491691105) and every other routine checked. There is no drift; the naive total_runs denominator was simply the wrong number to compare against."
+    repro: "sqlite3 'file:.../var/runtime/state.sqlite3?mode=ro' \"SELECT name, total_runs, accepted_runs, neutral_runs, acceptance_rate, CAST(accepted_runs AS REAL)/(total_runs-neutral_runs) FROM routines WHERE total_runs>0\" — compare stored vs implied rate using (total_runs-neutral_runs), not total_runs."
+    recommended_next_investigation: "No product action needed. Fixed 2026-08-06: test_routine_acceptance_rate_matches_judged_denominator now asserts equality against the judged-run denominator and would fail (correctly) on a genuine future write-path bug in omniagentos/scheduler/store.py."
+    status: fixed-this-session
+    discovered_run: livesim-author-workflow
+  - id: LS-016
+    title: "\"912 unsettled routine_runs\" — CONFIRMED test defect: rows are correctly-classified NEUTRAL, not a settlement leak"
+    severity: info
+    kind: test-infra
+    category: orchestration
+    suspected_subsystem: "tests/livesim/categories/test_orchestration.py (was test_routine_settlement_drift_defect)"
+    evidence: "The old test counted every routine_runs row with finished_at NOT NULL AND accepted IS NULL as an 'unsettled leak'. Read omniagentos/scheduler/routines.py::classify_run_outcome(): a finished run is NEUTRAL by design — deliberately excluded from the acceptance denominator, not left dangling — whenever its stop_reason is loop_parked_awaiting_human/loop_idle_no_work/gate_evidence_unavailable/gate_unconfigured/gate_unverifiable, or when gate_passed AND accepted are both NULL (evidence-absence). Live DB check: of the ~921 finished+accepted-IS-NULL rows, every single one matches a NEUTRAL stop_reason or the evidence-absent shape; zero rows exist where a gate actually ruled (gate_passed IS NOT NULL) with a non-neutral stop_reason and accepted was still never written. There is no leak."
+    repro: "sqlite3 mode=ro: SELECT stop_reason, gate_passed, accepted, COUNT(*) FROM routine_runs WHERE finished_at IS NOT NULL AND accepted IS NULL GROUP BY 1,2,3; every group's stop_reason is in the NEUTRAL/UNGATEABLE set or gate_passed is also NULL."
+    recommended_next_investigation: "No product action needed. Fixed 2026-08-06: test_routine_unsettled_runs_are_all_neutral_classified now checks the narrower genuine-leak shape (gate_passed IS NOT NULL, non-neutral stop_reason, accepted still NULL) and would fail (correctly) if a real leak ever appears."
+    status: fixed-this-session
+    discovered_run: livesim-author-workflow
+  - id: LS-017
+    title: "board_files N-4 denylist (_deny_guard) admits /private/etc, /private/tmp, and the production checkout"
+    severity: P2
+    kind: product
+    category: files_fs
+    suspected_subsystem: "omniagentos/api/routes/board_files.py::_deny_guard (imports mounts._deny_secret + mounts._deny_home_dotfile)"
+    evidence: "Live in-process probe (test_board_files_denylist_known_gaps_observed, evidence file board-files-denylist-verdicts.json): _deny_guard(/private/etc/hosts)=ADMIT, _deny_guard(/private/tmp)=ADMIT, _deny_guard(~/OmniAgentOS)=ADMIT. The denylist only covers the secret registry + the $HOME-dotfile regex, so system dirs and the prod repo pass. Known-open defect per LIVESIM.md; documented, not fixed."
+    repro: "cd /Users/youruser/OmniAgentOS-worktrees/LIVESIM && .venv/bin/python -c \"from pathlib import Path; from omniagentos.api.routes.board_files import _deny_guard; _deny_guard(Path('/private/etc/hosts')); print('ADMITTED')\""
+    recommended_next_investigation: "board_files N-4 denylist (_deny_guard) admits /private/etc, /private/tmp, and the production checkout — see evidence"
+    status: "fixed-this-session"
+    discovered_run: livesim-author-workflow
+  - id: LS-018
+    title: "F-015 workspace floor admits the production checkout end-to-end (grantable mount omniagentos)"
+    severity: P2
+    kind: product
+    category: files_fs
+    suspected_subsystem: "omniagentos/api/routes/board_files.py::_enforce_workspace_floor + configs/mounts.yaml (id: omniagentos, grantable: true)"
+    evidence: "_enforce_workspace_floor(Path('/Users/youruser/OmniAgentOS'))=ADMIT because ~/OmniAgentOS is a grantable mount root (operator decision 2026-07-26 in mounts.yaml notes). Combined with the N-4 denylist gap above, a board card whose session/run row names the prod checkout as workspace can list/download/zip prod-repo files through the authed board-files routes — both layers pass."
+    repro: "cd /Users/youruser/OmniAgentOS-worktrees/LIVESIM && .venv/bin/python -c \"import os; from pathlib import Path; from omniagentos.api.routes.board_files import _enforce_workspace_floor; _enforce_workspace_floor(Path(os.path.realpath(os.path.expanduser('~/OmniAgentOS')))); print('ADMITTED')\""
+    recommended_next_investigation: "F-015 workspace floor admits the production checkout end-to-end (grantable mount omniagentos) — see evidence"
+    status: "fixed-this-session"
+    discovered_run: livesim-author-workflow
+  - id: LS-019
+    title: "LIVESIM.md known-defect note is partially stale: ~/.ssh is now DENIED at both denylist and floor layers"
+    severity: P3
+    kind: product
+    category: files_fs
+    suspected_subsystem: "docs/testing/LIVESIM.md + docs/testing/LIVESIM-INVENTORY.md (docs drift, not product)"
+    evidence: "The known-open defect note lists ~/.ssh among paths the N-4 denylist admits, but observed today: _deny_guard(~/.ssh/id_rsa)=DENY 403 (secret registry) and _enforce_workspace_floor(~/.ssh)=DENY 403. Asserted as a regression tripwire in test_board_files_denylist_known_gaps_observed so a re-opening would fail the test."
+    repro: "cd /Users/youruser/OmniAgentOS-worktrees/LIVESIM && .venv/bin/python -c \"import os; from pathlib import Path; from omniagentos.api.routes.board_files import _deny_guard; _deny_guard(Path(os.path.expanduser('~/.ssh/id_rsa')))\"  # raises ApiError 403"
+    recommended_next_investigation: "LIVESIM.md known-defect note is partially stale: ~/.ssh is now DENIED at both denylist and floor layers — see evidence"
+    status: reported-by-livesim-author
+    discovered_run: livesim-author-workflow
+  - id: LS-020
+    title: "CORAL enforce mode has no producer — flipping it would regress skill injection to nothing"
+    severity: P2
+    kind: product
+    category: skills
+    suspected_subsystem: "omniagentos/skills/resolve.py + omniagentos/swarm/worktrees.py (CORAL context gate)"
+    evidence: "/Users/youruser/OmniAgentOS/var/coral does not exist (asserted live in test_coral_mode_defaults_off_and_producer_absent); resolve.py's own docstring records that OMNIAGENTOS_CORAL_CONTEXT_MODE=enforce renders '(no validated hub references available)' because nothing writes var/coral/skills/. Default is 'off' and invalid values fail safe to off, so the current state is safe — but the enforce knob is a loaded footgun."
+    repro: "OMNIAGENTOS_CORAL_CONTEXT_MODE=enforce on any spawn -> CORAL hub reference resolution finds an absent var/coral and workers receive no skill content instead of the DB-verified fallback bodies. Do NOT actually flip it on live; the test asserts producer absence read-only."
+    recommended_next_investigation: "CORAL enforce mode has no producer — flipping it would regress skill injection to nothing — see evidence"
+    status: reported-by-livesim-author
+    discovered_run: livesim-author-workflow
+  - id: LS-021
+    title: "Live skill corpus digest integrity is currently clean (baseline datum, not a bug)"
+    severity: info
+    kind: observation
+    category: skills
+    suspected_subsystem: "skills + skill_versions tables (live runtime DB)"
+    evidence: "All 53 selected-version rows (49 active + 4 quarantined skills) have a non-empty body, a recorded content_digest, and digest recompute matches; zero orphaned skills. The 4 quarantined skills (adforge_batch_ads, compliance_aware_ad_copy, facebook_ad_copy, offer_construction) are correctly never served by /api/skills even with include_archived=true."
+    repro: "tests/livesim/categories/test_skills.py::test_live_selected_version_digest_integrity and ::test_live_registry_never_serves_quarantined; evidence file digest-integrity.json in the run's evidence dir."
+    recommended_next_investigation: "Live skill corpus digest integrity is currently clean (baseline datum, not a bug) — see evidence"
+    status: reported-by-livesim-author
+    discovered_run: livesim-author-workflow
+  - id: LS-022
+    title: "Approval classifier fail-open: destructive requests phrased outside the enumerated verb vocabulary auto-approve"
+    severity: P1
+    kind: product
+    category: tools_permissions
+    suspected_subsystem: "omniagentos/orchestrator/approvals.py (_classify_finance_request unknown->approve fallthrough; _DESTRUCTIVE_VERB_RE vocabulary gap)"
+    evidence: "Observed live: resolve_approval on proposed_action 'reset the production database to factory state' with command 'python manage.py reset_db --env production' (class consequential) -> approved=True, reason 'auto-approved per finance-only policy (hard_stop: none)'. Same for 'format the customer table' and pure-unknown 'frobnicate the wibble'. 'reset' and 'format' are absent from _DESTRUCTIVE_VERB_RE so the H1 durable floor's verb-half never fires despite a production/customer noun, and the classifier's final fallthrough is approve-by-default. This is the LIVESIM.md known-open 'classifier fail-op"
+    repro: "In the LIVESIM worktree: .venv/bin/python -c \"from omniagentos.orchestrator.approvals import resolve_approval; from omniagentos.orchestrator.contracts import ApprovalRequest; print(resolve_approval(ApprovalRequest(proposed_action='reset the production database to factory state', action_class='conse"
+    recommended_next_investigation: "Approval classifier fail-open: destructive requests phrased outside the enumerated verb vocabulary auto-approve — see evidence"
+    status: "fix-in-flight: A1"
+    discovered_run: livesim-author-workflow
+    note_2026_08_06: "TWO LiveSim tests pinned this as OBSERVED-required: tests/livesim/categories/test_tools_permissions.py::test_classifier_fail_open_beyond_poc_phrases_observed (A1's own brief already covers inverting this one) and tests/livesim/categories/test_security.py::test_approval_classifier_fails_open_on_unlisted_destructive_intent (found during the preventive sweep, not named in A1's brief -- inverted here ahead of landing to assert not-approved; currently RED on purpose until A1 lands, same as its twin)."
+  - id: LS-023
+    title: "MemLife review queue is dormant: 210 staged candidates, zero graduations, memlife_lessons empty since queue inception"
+    severity: P2
+    kind: product
+    category: memory
+    suspected_subsystem: "memlife review loop (human graduation path: /api/memlife/{id}/graduate, dream cycle -> LESSONS.md render)"
+    evidence: "Live DB read-only: memlife_candidates has 210 rows ALL status='staged' (created 2026-08-01T03:01:10Z through 2026-08-05T03:00:08Z); memlife_decisions has 210 rows all action='stage' actor='cluster'; memlife_lessons has 0 rows ever. Because the recall bridge (omniagentos/memory/recall_bridge.py) surfaces only ACCEPTED rendered lessons, the memlife leg of recall can never return anything in prod until at least one candidate is graduated."
+    repro: "sqlite3 'file:.../var/runtime/state.sqlite3?mode=ro' \"SELECT status,COUNT(*) FROM memlife_candidates GROUP BY status; SELECT COUNT(*) FROM memlife_lessons;\" — also documented by test_memory.py::test_live_memory_surfaces_integrity (livesim.note DEFECT)"
+    recommended_next_investigation: "MemLife review queue is dormant: 210 staged candidates, zero graduations, memlife_lessons empty since queue inception — see evidence"
+    status: reported-by-livesim-author
+    discovered_run: livesim-author-workflow
+  - id: LS-024
+    title: "stage_candidate admits duplicate candidates for a key whose first candidate is still pending — 6 live keys already duplicated"
+    severity: P3
+    kind: product
+    category: memory
+    suspected_subsystem: "omniagentos/memlife/db.py::stage_candidate (key dedupe gate)"
+    evidence: "The decided-key gate only checks statuses graduated/rejected/quarantined, so nightly re-capture with a fresh id and the same dedupe key inserts a second STAGED row. Live DB shows 6 keys with >1 pending candidate, meaning a human reviewer will judge the same claim multiple times. Pinned by test_stage_candidate_idempotent_and_decided_key_gate (asserts observed dup_admitted is True on a scratch DB, with livesim.note DEFECT)."
+    repro: "On a scratch DB built from 090_memlife.sql: stage_candidate(c0), commit, then stage_candidate(c1) with same key/different id returns True. Live count: SELECT COUNT(*) FROM (SELECT key FROM memlife_candidates WHERE status IN ('staged','reopened') GROUP BY key HAVING COUNT(*)>1) -> 6"
+    recommended_next_investigation: "stage_candidate admits duplicate candidates for a key whose first candidate is still pending — 6 live keys already dupli — see evidence"
+    status: reported-by-livesim-author
+    discovered_run: livesim-author-workflow
+  - id: LS-025
+    title: "Metacog memory retrieval telemetry never fires: 3 promoted records, 0 retrieval events (and the table is named metacog_memory_retrieval_events, not metacog_retrieval_events)"
+    severity: P3
+    kind: product
+    category: memory
+    suspected_subsystem: "metacog memory retrieval logging (metacog_memory_retrieval_events writers)"
+    evidence: "Live DB: metacog_memory_records has 3 promoted lesson rows (confidence 1.0) while metacog_memory_retrieval_events has 0 rows — either retrieval never happens or its telemetry is unwired, so helpfulness_score/sample counting can never update. Also note the shared-facts/docs name 'metacog_retrieval_events' does not exist; the real table is metacog_memory_retrieval_events."
+    repro: "sqlite3 ro: SELECT COUNT(*) FROM metacog_memory_records; SELECT COUNT(*) FROM metacog_memory_retrieval_events; -> 3 and 0. Documented by test_live_memory_surfaces_integrity notes."
+    recommended_next_investigation: "Metacog memory retrieval telemetry never fires: 3 promoted records, 0 retrieval events (and the table is named metacog_m — see evidence"
+    status: reported-by-livesim-author
+    discovered_run: livesim-author-workflow
+  - id: LS-026
+    title: "PRAGMA foreign_keys=ON is silently a no-op inside an open implicit transaction (test-authoring trap, not a product bug)"
+    severity: info
+    kind: observation
+    category: memory
+    suspected_subsystem: "any sqlite writer that toggles pragmas after failed DML (omniagentos/db/store.py does it correctly at connect time with isolation_level=None)"
+    evidence: "While writing test_memlife_decisions_append_only_enforced: after a trigger-aborted UPDATE, python sqlite3's implicit transaction stayed open, PRAGMA foreign_keys=ON no-opped, and DELETE FROM memlife_candidates then deleted the parent WITHOUT cascading — leaving an orphaned decision row and no abort. Production connections are safe (store.py sets the pragma immediately after connect with isolation_level=None), but any ad-hoc script that enables FKs mid-connection can silently orphan memlife_decisions."
+    repro: "sqlite3.connect(db) with default isolation_level; cause any aborted DML; then PRAGMA foreign_keys=ON; DELETE parent row -> no cascade, no trigger abort. Fixed in the test with conn.rollback() before the pragma."
+    recommended_next_investigation: "PRAGMA foreign_keys=ON is silently a no-op inside an open implicit transaction (test-authoring trap, not a product bug) — see evidence"
+    status: reported-by-livesim-author
+    discovered_run: livesim-author-workflow
+  - id: LS-027
+    title: "TEST-INFRA: secret-sweep test was unbounded in wall-time (read-timeout on a large/slow endpoint)"
+    severity: P3
+    kind: test-infra
+    category: security
+    suspected_subsystem: "tests/livesim/categories/test_security.py sweep + tests/livesim/conftest.py LiveApi.request"
+    evidence: "Full run livesim-full-0806: test_no_public_get_body_exposes_a_credential_shape FAILED with an unhandled OSError 'cannot read from timed out object' during a chunked-body read of a large endpoint; the LiveApi except tuple caught TimeoutError/socket.timeout but not the plain OSError, and the sweep retried each of ~128 GETs on a doubling budget. NOT a credential exposure (the read failed before any pattern match). Rerun after fix: 83 endpoints / 7.25MB scanned, 0 findings, 9s."
+    repro: ".venv/bin/python -m pytest tests/livesim/categories/test_security.py::test_no_public_get_body_exposes_a_credential_shape -o addopts= -m livesim"
+    recommended_next_investigation: "Fixed this session: LiveApi now catches OSError->status 0; sweep uses a 5s single-shot per endpoint + a 90s deadline with honest skipped_for_time accounting."
+    status: fixed-this-session
+    discovered_run: livesim-full-0806

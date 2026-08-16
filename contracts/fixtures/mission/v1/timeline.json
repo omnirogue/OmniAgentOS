@@ -1,0 +1,118 @@
+[
+  {
+    "id": "tl_ordered",
+    "variant": "ordered-stages",
+    "execution_id": "exec_ready_1",
+    "project_id": "proj_mission_rail",
+    "company_id": "comp_alpha",
+    "stages": ["plan", "form", "execute", "gate", "receipt"],
+    "status": "ordered",
+    "reconnect_advertised": false,
+    "replay_required": false
+  },
+  {
+    "id": "tl_fanout",
+    "variant": "dependency-fan-out-fan-in",
+    "execution_id": "exec_ready_1",
+    "project_id": "proj_mission_rail",
+    "company_id": "comp_alpha",
+    "stages": ["plan", "fan_out", "fan_in", "integrate"],
+    "dependencies": {"fan_in": ["fan_out"]},
+    "status": "graph",
+    "reconnect_advertised": false,
+    "replay_required": false
+  },
+  {
+    "id": "tl_blocker",
+    "variant": "blocker",
+    "execution_id": "exec_approval_1",
+    "project_id": "proj_mission_rail",
+    "company_id": "comp_alpha",
+    "stages": ["plan", "blocked"],
+    "status": "blocked",
+    "blocker": "approval_required",
+    "reconnect_advertised": false,
+    "replay_required": false
+  },
+  {
+    "id": "tl_preview",
+    "variant": "preview",
+    "execution_id": "exec_changed_1",
+    "project_id": "proj_mission_rail",
+    "company_id": "comp_alpha",
+    "stages": ["preview"],
+    "status": "preview",
+    "reconnect_advertised": false,
+    "replay_required": false
+  },
+  {
+    "id": "tl_retry",
+    "variant": "retry",
+    "execution_id": "exec_ready_1",
+    "project_id": "proj_mission_rail",
+    "company_id": "comp_alpha",
+    "stages": ["execute", "retry", "execute"],
+    "attempt_index": 1,
+    "status": "retrying",
+    "reconnect_advertised": false,
+    "replay_required": false
+  },
+  {
+    "id": "tl_reconnect",
+    "variant": "reconnect-replay",
+    "execution_id": "exec_ready_1",
+    "project_id": "proj_mission_rail",
+    "company_id": "comp_alpha",
+    "stages": ["stream", "disconnect", "reconnect", "replay"],
+    "status": "replaying",
+    "reconnect_advertised": true,
+    "replay_required": true,
+    "replay_from_cursor": "cur_1"
+  },
+  {
+    "id": "tl_cancel",
+    "variant": "cancellation",
+    "execution_id": "exec_approval_1",
+    "project_id": "proj_mission_rail",
+    "company_id": "comp_alpha",
+    "stages": ["plan", "cancelled"],
+    "status": "cancelled",
+    "reconnect_advertised": false,
+    "replay_required": false
+  },
+  {
+    "id": "tl_partial",
+    "variant": "partial",
+    "execution_id": "exec_incomplete_1",
+    "project_id": "proj_mission_rail",
+    "company_id": "comp_alpha",
+    "stages": ["plan", "execute", "partial"],
+    "status": "partial",
+    "reconnect_advertised": false,
+    "replay_required": false
+  },
+  {
+    "id": "tl_term_accept",
+    "variant": "terminal-accepted",
+    "execution_id": "exec_ready_1",
+    "project_id": "proj_mission_rail",
+    "company_id": "comp_alpha",
+    "stages": ["plan", "execute", "gate", "receipt", "terminal"],
+    "status": "accepted",
+    "terminal": true,
+    "reconnect_advertised": false,
+    "replay_required": false
+  },
+  {
+    "id": "tl_term_reject",
+    "variant": "terminal-rejected",
+    "execution_id": "exec_refused_1",
+    "project_id": "proj_mission_rail",
+    "company_id": "comp_alpha",
+    "stages": ["plan", "refused", "terminal"],
+    "status": "rejected",
+    "terminal": true,
+    "reconnect_advertised": false,
+    "replay_required": false
+  }
+]

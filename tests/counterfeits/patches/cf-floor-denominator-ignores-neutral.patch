@@ -1,0 +1,13 @@
+diff --git a/omniagentos/scheduler/routines.py b/omniagentos/scheduler/routines.py
+index c6daacee..d7e9f044 100644
+--- a/omniagentos/scheduler/routines.py
++++ b/omniagentos/scheduler/routines.py
+@@ -479,7 +479,7 @@ def should_auto_pause(total_runs: int, accepted_runs: int, neutral_runs: int = 0
+     routine whose whole history is non-results is never paused at all. Neutral
+     runs leave both the numerator and the denominator alone.
+     """
+-    denominator = _judged_runs(total_runs, neutral_runs)
++    denominator = int(total_runs)
+     if denominator < AUTO_PAUSE_MIN_RUNS:
+         return False
+     return (accepted_runs / denominator) < AUTO_PAUSE_ACCEPTANCE_FLOOR

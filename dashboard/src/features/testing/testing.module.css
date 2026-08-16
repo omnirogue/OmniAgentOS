@@ -1,0 +1,187 @@
+/* Observatory /testing — Test Observability. Same Stripe-density language as
+   pulse.module.css: hairline borders, small radii, tone tokens only. */
+
+/* ── Page chrome ──────────────────────────────────────────────────── */
+
+.lead {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: var(--text-body);
+  line-height: 1.5;
+  max-width: 46rem;
+}
+
+/* ── Stat row (4 tiles) ───────────────────────────────────────────── */
+
+.statGrid {
+  display: grid;
+  gap: var(--space-4);
+  grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
+}
+
+.statTile {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-5);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  min-height: 9.5rem;
+}
+
+.statTile--unavailable {
+  border-style: dashed;
+}
+
+.statHead {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.statTitle {
+  margin: 0;
+  font-size: var(--text-small);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.statSpark {
+  flex-shrink: 0;
+}
+
+.statValue {
+  font-family: var(--font-mono);
+  font-size: var(--text-display, 2rem);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1;
+  color: var(--text);
+}
+
+.statValue--ok { color: var(--ok); }
+.statValue--warn { color: var(--warn); }
+.statValue--danger { color: var(--danger); }
+.statValue--accent { color: var(--accent); }
+/* "default" is deliberately unstyled here — UNKNOWN is never success- or
+   failure-colored (dashboard-conventions.md Rule 2). */
+
+.statCaption {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: var(--text-micro);
+  line-height: 1.4;
+}
+
+/* ── Trend panels (2x2 grid of LineChart cards) ──────────────────── */
+
+.trendGrid {
+  display: grid;
+  gap: var(--space-4);
+  grid-template-columns: repeat(auto-fit, minmax(22rem, 1fr));
+}
+
+.trendCard {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.trendHead {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+.trendTitle {
+  margin: 0;
+  font-size: var(--text-h3);
+  font-weight: 600;
+  color: var(--text);
+}
+
+.trendMeta {
+  color: var(--text-faint);
+  font-size: var(--text-micro);
+  font-family: var(--font-mono);
+}
+
+.trendUnavailable {
+  margin: 0;
+  padding: var(--space-4) 0;
+  color: var(--text-muted);
+  font-size: var(--text-small);
+}
+
+/* ── Weak spots table ─────────────────────────────────────────────── */
+
+.weakspotsHead {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+}
+
+.weakspotsSummary {
+  color: var(--text-muted);
+  font-size: var(--text-small);
+}
+
+.mono {
+  font-family: var(--font-mono);
+  font-size: var(--text-micro);
+}
+
+.detailCell {
+  color: var(--text-muted);
+  max-width: 28rem;
+  overflow-wrap: anywhere;
+}
+
+.gateFlag {
+  color: var(--text-faint);
+  font-size: var(--text-micro);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+/* Weakspots "coverage incomplete" list — deliberately the same muted
+   neutral as everything else here, never a danger/warn tone: an unavailable
+   source is a gap in coverage, not itself a failing test. */
+.sourceGapList {
+  margin: 0;
+  padding: 0 0 0 var(--space-4);
+  color: var(--text-muted);
+  font-size: var(--text-small);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+/* Compact coverage-gap notice above an otherwise-populated table (grok
+   T2-R2-N3) — same neutral tone as .sourceGapList's list, just with a
+   one-line header above it and a hairline separator from the table below. */
+.coverageNotice {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: color-mix(in srgb, var(--text-muted) 6%, transparent);
+}
+
+.coverageNoticeHead {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--text-muted);
+  font-size: var(--text-small);
+  font-weight: 500;
+}

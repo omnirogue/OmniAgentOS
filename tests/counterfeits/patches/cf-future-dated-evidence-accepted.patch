@@ -1,0 +1,17 @@
+diff --git a/omniagentos/scheduler/gate_evidence.py b/omniagentos/scheduler/gate_evidence.py
+index 18f1a890..29956e01 100644
+--- a/omniagentos/scheduler/gate_evidence.py
++++ b/omniagentos/scheduler/gate_evidence.py
+@@ -1091,11 +1091,9 @@ def evidence_rejections(
+     elif finished < started:
+         errors.append("gate evidence finished before it started")
+     else:
+-        age = (now.astimezone(UTC) - finished).total_seconds()
++        age = abs((now.astimezone(UTC) - finished).total_seconds())
+         if age > MAX_EVIDENCE_AGE_SECONDS:
+             errors.append("gate evidence is stale")
+-        elif age < -60:
+-            errors.append("gate evidence is dated in the future")
+ 
+     return errors
+ 

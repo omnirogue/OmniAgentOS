@@ -1,0 +1,8 @@
+{"seq": 1, "variant": "monotonic sequence", "execution_id": "exec_ready_1", "frame_type": "progress", "cursor": "cur_1", "payload": {"stage": "worker", "message": "started"}}
+{"seq": 1, "variant": "duplicate", "execution_id": "exec_ready_1", "frame_type": "progress", "cursor": "cur_1", "payload": {"stage": "worker", "message": "started"}, "duplicate_of_seq": 1}
+{"seq": 3, "variant": "gap", "execution_id": "exec_ready_1", "frame_type": "progress", "cursor": "cur_3", "payload": {"stage": "worker", "message": "after missing seq 2"}, "gap_from_seq": 1}
+{"seq": 2, "variant": "out-of-order", "execution_id": "exec_ready_1", "frame_type": "progress", "cursor": "cur_2", "payload": {"stage": "worker", "message": "late delivery of seq 2"}}
+{"seq": 4, "variant": "reconnect replay", "execution_id": "exec_ready_1", "frame_type": "replay", "cursor": "cur_1", "payload": {"replay_from_cursor": "cur_1", "replayed_seqs": [2, 3]}, "reconnect": true, "replay_supported": true}
+{"seq": 0, "variant": "cursor-too-old/resync", "execution_id": "exec_ready_1", "frame_type": "resync", "cursor": null, "payload": {"reason": "cursor_too_old", "oldest_retained_seq": 1}, "reconnect": true, "replay_supported": false}
+{"seq": 5, "variant": "terminal event", "execution_id": "exec_ready_1", "frame_type": "terminal", "cursor": "cur_5", "payload": {"status": "accepted"}, "terminal": true}
+{"seq": 6, "variant": "cross-execution noise", "execution_id": "exec_refused_1", "frame_type": "progress", "cursor": "cur_x1", "payload": {"stage": "planner", "message": "foreign execution frame"}}

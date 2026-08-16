@@ -1,0 +1,10 @@
+# Self-test corpus: a patch that cannot apply. The runner must hard-error, never skip.
+
+[[counterfeit]]
+id = "selftest-apply-must-hard-error"
+patch = "patches/does-not-apply.patch"
+rationale = "Deliberately unapplicable patch — runner must raise, not skip or report caught."
+must_fail = [
+  "tests/tracelab/test_metrics.py::test_empty_denominator_rates_are_unknown_through_row_serialization",
+]
+failure_re = "this-will-not-matter"

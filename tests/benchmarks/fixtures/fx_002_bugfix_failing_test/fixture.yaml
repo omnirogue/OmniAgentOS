@@ -1,0 +1,26 @@
+# FROZEN fixture — see tests/benchmarks/README.
+id: fx_002_bugfix_failing_test
+discipline: code-changes
+kind: bugfix
+repo_rev: 14a84bc36df760f9603cfbae1a00ba20060de922
+tier: standard
+timeout_ms: 420000
+max_turns: 30
+declared_files:
+  - pager.py
+canaries: []
+acceptance:
+  paths:
+    # The visible check is ALSO an acceptance path and is restored from accept/
+    # before it runs, so "edit the test until it goes green" scores zero.
+    - check_pager.py
+    - check_accept_pager.py
+  timeout_s: 120
+prompt: |
+  `python -m pytest check_pager.py` currently fails in this directory.
+
+  Fix the bug in `pager.py` so the check passes. `page_count` must return the
+  number of pages needed to hold `total_items` items at `per_page` items per
+  page — a partial final page still counts as a page.
+
+  Modify only `pager.py`. Do not modify `check_pager.py`.

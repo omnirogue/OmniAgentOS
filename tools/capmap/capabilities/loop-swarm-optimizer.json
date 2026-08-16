@@ -1,0 +1,58 @@
+{
+  "blast_radius": "Swarm formation tuning is not being applied; no data loss.",
+  "cadence_seconds": 43200,
+  "company": "omniagentos",
+  "escalation_tier": "medium",
+  "exit_semantics": {
+    "DEGRADED": "degraded",
+    "DOWN": "down",
+    "OK": "ok",
+    "UNVERIFIED": "cannot_evaluate",
+    "default": "cannot_evaluate"
+  },
+  "host": "owner-mac",
+  "id": "loop-swarm-optimizer",
+  "kind": "llm-loop",
+  "last_status": "DOWN",
+  "last_verified": null,
+  "owner": "estate-ops",
+  "repo": "/Users/youruser/OmniAgentOS",
+  "staleness_slo_seconds": 129600,
+  "throughput": {
+    "derivation": "loops.launchd_state() over 'launchctl list'; the label has a plist but no row, which is NOT_LOADED and therefore DOWN.",
+    "floor": {
+      "floor": null,
+      "fraction": 0.3,
+      "median": null,
+      "min_sample_days": 7,
+      "reason": "no history: the job has not produced a run in the retained window",
+      "sample": null,
+      "sample_days": 0,
+      "sample_window": null
+    },
+    "max_error_rate": 0.25,
+    "metric": "runs_24h",
+    "notes": [
+      "Sibling stub-backup files exist for other loops that ARE loaded, so this looks like an unfinished configuration change rather than an intentional stop."
+    ],
+    "observed": {
+      "as_of": null,
+      "burn": null,
+      "error_rate": null,
+      "last_success": null,
+      "process_state": "NOT_LOADED",
+      "volume": null
+    },
+    "signal_exists": true,
+    "signal_path": "/Users/youruser/OmniAgentOS/var/log/swarm-optimizer.log",
+    "window": "24h"
+  },
+  "verification": {
+    "field": "runs_24h",
+    "note": "Graded on throughput, not liveness: a running loop with zero volume is DEGRADED.",
+    "source": "/Users/youruser/OmniAgentOS/var/log/swarm-optimizer.log",
+    "type": "snapshot_field"
+  },
+  "what_it_does": "Swarm optimizer (plist declares 03:45 and 15:45). The plist exists in ~/Library/LaunchAgents but the label is ABSENT from launchctl list: NOT_LOADED.",
+  "why_it_matters": "A not-loaded plist is a real outage that looks like nothing at all — no failing exit code is ever produced because nothing ever runs. A stub-backup file sitting beside the plist suggests an unfinished configuration change rather than a deliberate stop."
+}

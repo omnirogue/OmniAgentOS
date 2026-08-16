@@ -1,0 +1,46 @@
+# Formation Engine config — HANDOFF/formation Phase 5 foundation.
+# Does not replace CBM/assess/routing; selector picks a team structure only.
+
+default_formation: coding
+
+formations:
+  coding:
+    use_for: [feature, bug, refactor, architecture, integration, infrastructure, code]
+    implementers: [gemini]
+    reviewer: grok
+    planner: sol
+    mechanical_gate: true
+    review_classes: [R1, R2, R3, R4]
+  creative:
+    use_for: [design, branding, ad_copy, email, webinar, script, image, video, audio]
+    implementers: [grok, gemini]
+    reviewer: fable
+    planner: fable
+    mechanical_gate: false
+  research:
+    use_for: [research, competitive, evidence, investigation]
+    implementers: [gemini, grok]
+    reviewer: opus
+    planner: sol
+    mechanical_gate: false
+  marketing:
+    use_for: [campaign, funnel, landing, ad, offer, marketing]
+    implementers: [grok, gemini]
+    reviewer: fable
+    planner: fable
+    mechanical_gate: false
+  operations:
+    use_for: [automation, integration, support, finance, admin, ops, workflow]
+    implementers: [gemini]
+    reviewer: grok
+    planner: sol
+    mechanical_gate: true
+    review_classes: [R2, R3, R4]
+  # B7 — Prediction Systems (sixth formation). Topology: specialist_panel.
+  prediction:
+    use_for: [prediction, forecast, conversion, backtest, simulation, decision_support, model]
+    implementers: [grok, gemini]
+    reviewer: opus
+    planner: sol
+    mechanical_gate: true
+    review_classes: [R2, R3, R4]

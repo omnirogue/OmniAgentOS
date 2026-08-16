@@ -1,0 +1,97 @@
+# Counterfeit corpus for the receipt OUTCOME invariants (P2, 2026-08-01).
+#
+# A separate manifest from corpus.toml on purpose: these five entries were added
+# by the receipt-outcome lane while the corpus lane was repairing the main file,
+# and a second file merges without touching a line of theirs. Same harness, same
+# rules — `find` must match EXACTLY ONCE, the control pass must be green, and the
+# mutated run must be red FOR THE STATED REASON.
+#
+# Each entry reverts one half of the defect the reviews found live: a receipt
+# that records identity but never outcome, so a failed launchctl repair is filed
+# as a completed effect and suppresses every retry in the incident window.
+
+# --- the write side: a failed effect must not be filed as done --------------
+[[counterfeit]]
+id = "cf-receipt-completes-a-failed-effect"
+primary_template = ""
+file = "omniagentos_loops/receipts.py"
+find = "    if verdict.ok:"
+replace = "    if True:"
+rationale = """Restores the exact production defect of 2026-08-01: the receipt is completed
+with whatever the tool returned, including {"success": false, "returncode": 1}.
+The idempotency table still looks perfect — one receipt per business key, all
+completed — while a failed repair is filed as handled and the receipt suppresses
+every later attempt for the rest of the incident window."""
+must_fail = [
+  "tests/test_receipt_outcome.py::test_a_failed_effect_is_recorded_failed_not_completed",
+  "tests/test_receipt_outcome.py::test_a_failed_receipt_does_not_suppress_the_next_attempt",
+]
+failure_re = "assert True is False"
+
+# --- the read side: a failed receipt must not short-circuit a replay --------
+[[counterfeit]]
+id = "cf-failed-receipt-read-as-done"
+primary_template = ""
+file = "omniagentos_loops/receipts.py"
+find = "            if state == FAILED:"
+replace = "            if False:"
+rationale = """Keeps RECORDING the outcome and stops READING it. Every failure is written to
+the row exactly as designed — an operator inspecting the table sees the truth —
+but the guard replays a failed attempt as though it had succeeded, so the effect
+is never retried. Half a fix is indistinguishable from none at the tick level."""
+must_fail = [
+  "tests/test_receipt_outcome.py::test_a_failed_receipt_does_not_suppress_the_next_attempt",
+  "tests/test_receipt_outcome.py::test_a_failed_repair_is_retried_on_the_next_tick_of_the_same_incident",
+]
+failure_re = "assert 1 == 2|attempted again, not replayed"
+
+# --- success must not be the tool's own say-so -----------------------------
+[[counterfeit]]
+id = "cf-verification-predicate-ignored"
+primary_template = ""
+file = "omniagentos_loops/receipts.py"
+find = "    if tool.verify is not None:"
+replace = "    if False:"
+rationale = """Accepts the tool's self-report as the whole outcome and never consults the
+declared verification predicate. A command that exits 0 while producing nothing
+— the scraper/GUI failure mode, and every "the job was submitted" API — is then
+filed as a succeeded effect against external evidence that was never read."""
+must_fail = [
+  "tests/test_receipt_outcome.py::test_exit_zero_with_no_artifact_is_not_a_succeeded_receipt",
+  "tests/test_receipt_outcome.py::test_a_verifier_that_raises_leaves_the_effect_UNKNOWN",
+]
+failure_re = "DID NOT RAISE EffectStateUnknown|assert True is False"
+
+# --- the retry budget must be bounded --------------------------------------
+[[counterfeit]]
+id = "cf-retry-budget-unbounded"
+primary_template = ""
+file = "omniagentos_loops/tools.py"
+find = "        return DEFAULT_MAX_ATTEMPTS"
+replace = "        return MAX_ATTEMPTS_CEILING * 1000"
+rationale = """Turns "record the outcome and retry" into "retry forever". Every tick mints a
+new attempt row and calls launchctl again; the loop reports a failure each time,
+so nothing looks green — but a broken dependency now has an automated hammer
+pointed at it and no human is ever escalated to."""
+must_fail = [
+  "tests/test_receipt_outcome.py::test_consecutive_failures_park_instead_of_hammering",
+  "tests/test_receipt_outcome.py::test_a_new_business_key_gets_a_fresh_budget",
+]
+failure_re = "DID NOT RAISE EffectAttemptsExhausted"
+
+# --- UNKNOWN must keep failing closed, per attempt row ----------------------
+[[counterfeit]]
+id = "cf-unknown-attempt-blind-retried"
+primary_template = ""
+file = "omniagentos_loops/receipts.py"
+find = "        if not tool.replay_on_unknown:"
+replace = "        if False:"
+rationale = """The guarantee the outcome states were built NOT to weaken: a receipt claimed
+and never completed means the external effect may already have happened, and no
+tool without replay_on_unknown may be re-run. Blind-retrying it re-sends the
+irreversible effect P7 measured happening twice — now once per attempt slot."""
+must_fail = [
+  "tests/test_receipts.py::test_a_claimed_but_uncompleted_receipt_fails_closed",
+  "tests/test_receipt_outcome.py::test_claimed_but_unacted_still_fails_closed_on_a_later_attempt",
+]
+failure_re = "DID NOT RAISE EffectStateUnknown"

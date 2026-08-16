@@ -1,0 +1,169 @@
+.summaryStrip {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.summaryMeta {
+  color: var(--text-faint);
+  font-size: var(--text-micro);
+  margin: var(--space-1) 0 0;
+}
+
+.degradedNote {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  color: var(--warn);
+  font-size: var(--text-small);
+  margin: var(--space-2) 0 0;
+}
+
+.controlsRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-4);
+}
+
+.controlGroup {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.controlLabel {
+  color: var(--text-muted);
+  font-size: var(--text-small);
+  font-weight: 600;
+  margin-right: var(--space-1);
+}
+
+.chipToggle {
+  cursor: pointer;
+  border: none;
+  background: none;
+  padding: 0;
+}
+
+.sortSelect {
+  min-width: 12rem;
+}
+
+.categorySection {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.categoryHead {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-2);
+}
+
+.categoryTitle {
+  margin: 0;
+  font-size: var(--text-h4, var(--text-small));
+  font-weight: 600;
+}
+
+.categoryCounts {
+  color: var(--text-faint);
+  font-size: var(--text-micro);
+}
+
+.jobList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--space-2);
+}
+
+.jobRow {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  align-items: start;
+}
+
+.jobPrimary {
+  display: grid;
+  gap: var(--space-1);
+  min-width: 0;
+}
+
+.jobNameLine {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+
+.jobName {
+  font-weight: 600;
+}
+
+.jobPurpose {
+  color: var(--text-muted);
+  font-size: var(--text-small);
+  line-height: 1.4;
+}
+
+.jobMetaLine {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+  color: var(--text-faint);
+  font-size: var(--text-micro);
+  font-variant-numeric: tabular-nums;
+}
+
+.jobLastResult {
+  color: var(--text-muted);
+  font-size: var(--text-small);
+}
+
+.jobLastResultMuted {
+  color: var(--text-faint);
+  font-size: var(--text-small);
+  font-style: italic;
+}
+
+.jobSource {
+  font-family: var(--font-mono);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 26rem;
+  display: inline-block;
+  vertical-align: bottom;
+}
+
+.jobHealthReason {
+  color: var(--text-faint);
+  font-size: var(--text-micro);
+}
+
+.jobSide {
+  display: grid;
+  justify-items: end;
+  gap: var(--space-1);
+  text-align: right;
+}
+
+.flatList {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.managedSection {
+  margin-top: var(--space-2);
+}

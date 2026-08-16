@@ -1,0 +1,16 @@
+diff --git a/omniagentos/swarm/worktrees.py b/omniagentos/swarm/worktrees.py
+index ef90dd14..4d16e513 100644
+--- a/omniagentos/swarm/worktrees.py
++++ b/omniagentos/swarm/worktrees.py
+@@ -467,6 +467,11 @@ class SubprocessSwarmWorktrees(SubprocessWorktrees):
+         # Construction is intentionally filesystem-write-free. CORAL creation
+         # is deferred to create(), where _ensure_coral_root() is the one uniform
+         # first-use guard for every caller.
++        # COUNTERFEIT: restore eager mkdir in __init__, breaking zero-write invariant
++        try:
++            _ensure_coral_root(Path(os.path.expanduser(configured_coral_root)))
++        except OSError:
++            pass
+         self._coral_shared_root = Path(os.path.realpath(os.path.expanduser(configured_coral_root)))
+         super().__init__(
+             namespace="swarm",

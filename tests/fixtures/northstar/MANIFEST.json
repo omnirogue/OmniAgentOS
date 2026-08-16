@@ -1,0 +1,13 @@
+{
+  "suite": "northstar-cert/domains.v1",
+  "version": 1,
+  "fixtures": [
+    {"id": "SW-01", "path": "SW-01.yaml", "seed": 40101, "sha256": "747ce083e0688207ea34d1d98e7a61bbdeb126f8398e5e5358f056ae832afe6a", "expected_outcome": "verified"},
+    {"id": "CR-AD-01", "path": "CR-AD-01.yaml", "seed": 40201, "sha256": "72e0b6c24a8f02693edff67618d768ed5ec545327fac6b08d85557b91ffe2278", "expected_outcome": "reviewed_batch"},
+    {"id": "CS-01", "path": "CS-01.yaml", "seed": 40301, "sha256": "c4e1158e31c2ddbf2f800a390b20e59d96f8d09c5905065c8478511c9ac339d8", "expected_outcome": "resolved_or_escalated"},
+    {"id": "FIN-01", "path": "FIN-01.yaml", "seed": 40401, "sha256": "47f54dcfbc02b6a2c6b9e12a9e40833d6a2945ec0416d4e95902ad8c798fca3c", "expected_outcome": "reconciled_with_unknowns"},
+    {"id": "RES-01", "path": "RES-01.yaml", "seed": 40501, "sha256": "65bbd93cbc0eb684798605c81194663ef86dfd75f1654613fbd7ac5385e6935b", "expected_outcome": "cited_brief"},
+    {"id": "SALES-CRM-01", "path": "SALES-CRM-01.yaml", "seed": 40601, "sha256": "42661db55106f1829b468819bd67a1a5be0f2cf93245abf459e9bbea4cbdaeb1", "expected_outcome": "reviewable_outreach"},
+    {"id": "CONTENT-EDITORIAL-01", "path": "CONTENT-EDITORIAL-01.yaml", "seed": 40701, "sha256": "a0d5ac11c8497884c4a041a8833d3f0ea7cac75e0c7382ad68fa5e5520e08a51", "expected_outcome": "publishable_draft"}
+  ]
+}

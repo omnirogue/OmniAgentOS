@@ -1,0 +1,18 @@
+{
+  "id": "freshdesk-initech",
+  "company": "initech",
+  "kind": "external-service",
+  "host": "owner-mac",
+  "repo": "/Users/youruser/Work/Ops",
+  "what_it_does": "Records Initech Freshdesk API health from the integrations probe snapshot.",
+  "why_it_matters": "Initech support operations depend on Freshdesk access.",
+  "blast_radius": "Initech customer support workflows.",
+  "verification": {"type": "snapshot_field", "source": "/Users/youruser/Work/Ops/var/integrations-health.json", "field": "integrations.freshdesk-initech.status", "checked_at_field": "integrations.freshdesk-initech.checked_at"},
+  "exit_semantics": {"UP": "ok", "DOWN": "down", "SUSPENDED": "degraded", "NO-CRED": "cannot_evaluate"},
+  "cadence_seconds": 900,
+  "staleness_slo_seconds": 2700,
+  "escalation_tier": "high",
+  "owner": "initech-ops",
+  "last_verified": null,
+  "last_status": "UNVERIFIED"
+}

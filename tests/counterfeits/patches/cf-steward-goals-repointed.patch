@@ -1,0 +1,13 @@
+diff --git a/omniagentos/company_goals/store.py b/omniagentos/company_goals/store.py
+index f61de2b8..49589885 100644
+--- a/omniagentos/company_goals/store.py
++++ b/omniagentos/company_goals/store.py
+@@ -32,7 +32,7 @@ from omniagentos.db.store import SqliteStore, _row, _rows
+ 
+ # Owned tables. NEVER point any of these at the steward 'goals' table.
+ EMPLOYEES_TABLE = "employees"
+-COMPANY_GOALS_TABLE = "company_goals"
++COMPANY_GOALS_TABLE = "goals"  # COUNTERFEIT: repointed at the steward goals table
+ JIRA_LINKS_TABLE = "company_goal_jira_links"
+ 
+ # Read-only far side of company_goals.org_company_id (owned by orgdims).

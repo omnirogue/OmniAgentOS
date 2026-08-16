@@ -1,0 +1,17 @@
+--- a/omniagentos/workfs/containment.py
++++ b/omniagentos/workfs/containment.py
+@@ -30,7 +30,13 @@ def path_is_contained(
+     root: str | os.PathLike[str],
+ ) -> bool:
+     """Return True iff *candidate* is inside *root* by inode ancestry."""
+-    return inode_relative_parts(candidate, root) is not None
++    # COUNTERFEIT: bare string prefix — admits sibling-prefix escapes.
++    try:
++        cand = os.path.abspath(os.path.expanduser(os.fspath(candidate)))
++        root_text = os.path.abspath(os.path.expanduser(os.fspath(root)))
++    except (OSError, TypeError, ValueError):
++        return False
++    return cand.startswith(root_text)
+ 
+ 
+ def require_contained(

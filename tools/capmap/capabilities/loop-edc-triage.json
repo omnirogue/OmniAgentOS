@@ -1,0 +1,59 @@
+{
+  "blast_radius": "Triages EDC items and sends DMs; a stall means items go unrouted.",
+  "cadence_seconds": 330,
+  "company": "omniagentos",
+  "escalation_tier": "medium",
+  "exit_semantics": {
+    "DEGRADED": "degraded",
+    "DOWN": "down",
+    "OK": "ok",
+    "UNVERIFIED": "cannot_evaluate",
+    "default": "cannot_evaluate"
+  },
+  "host": "owner-mac",
+  "id": "loop-edc-triage",
+  "kind": "llm-loop",
+  "last_status": "UNVERIFIED",
+  "last_verified": null,
+  "owner": "estate-ops",
+  "repo": "/Users/youruser/OmniAgentOS",
+  "staleness_slo_seconds": 990,
+  "throughput": {
+    "derivation": "Attempted loops.daily_counts() over the log; every record lacks a ts/at field, so all records are dropped by design.",
+    "floor": {
+      "floor": null,
+      "fraction": 0.3,
+      "median": null,
+      "min_sample_days": 7,
+      "reason": "no windowable history: log records carry no timestamp",
+      "sample": null,
+      "sample_days": 0,
+      "sample_window": null
+    },
+    "max_error_rate": 0.25,
+    "metric": "triaged_24h",
+    "notes": [
+      "Record keys are exactly: completion, learn, reclassify, reconcile, sessions, snooze, triage — no ts.",
+      "Remedy: add a UTC 'ts' to each summary line; this entry then derives a floor with no further code change."
+    ],
+    "observed": {
+      "as_of": null,
+      "burn": null,
+      "error_rate": null,
+      "last_success": null,
+      "process_state": "RUNNING",
+      "volume": null
+    },
+    "signal_exists": false,
+    "signal_path": "/Users/youruser/OmniAgentOS/var/log/edc-triage.log",
+    "window": "24h"
+  },
+  "verification": {
+    "field": "triaged_24h",
+    "note": "Graded on throughput, not liveness: a running loop with zero volume is DEGRADED.",
+    "source": "/Users/youruser/OmniAgentOS/var/log/edc-triage.log",
+    "type": "snapshot_field"
+  },
+  "what_it_does": "EDC triage loop (every 330s). NO WINDOWABLE THROUGHPUT SIGNAL: its log is JSONL with per-stage counters, but records carry no timestamp field of any kind, so no 24h window can be cut from it.",
+  "why_it_matters": "The loop is loaded and its per-run counters are non-zero, but capmap cannot prove a 24h volume without fabricating one from the file's mtime — and a timestamp is not a count."
+}

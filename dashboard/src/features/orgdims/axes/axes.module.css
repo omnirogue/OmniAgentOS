@@ -1,0 +1,125 @@
+/**
+ * Axis chip primitives — design-token-friendly, wrapping-safe.
+ * No raw brand success/error palette hex.
+ */
+
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2, 0.5rem);
+  /* 320px-safe: no fixed pixel width that clips */
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1, 0.25rem);
+  max-width: 100%;
+  min-width: 0;
+  padding: var(--space-1, 0.25rem) var(--space-2, 0.5rem);
+  border: 1px solid var(--border, #232b3a);
+  border-radius: var(--radius-pill, 999px);
+  background: var(--surface-raised, #171c27);
+  color: var(--text, #e6e9ef);
+  font-family: var(--font-sans, inherit);
+  font-size: var(--text-micro, 0.6875rem);
+  font-weight: 500;
+  line-height: 1.3;
+  cursor: default;
+  text-align: left;
+  box-sizing: border-box;
+}
+
+.chipInteractive {
+  cursor: pointer;
+}
+
+.chipInteractive:hover {
+  border-color: var(--border-strong, #33405a);
+  background: var(--overlay, #1d2431);
+}
+
+.chipInteractive:focus-visible {
+  outline: 2px solid var(--accent-ring, #2a4a7f);
+  outline-offset: 2px;
+}
+
+.chipLocked {
+  cursor: not-allowed;
+  opacity: 0.85;
+}
+
+.chipMissing {
+  color: var(--text-muted, #9aa4b6);
+  border-style: dashed;
+}
+
+.glyph {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 0.85em;
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-size: 0.85em;
+  line-height: 1;
+  color: var(--text-faint, #6b7688);
+  /* Non-color state carrier — do not rely on color alone */
+  speak: never;
+}
+
+.axisName {
+  flex: 0 0 auto;
+  color: var(--text-faint, #6b7688);
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  text-transform: none;
+}
+
+.value {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--text, #e6e9ef);
+}
+
+.valueUnassigned {
+  color: var(--text-muted, #9aa4b6);
+  font-style: normal;
+  font-weight: 400;
+}
+
+.meta {
+  flex: 0 0 auto;
+  color: var(--text-faint, #6b7688);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Resolution modifiers use tokens only — glyph remains primary state cue */
+.chip[data-resolution="suggested"] .glyph,
+.chip[data-resolution="provisional"] .glyph {
+  color: var(--text-muted, #9aa4b6);
+}
+
+.chip[data-resolution="applied"] .glyph {
+  color: var(--text-muted, #9aa4b6);
+}
+
+.chip[data-resolution="locked"] .glyph {
+  color: var(--text-faint, #6b7688);
+}
+
+.chip[data-resolution="rejected"] .glyph {
+  color: var(--text-muted, #9aa4b6);
+}
+
+.chip[data-resolution="missing"] .glyph {
+  color: var(--text-faint, #6b7688);
+}

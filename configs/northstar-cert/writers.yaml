@@ -1,0 +1,474 @@
+# Sticky reverse-index for every colon-shaped North Star mask token.
+#
+# STRUCTURAL LOWER BOUND — NOT A FULL SEMANTIC GUARANTEE: a writer proof shows
+# that its test references the witness non-vacuously, but cannot prove that the
+# assertion adequately establishes the capability or that the witness was newly
+# landed by the reviewed change rather than pre-existing. Cross-lineage review
+# backstops this residual: manifest.yaml and writers.yaml must remain in
+# pipeline/bridge/review_policy.py::_RISKY_EXACT — as must the instrument that
+# reads them (scripts/northstar_cert/record_results.py, emit_gaps.py,
+# migrate_writers_v3.py). This is honestly a structural lower-bound + review
+# model, not a pure static guarantee.
+#
+# NAMED RESIDUALS of the static "does this proof exercise its witness" check:
+#   * REACHABILITY. Only constant-false shapes are pruned (`if False:`, `if 0:`,
+#     the `else` of `if True:`). A witness call behind ANY runtime condition —
+#     `if os.environ.get("X"):`, an early return, a mocked-out branch — still
+#     reads as exercised. Reachability is undecidable in general and this module
+#     does not pretend otherwise.
+#   * ADEQUACY. `assert witness.attr is not None` exercises the witness and
+#     establishes almost nothing about the capability.
+#   * NEWNESS. Nothing here distinguishes a capability this change landed from
+#     one that predates it.
+#   * ALIASING / RE-EXPORTS. The realness guard's import resolution is textual
+#     (AST imports): a witness re-exported through a package `__init__` and
+#     consumed under an alias can read as unreferenced, and a same-named symbol
+#     defined elsewhere could launder a reference. No current pair hits this.
+# Each landed PAIR is therefore a Class-A cross-lineage review surface, and that
+# review — not this file's static checks — is what closes these four.
+#
+# Every token/check pair in manifest history stays here forever. A null witness
+# means the capability is not landed; a landed writer needs path.py::Symbol plus
+# a distinct @pytest.mark.nsc_writer_proof("writer:...") proof nodeid.
+#
+# SCHEMA v3 — per-(token, check) satisfiability for NON-writer tokens.
+# `writer:` entries keep token-wide evidence (`gates` list + witness/proof):
+# their capability lands once for every check the token gates. Every other
+# token (glue:, binding:, launchd:, fs:, provider:, suite:, campaign:, ...)
+# carries a per-check map instead:
+#
+#   "glue:fold-legs-pending":
+#     gates:
+#       NSC-C02-02: {witness: omniagentos/x.py::symbol, proof: tests/y.py::test_z}
+#       NSC-C02-06: {witness: null, proof: null}
+#
+# because one glue token masks a hundred unrelated checks and one landed leg
+# discharges exactly the check it was built for. `witness: null, proof: null`
+# is NOT-LANDED — identical in meaning to the bare list this replaced, so the
+# migration (scripts/northstar_cert/migrate_writers_v3.py) changed no verdict.
+#
+# A per-pair proof self-declares its PAIR, not the bare token:
+# @pytest.mark.nsc_writer_proof("glue:fold-legs-pending@NSC-C02-02"). A proof
+# declaring only the token would read as evidence for all hundred checks.
+# Landed pairs are held to the same mechanical discipline writer evidence gets
+# (witness resolves, proof declares the pair, proof exercises the witness,
+# proof is never the gated carrier, proof EXECUTED AND PASSED in this run), so
+# deleting or breaking a leg reverts that pair to unsatisfied — no ratchet.
+# NSCERT_AVAILABLE_REQUIREMENTS arming is unchanged and remains an OR: it can
+# still satisfy a whole token, and a landed pair can only ever add.
+version: 3
+tokens:
+  "binding:needs-specific-carrier":
+    gates:
+      NSC-C01-04: {witness: null, proof: null}
+      NSC-C02-03: {witness: null, proof: null}
+      NSC-C02-07: {witness: null, proof: null}
+      NSC-C04-01: {witness: null, proof: null}
+      NSC-C06-01: {witness: null, proof: null}
+      NSC-C09-01: {witness: null, proof: null}
+      NSC-C09-03: {witness: null, proof: null}
+      NSC-C10-02: {witness: null, proof: null}
+      NSC-C10-04: {witness: null, proof: null}
+      NSC-C10-06: {witness: null, proof: null}
+      NSC-C12-04: {witness: null, proof: null}
+      NSC-C13-02: {witness: null, proof: null}
+      NSC-C13-05: {witness: null, proof: null}
+      NSC-C17-04: {witness: null, proof: null}
+      NSC-C17-05: {witness: null, proof: null}
+      NSC-C19-01: {witness: null, proof: null}
+      NSC-C19-04: {witness: null, proof: null}
+      NSC-C19-07: {witness: null, proof: null}
+      NSC-C19-08: {witness: null, proof: null}
+      NSC-C20-01: {witness: null, proof: null}
+      NSC-C20-05: {witness: null, proof: null}
+      NSC-C20-06: {witness: null, proof: null}
+      NSC-C21-01: {witness: null, proof: null}
+      NSC-C21-06: {witness: null, proof: null}
+      NSC-C23-02: {witness: null, proof: null}
+      NSC-C23-05: {witness: null, proof: null}
+      NSC-C24-02: {witness: null, proof: null}
+      NSC-C24-05: {witness: null, proof: null}
+      NSC-C24-07: {witness: null, proof: null}
+      NSC-C24-08: {witness: null, proof: null}
+      NSC-C26-06: {witness: null, proof: null}
+      NSC-C26-07: {witness: null, proof: null}
+      NSC-C27-04: {witness: null, proof: null}
+      NSC-C27-06: {witness: null, proof: null}
+      NSC-C28-02: {witness: null, proof: null}
+      NSC-C28-04: {witness: null, proof: null}
+      NSC-C28-05: {witness: null, proof: null}
+      NSC-C28-06: {witness: null, proof: null}
+      NSC-C29-03: {witness: null, proof: null}
+      NSC-C29-04: {witness: null, proof: null}
+      NSC-C31-05: {witness: null, proof: null}
+      NSC-C32-01: {witness: null, proof: null}
+      NSC-C32-06: {witness: null, proof: null}
+      NSC-C33-05: {witness: null, proof: null}
+      NSC-C35-01: {witness: null, proof: null}
+      NSC-C35-06: {witness: null, proof: null}
+      NSC-C36-03: {witness: null, proof: null}
+      NSC-C37-02: {witness: null, proof: null}
+      NSC-C38-05: {witness: null, proof: null}
+      NSC-C39-05: {witness: null, proof: null}
+      NSC-C42-02: {witness: null, proof: null}
+      NSC-C43-07: {witness: null, proof: null}
+  "campaign:northstar-sem":
+    gates:
+      NSC-C01-07: {witness: null, proof: null}
+      NSC-C38-06: {witness: null, proof: null}
+  "fs:var/eval_protected.db":
+    gates:
+      NSC-C34-01: {witness: null, proof: null}
+  "fs:var/health-sentinel/latest.json":
+    gates:
+      NSC-C43-05: {witness: null, proof: null}
+  "glue:fold-legs-pending":
+    gates:
+      NSC-C01-01: {witness: null, proof: null}
+      NSC-C01-02: {witness: null, proof: null}
+      NSC-C01-03: {witness: null, proof: null}
+      NSC-C01-04: {witness: null, proof: null}
+      NSC-C01-05: {witness: null, proof: null}
+      NSC-C01-06: {witness: null, proof: null}
+      NSC-C01-07: {witness: null, proof: null}
+      NSC-C02-01: {witness: null, proof: null}
+      NSC-C02-02: {witness: null, proof: null}
+      NSC-C02-06: {witness: null, proof: null}
+      NSC-C02-07: {witness: null, proof: null}
+      NSC-C03-01: {witness: null, proof: null}
+      NSC-C03-02: {witness: null, proof: null}
+      NSC-C03-05: {witness: null, proof: null}
+      NSC-C03-06: {witness: null, proof: null}
+      NSC-C04-01: {witness: null, proof: null}
+      NSC-C04-03: {witness: null, proof: null}
+      NSC-C04-04: {witness: null, proof: null}
+      NSC-C05-03: {witness: null, proof: null}
+      NSC-C05-05: {witness: null, proof: null}
+      NSC-C06-01: {witness: null, proof: null}
+      NSC-C06-05: {witness: null, proof: null}
+      NSC-C06-07: {witness: null, proof: null}
+      NSC-C06-08: {witness: null, proof: null}
+      NSC-C07-04: {witness: null, proof: null}
+      NSC-C07-05: {witness: null, proof: null}
+      NSC-C08-04: {witness: omniagentos/swarm/worktrees.py::SubprocessSwarmWorktrees, proof: tests/swarm/test_worktrees.py::TestMerge::test_lane_work_reaches_main_only_through_the_merge_commit}
+      NSC-C08-05: {witness: null, proof: null}
+      NSC-C09-01: {witness: null, proof: null}
+      NSC-C09-03: {witness: null, proof: null}
+      NSC-C09-05: {witness: null, proof: null}
+      NSC-C10-01: {witness: null, proof: null}
+      NSC-C10-02: {witness: null, proof: null}
+      NSC-C10-04: {witness: null, proof: null}
+      NSC-C10-05: {witness: null, proof: null}
+      NSC-C10-06: {witness: null, proof: null}
+      NSC-C11-02: {witness: null, proof: null}
+      NSC-C11-03: {witness: null, proof: null}
+      NSC-C11-05: {witness: null, proof: null}
+      NSC-C12-01: {witness: null, proof: null}
+      NSC-C12-02: {witness: null, proof: null}
+      NSC-C12-03: {witness: null, proof: null}
+      NSC-C12-05: {witness: null, proof: null}
+      NSC-C13-02: {witness: null, proof: null}
+      NSC-C13-07: {witness: null, proof: null}
+      NSC-C14-01: {witness: null, proof: null}
+      NSC-C14-02: {witness: null, proof: null}
+      NSC-C14-06: {witness: null, proof: null}
+      NSC-C14-07: {witness: null, proof: null}
+      NSC-C15-01: {witness: null, proof: null}
+      NSC-C15-03: {witness: null, proof: null}
+      NSC-C15-04: {witness: null, proof: null}
+      NSC-C16-01: {witness: null, proof: null}
+      NSC-C16-03: {witness: null, proof: null}
+      NSC-C17-01: {witness: null, proof: null}
+      NSC-C17-04: {witness: null, proof: null}
+      NSC-C18-01: {witness: null, proof: null}
+      NSC-C18-05: {witness: null, proof: null}
+      NSC-C18-06: {witness: null, proof: null}
+      NSC-C19-01: {witness: null, proof: null}
+      NSC-C19-02: {witness: null, proof: null}
+      NSC-C19-04: {witness: null, proof: null}
+      NSC-C19-07: {witness: null, proof: null}
+      NSC-C19-08: {witness: null, proof: null}
+      NSC-C20-01: {witness: null, proof: null}
+      NSC-C20-05: {witness: null, proof: null}
+      NSC-C20-06: {witness: null, proof: null}
+      NSC-C21-01: {witness: null, proof: null}
+      NSC-C21-03: {witness: null, proof: null}
+      NSC-C21-04: {witness: null, proof: null}
+      NSC-C21-05: {witness: null, proof: null}
+      NSC-C21-06: {witness: null, proof: null}
+      NSC-C21-07: {witness: null, proof: null}
+      NSC-C22-01: {witness: null, proof: null}
+      NSC-C22-02: {witness: null, proof: null}
+      NSC-C22-04: {witness: null, proof: null}
+      NSC-C23-01: {witness: null, proof: null}
+      NSC-C23-03: {witness: null, proof: null}
+      NSC-C23-04: {witness: null, proof: null}
+      NSC-C23-05: {witness: null, proof: null}
+      NSC-C24-02: {witness: null, proof: null}
+      NSC-C24-05: {witness: null, proof: null}
+      NSC-C24-06: {witness: null, proof: null}
+      NSC-C24-08: {witness: null, proof: null}
+      NSC-C24-09: {witness: null, proof: null}
+      NSC-C25-01: {witness: null, proof: null}
+      NSC-C25-04: {witness: null, proof: null}
+      NSC-C25-05: {witness: null, proof: null}
+      NSC-C25-06: {witness: null, proof: null}
+      NSC-C25-08: {witness: null, proof: null}
+      NSC-C26-01: {witness: null, proof: null}
+      NSC-C26-05: {witness: null, proof: null}
+      NSC-C26-06: {witness: null, proof: null}
+      NSC-C27-01: {witness: null, proof: null}
+      NSC-C27-04: {witness: null, proof: null}
+      NSC-C27-06: {witness: null, proof: null}
+      NSC-C28-02: {witness: null, proof: null}
+      NSC-C28-03: {witness: null, proof: null}
+      NSC-C28-05: {witness: null, proof: null}
+      NSC-C28-06: {witness: null, proof: null}
+      NSC-C29-01: {witness: null, proof: null}
+      NSC-C29-04: {witness: null, proof: null}
+      NSC-C29-05: {witness: null, proof: null}
+      NSC-C29-06: {witness: null, proof: null}
+      NSC-C30-01: {witness: null, proof: null}
+      NSC-C30-02: {witness: null, proof: null}
+      NSC-C30-03: {witness: null, proof: null}
+      NSC-C30-04: {witness: null, proof: null}
+      NSC-C30-05: {witness: null, proof: null}
+      NSC-C31-04: {witness: null, proof: null}
+      NSC-C31-05: {witness: null, proof: null}
+      NSC-C32-01: {witness: null, proof: null}
+      NSC-C32-03: {witness: null, proof: null}
+      NSC-C32-06: {witness: null, proof: null}
+      NSC-C32-07: {witness: null, proof: null}
+      NSC-C33-01: {witness: null, proof: null}
+      NSC-C33-03: {witness: null, proof: null}
+      NSC-C33-04: {witness: null, proof: null}
+      NSC-C34-02: {witness: null, proof: null}
+      NSC-C34-05: {witness: null, proof: null}
+      NSC-C35-01: {witness: null, proof: null}
+      NSC-C35-03: {witness: null, proof: null}
+      NSC-C35-05: {witness: null, proof: null}
+      NSC-C36-03: {witness: null, proof: null}
+      NSC-C37-01: {witness: null, proof: null}
+      NSC-C37-02: {witness: null, proof: null}
+      NSC-C38-01: {witness: null, proof: null}
+      NSC-C38-05: {witness: null, proof: null}
+      NSC-C38-06: {witness: null, proof: null}
+      NSC-C39-01: {witness: null, proof: null}
+      NSC-C39-02: {witness: null, proof: null}
+      NSC-C39-03: {witness: null, proof: null}
+      NSC-C39-04: {witness: null, proof: null}
+      NSC-C39-05: {witness: null, proof: null}
+      NSC-C39-06: {witness: null, proof: null}
+      NSC-C40-01: {witness: null, proof: null}
+      NSC-C40-02: {witness: null, proof: null}
+      NSC-C40-03: {witness: null, proof: null}
+      NSC-C41-03: {witness: null, proof: null}
+      NSC-C41-04: {witness: null, proof: null}
+      NSC-C42-01: {witness: null, proof: null}
+      NSC-C42-02: {witness: null, proof: null}
+      NSC-C42-03: {witness: null, proof: null}
+      NSC-C42-04: {witness: null, proof: null}
+      NSC-C42-05: {witness: null, proof: null}
+      NSC-C43-01: {witness: null, proof: null}
+      NSC-C43-02: {witness: null, proof: null}
+      NSC-C43-03: {witness: null, proof: null}
+      NSC-C43-04: {witness: null, proof: null}
+      NSC-C43-05: {witness: null, proof: null}
+      NSC-C43-06: {witness: null, proof: null}
+      NSC-C43-08: {witness: null, proof: null}
+      NSC-C43-09: {witness: null, proof: null}
+      NSC-C43-10: {witness: null, proof: null}
+  "launchd:com.omniagentos.reflection-nightly":
+    gates:
+      NSC-C18-05: {witness: null, proof: null}
+      NSC-C18-07: {witness: null, proof: null}
+  "launchd:health-sentinel":
+    gates:
+      NSC-C02-06: {witness: null, proof: null}
+      NSC-C03-06: {witness: null, proof: null}
+      NSC-C09-05: {witness: null, proof: null}
+      NSC-C12-05: {witness: null, proof: null}
+      NSC-C13-03: {witness: null, proof: null}
+      NSC-C14-02: {witness: null, proof: null}
+      NSC-C14-08: {witness: null, proof: null}
+      NSC-C17-07: {witness: null, proof: null}
+      NSC-C18-05: {witness: null, proof: null}
+      NSC-C21-04: {witness: null, proof: null}
+      NSC-C22-05: {witness: null, proof: null}
+      NSC-C32-04: {witness: null, proof: null}
+      NSC-C35-05: {witness: null, proof: null}
+  "provider:3-lineage":
+    gates:
+      NSC-C01-07: {witness: null, proof: null}
+      NSC-C02-07: {witness: null, proof: null}
+      NSC-C06-08: {witness: null, proof: null}
+      NSC-C15-04: {witness: null, proof: null}
+      NSC-C16-01: {witness: null, proof: null}
+      NSC-C18-06: {witness: null, proof: null}
+      NSC-C27-06: {witness: null, proof: null}
+      NSC-C35-01: {witness: null, proof: null}
+      NSC-C35-02: {witness: null, proof: null}
+      NSC-C35-03: {witness: null, proof: null}
+      NSC-C35-04: {witness: null, proof: null}
+      NSC-C36-03: {witness: null, proof: null}
+      NSC-C38-06: {witness: null, proof: null}
+  "provider:cheap-model":
+    gates:
+      NSC-C19-08: {witness: null, proof: null}
+      NSC-C39-05: {witness: null, proof: null}
+  "suite:external":
+    gates:
+      NSC-C22-02: {witness: null, proof: null}
+  "writer:TaskContract.gates":
+    gates: [NSC-C01-03]
+    witness: null
+  "writer:action-attribution":
+    gates: [NSC-C21-02]
+    witness: null
+  "writer:action-observability-map":
+    gates: [NSC-C21-08]
+    witness: null
+  "writer:aging-priority":
+    gates: [NSC-C32-05]
+    witness: null
+  "writer:allocation-frontier-report":
+    gates: [NSC-C31-01, NSC-C31-02]
+    witness: null
+  "writer:approval-consumption":
+    gates: [NSC-C38-05]
+    witness: null
+  "writer:approval-recommendation":
+    gates: [NSC-C38-02]
+    witness: null
+  "writer:autonomy-expansion-evidence":
+    gates: [NSC-C24-10]
+    witness: null
+  "writer:backlog-drain-census":
+    gates: [NSC-C32-04]
+    witness: null
+  "writer:brief-sufficiency-lab-eval-task":
+    gates: [NSC-C02-07]
+    witness: null
+  "writer:broker-dry-run":
+    gates: [NSC-C24-07]
+    witness: null
+  "writer:broker-idempotency-key":
+    gates: [NSC-C25-09]
+    witness: null
+  "writer:broker_calls.redaction_count":
+    gates: [NSC-C26-06]
+    witness: null
+  "writer:calibration-ordering":
+    gates: [NSC-C35-06]
+    witness: null
+  "writer:company-axis":
+    gates: [NSC-C39-06]
+    witness: null
+  "writer:content-citation-oracle":
+    gates: [NSC-C20-03]
+    witness: null
+  "writer:decision-deliverable":
+    gates: [NSC-C27-02, NSC-C27-03, NSC-C27-05]
+    witness: null
+  "writer:domain-fixtures":
+    gates: [NSC-C20-03, NSC-C20-04, NSC-C20-06]
+    witness: null
+  "writer:domain-verification-map":
+    gates: [NSC-C20-02]
+    witness: null
+  "writer:duplicate-detector":
+    gates: [NSC-C22-03]
+    witness: null
+  "writer:duplication-detector":
+    gates: [NSC-C22-03]
+    witness: null
+  "writer:finance-cs-fixtures":
+    gates: [NSC-C20-04]
+    witness: null
+  "writer:human-intervention-series":
+    gates: [NSC-C38-09]
+    witness: null
+  "writer:loopqueue-priority":
+    gates: [NSC-C32-02]
+    witness: null
+  "writer:mech-gate-absolute-red":
+    gates: [NSC-C10-06]
+    witness: null
+  "writer:metacog-checkpoint":
+    gates: [NSC-C28-04]
+    witness: null
+  "writer:metacog-registry-bridge":
+    gates: [NSC-C40-02]
+    witness: null
+  "writer:normalized-loopqueue-priority":
+    gates: [NSC-C32-02]
+    witness: null
+  "writer:northstar.c37-series":
+    gates: [NSC-C37-02]
+    witness: null
+  "writer:outcome-oracle":
+    gates: [NSC-C36-01, NSC-C36-02, NSC-C36-04, NSC-C36-05]
+    witness: null
+  "writer:phase-baseline":
+    gates: [NSC-C17-05]
+    witness: null
+  "writer:production-self-improvement":
+    gates: [NSC-C18-07]
+    witness: null
+  "writer:promotion-baseline":
+    gates: [NSC-C33-05]
+    witness: null
+  "writer:protected-holdout-runtime":
+    gates: [NSC-C34-01]
+    witness: null
+  "writer:provisioning-latency-collector":
+    gates: [NSC-C02-05]
+    witness: null
+  "writer:queue-aging":
+    gates: [NSC-C32-05]
+    witness: null
+  "writer:rediscovery-event-trace-collector":
+    gates: [NSC-C02-03]
+    witness: null
+  "writer:reliability-monitoring":
+    gates: [NSC-C33-04]
+    witness: null
+  "writer:resume-block":
+    gates: [NSC-C28-02]
+    witness: null
+  "writer:retread-census":
+    gates: [NSC-C22-05]
+    witness: null
+  "writer:review-round-receipts":
+    gates: [NSC-C12-04]
+    witness: null
+  "writer:runs.project_id":
+    gates: [NSC-C39-04]
+    witness: null
+  "writer:sales-content-fixtures":
+    gates: [NSC-C20-07]
+    witness: null
+  "writer:simharness-deterministic-zero-call-scenario":
+    gates: [NSC-C05-03, NSC-C31-03]
+    witness: null
+  "writer:structured-findings":
+    gates: [NSC-C12-03]
+    witness: null
+  "writer:supersession":
+    gates: [NSC-C29-02, NSC-C29-03, NSC-C29-04, NSC-C29-06]
+    witness: null
+  "writer:swarm_attempts.verdict_hash":
+    gates: [NSC-C14-02]
+    witness: null
+  "writer:swarm_runs.root_contract_hash":
+    gates: [NSC-C23-02]
+    witness: null
+  "writer:task-class-series":
+    gates: [NSC-C15-06]
+    witness: null
+  "writer:tool-set-digest":
+    gates: [NSC-C31-05]
+    witness: null
+  "writer:verification-reports":
+    gates: [NSC-C12-05]
+    witness: null

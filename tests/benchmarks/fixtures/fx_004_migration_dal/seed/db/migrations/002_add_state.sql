@@ -1,0 +1,1 @@
+ALTER TABLE widgets ADD COLUMN state TEXT NOT NULL DEFAULT 'new';

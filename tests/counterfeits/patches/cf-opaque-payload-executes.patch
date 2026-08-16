@@ -1,0 +1,14 @@
+diff --git a/omniagentos/orchestrator/approvals.py b/omniagentos/orchestrator/approvals.py
+index aa4e32bf..5991972c 100644
+--- a/omniagentos/orchestrator/approvals.py
++++ b/omniagentos/orchestrator/approvals.py
+@@ -1931,9 +1931,6 @@ def _classify_finance_request(
+     # The category is ``delete`` because an arbitrary payload run through an
+     # interpreter is unbounded destructive capability, and because this rule is
+     # the payload-side twin of _durable_write_floor, which reports the same.
+-    if _opaque_payload_execution(request):
+-        return "delete", "delete", "unresolved"
+-
+     # Both customer and money floors read the SAME inert-stripped text: a commit
+     # message or document path that MENTIONS them is not an instruction to mutate
+     # them. Reading

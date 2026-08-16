@@ -1,0 +1,67 @@
+{
+  "blast_radius": "Marks tickets as spam/ads; a false positive buries a real customer email.",
+  "cadence_seconds": 300,
+  "company": "initech",
+  "escalation_tier": "medium",
+  "exit_semantics": {
+    "DEGRADED": "degraded",
+    "DOWN": "down",
+    "OK": "ok",
+    "UNVERIFIED": "cannot_evaluate",
+    "default": "cannot_evaluate"
+  },
+  "host": "initech-worker-host",
+  "id": "loop-er2-deflection",
+  "kind": "llm-loop",
+  "last_status": "OK",
+  "last_verified": null,
+  "owner": "estate-ops",
+  "repo": "example-support-service",
+  "staleness_slo_seconds": 3600,
+  "throughput": {
+    "derivation": "Read-only database query inside the service's own container over one SSH session. count(*) filter (where flagged_spam) by day(synced_at) over a trailing window; 24h = synced_at >= now()-24h.",
+    "floor": {
+      "floor": 27.0,
+      "fraction": 0.3,
+      "median": 90.0,
+      "min_sample_days": 7,
+      "reason": null,
+      "sample": {
+        "2024-01-01": 60,
+        "2024-01-02": 70,
+        "2024-01-03": 80,
+        "2024-01-04": 90,
+        "2024-01-05": 100,
+        "2024-01-06": 110,
+        "2024-01-07": 120
+      },
+      "sample_days": 7,
+      "sample_window": "2024-01-01..2024-01-07"
+    },
+    "max_error_rate": 0.25,
+    "metric": "deflections_24h",
+    "notes": [
+      "Lifetime deflection rate is high (illustrative: roughly 13,000 of 19,000 tickets, ~68%).",
+      "A small, explicitly blocklisted set of sender domains accounts for a portion of flagged mail."
+    ],
+    "observed": {
+      "as_of": null,
+      "burn": null,
+      "error_rate": null,
+      "last_success": null,
+      "process_state": "RUNNING",
+      "volume": 120
+    },
+    "signal_exists": true,
+    "signal_path": "postgres://example-service-db/example_service (container-local; credentials in EXAMPLE_SERVICE_* env, never read by capmap)#tickets.flagged_spam",
+    "window": "24h"
+  },
+  "verification": {
+    "field": "deflections_24h",
+    "note": "Graded on throughput, not liveness: a running loop with zero volume is DEGRADED.",
+    "source": "postgres://example-service-db/example_service (container-local; credentials in EXAMPLE_SERVICE_* env, never read by capmap)#tickets.flagged_spam",
+    "type": "snapshot_field"
+  },
+  "what_it_does": "Spam/advertisement deflection classifier for the support pipeline. Volume is tickets flagged as automated or promotional mail in the window.",
+  "why_it_matters": "Deflection keeps a large share of ingested mail out of the human support queue; a stall here means spam and ad mail starts reaching agents directly."
+}

@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  wq-server.plist.template — darwin LaunchAgent for wq-server (the primary
+  Mac only). Rendered by scripts/workqueue/serve.sh via sed. Binds LOOPBACK
+  ONLY (configs/workqueue.yaml:server.bind) — reach it from other machines
+  via tailscale's `serve` subcommand with its tcp flag for port 8487
+  (see MACHINE-ACCESS.md for the exact invocation) or the reverse SSH
+  tunnel (wq-tunnel.plist.template), never by binding 0.0.0.0
+  (MACHINE-ACCESS.md).
+-->
+<plist version="1.0">
+<dict>
+	<key>Label</key>
+	<string>__LABEL__</string>
+	<key>ProgramArguments</key>
+	<array>
+		<string>/bin/bash</string>
+		<string>-lc</string>
+		<string>set -a; [ -f __CONNECTIONS_ENV__ ] &amp;&amp; source __CONNECTIONS_ENV__; set +a; exec __PYTHON_BIN__ -m omniagentos.workqueue.server --config __CONFIG_PATH__</string>
+	</array>
+	<key>WorkingDirectory</key>
+	<string>__REPO_ROOT__</string>
+	<key>EnvironmentVariables</key>
+	<dict>
+		<key>PATH</key>
+		<string>/usr/local/bin:/opt/homebrew/bin:/usr/bin:/bin:/usr/sbin:/sbin</string>
+	</dict>
+	<key>RunAtLoad</key>
+	<true/>
+	<key>KeepAlive</key>
+	<true/>
+	<key>ThrottleInterval</key>
+	<integer>10</integer>
+	<key>StandardOutPath</key>
+	<string>__LOG_DIR__/wq-server.out.log</string>
+	<key>StandardErrorPath</key>
+	<string>__LOG_DIR__/wq-server.err.log</string>
+</dict>
+</plist>

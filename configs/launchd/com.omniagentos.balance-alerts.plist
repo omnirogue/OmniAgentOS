@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  Fleet Claude-balance watch, every 15 minutes.
+
+  Alerts the team channel when any enrolled machine's best remaining Claude
+  balance drops below 10% with no fallback account (operator directive, the operator
+  2026-08-12). Edge-triggered with a 6h re-alert — see
+  omniagentos/team/balance_alerts.py for the full discipline.
+
+  launchd hands a job a STRIPPED environment: no shell profile, no PATH from
+  .zshrc, no cwd. Every path here is absolute and the interpreter is the
+  repo's own .venv python invoked directly. The Slack token is loaded by the
+  module itself via load_slack_env() (~/.config/omni/connections.env).
+-->
+<plist version="1.0">
+<dict>
+	<key>Label</key>
+	<string>com.omniagentos.balance-alerts</string>
+	<key>EnvironmentVariables</key>
+	<dict>
+		<key>PATH</key>
+		<string>/usr/local/bin:/opt/homebrew/bin:/usr/bin:/bin:/usr/sbin:/sbin</string>
+	</dict>
+	<key>ProgramArguments</key>
+	<array>
+		<string>/Users/youruser/OmniAgentOS/.venv/bin/python</string>
+		<string>-m</string>
+		<string>omniagentos.team.balance_alerts</string>
+	</array>
+	<key>WorkingDirectory</key>
+	<string>/Users/youruser/OmniAgentOS</string>
+	<key>StartInterval</key>
+	<integer>900</integer>
+	<key>StandardOutPath</key>
+	<string>/Users/youruser/OmniAgentOS/var/log/balance-alerts.log</string>
+	<key>StandardErrorPath</key>
+	<string>/Users/youruser/OmniAgentOS/var/log/balance-alerts.log</string>
+</dict>
+</plist>

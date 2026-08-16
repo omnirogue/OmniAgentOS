@@ -1,0 +1,561 @@
+# Model Intelligence — curated roster, capability domains, and priors.
+#
+# The daily update (omniagentos.modelintel.daily) merges LIVE benchmark data over
+# these priors and writes the result to var/modelintel/registry.json plus the
+# vault knowledge graph (vault/models/, vault/capabilities/, vault/benchmarks/
+# sources/). Nothing here is a hard cap — priors are the starting belief that
+# fresh benchmark evidence adjusts. Scores are 0..1.
+#
+# Editing rules:
+# - `aliases` are matched after normalization (lowercase, parentheticals stripped,
+#   spaces->dashes), so "GPT-5.6 Sol (high)" matches alias "gpt-5.6-sol".
+# - `fusion_agents` maps a model to the agent ids Fusion can actually launch
+#   (must match ids in ~/.claude/fusion/model-rankings.json). Empty list =
+#   reference-only model (tracked for market awareness, never routed to).
+
+router:
+  model: grok-4.5
+  reasoning_effort: low
+  api_base: https://api.x.ai/v1
+  timeout_seconds: 60
+
+research:
+  model: grok-4.5
+  api_base: https://api.x.ai/v1
+  timeout_seconds: 240
+
+# Applied 2026-08-06 per operator ruling (session ledger,
+# lane/autoroute-ruling-0806) — reflection proposal
+# rfl_prop_20260804_router_derank_claude_subagent_workflows (status: shadow
+# in var/runtime/state.sqlite3 reflection_proposals; NOT flipped to
+# 'promoted' by this commit — see the note left for the coordinator).
+# Self-reverting condition owned by the proposal, not enforced by this
+# config: re-admit claude automatically once a launch-time sandbox-exemption
+# assertion ships and one probe lane completes with zero policy_denial
+# events.
+routing_weights:
+  formations:
+    subagent_workflow:
+      claude: >-
+        down-rank for subagent_workflow formations pending a launch-time assertion that the sandbox-disable exemption is active (no nested Seatbelt); promote codex (implementer+reviewer) and grok (reviewer) into those slots; re-admit claude automatically once the assertion ships and one probe lane completes with zero policy_denial events
+      scope_note: does NOT touch risk-pinned categories (external/deploy/destructive stay on Claude per pin)
+
+domains:
+  - key: coding-implementation
+    title: Coding — implementation
+    description: Well-scoped feature and fix implementation quality (edit correctness, code quality).
+  - key: coding-architecture
+    title: Coding — architecture
+    description: Design-heavy, cross-cutting, high-risk engineering; system decomposition.
+  - key: debugging
+    title: Debugging
+    description: Root-causing and repairing real defects in existing codebases.
+  - key: agentic-tool-use
+    title: Agentic tool use
+    description: Long-horizon reliability driving tools, terminals, and multi-step plans.
+  - key: long-context
+    title: Long context
+    description: Quality retained over very large inputs (big repos, long transcripts).
+  - key: speed
+    title: Speed
+    description: Wall-clock latency to useful output (measured locally per lineage CLI).
+  - key: web-research
+    title: Web research
+    description: Finding and synthesizing current information from the live web.
+
+# How live benchmark scores blend into domain scores. Only percent-metric
+# benchmarks blend numerically (elo-style boards rank but do not blend);
+# blended = (1 - bench_weight_total/2) * prior + sum(weight/2 * bench_score).
+#
+# swebench-live and aa-coding-index are deterministic, independently-measured
+# cross-checks on the Grok-research-sourced swe-bench-verified figure — weight
+# has shifted from swe-bench-verified toward them (same total per domain as
+# before: coding-implementation and debugging both still sum to 1.0) so a
+# grounded live leaderboard/API carries at least as much weight as an LLM web
+# sweep, without discarding the sweep entirely (it still covers models neither
+# live source has data for yet).
+domain_blend:
+  coding-implementation:
+    - benchmark: aider-polyglot
+      weight: 0.6
+    - benchmark: swe-bench-verified
+      weight: 0.2
+    - benchmark: swebench-live
+      weight: 0.1
+    - benchmark: aa-coding-index
+      weight: 0.1
+  debugging:
+    - benchmark: swe-bench-verified
+      weight: 0.7
+    - benchmark: swebench-live
+      weight: 0.3
+  agentic-tool-use:
+    - benchmark: terminal-bench
+      weight: 1.0
+
+benchmarks:
+  - key: aider-polyglot
+    title: Aider polyglot leaderboard
+    metric: percent
+    url: https://aider.chat/docs/leaderboards/
+    fetch: aider
+    description: 225 hard Exercism exercises across 6 languages; diff-edit correctness.
+  - key: swe-bench-verified
+    title: SWE-bench Verified
+    metric: percent
+    url: https://www.swebench.com/
+    fetch: research
+    description: Human-validated real GitHub issues resolved end-to-end.
+  - key: swebench-live
+    title: SWE-bench-Live (lite split)
+    metric: percent
+    url: https://swe-bench-live.github.io/
+    fetch: swebench-live
+    description: >-
+      Continuously refreshed, real-submission GitHub-issue resolution rate;
+      a deterministic cross-check/override on swe-bench-verified.
+  - key: terminal-bench
+    title: Terminal-Bench
+    metric: percent
+    url: https://www.tbench.ai/
+    fetch: research
+    description: Agentic tasks completed inside a real terminal.
+  - key: lmarena-coding
+    title: LMArena coding Elo
+    metric: elo
+    url: https://lmarena.ai/leaderboard
+    fetch: research
+    description: Human-preference Elo, coding category (ranking signal only).
+  - key: openrouter-pricing
+    title: OpenRouter pricing + context
+    metric: facts
+    url: https://openrouter.ai/api/v1/models
+    fetch: openrouter
+    description: Live per-token pricing and context windows, plus a per-model latency cross-check.
+  - key: aa-coding-index
+    title: Artificial Analysis coding index
+    metric: percent
+    url: https://artificialanalysis.ai/models
+    fetch: aa-coding-index
+    description: >-
+      Independently-measured coding-quality index (0-100), plus tokens/sec,
+      time-to-first-token, and $/Mtok pricing. Requires AA_API_KEY; skipped
+      (not zeroed) when unset.
+
+models:
+  - key: gpt-5.6-sol
+    title: GPT-5.6 Sol
+    provider: openai
+    lineage: codex
+    fusion_agents: [sol-coder, sol-xhigh]
+    aliases: [gpt-5.6-sol, openai/gpt-5.6-sol, gpt-5.6-sol-high, gpt-5.6-sol-xhigh]
+    priors:
+      coding-implementation: 0.95
+      coding-architecture: 0.96
+      debugging: 0.95
+      agentic-tool-use: 0.93
+      long-context: 0.85
+      speed: 0.35
+      web-research: 0.60
+  - key: gpt-5.6-terra
+    title: GPT-5.6 Terra
+    provider: openai
+    lineage: codex
+    fusion_agents: [terra-coder]
+    aliases: [gpt-5.6-terra, openai/gpt-5.6-terra]
+    priors:
+      coding-implementation: 0.87
+      coding-architecture: 0.82
+      debugging: 0.85
+      agentic-tool-use: 0.90
+      long-context: 0.80
+      speed: 0.55
+      web-research: 0.55
+  - key: gpt-5.6-luna
+    title: GPT-5.6 Luna
+    provider: openai
+    lineage: codex
+    fusion_agents: [luna-coder]
+    aliases: [gpt-5.6-luna, openai/gpt-5.6-luna]
+    priors:
+      coding-implementation: 0.74
+      coding-architecture: 0.55
+      debugging: 0.70
+      agentic-tool-use: 0.85
+      long-context: 0.75
+      speed: 0.90
+      web-research: 0.50
+  - key: grok-4.5
+    title: Grok 4.5
+    provider: xai
+    lineage: grok
+    fusion_agents: [grok-coder]
+    aliases: [grok-4.5, x-ai/grok-4.5, grok-4-5, grok-4.5-high]
+    priors:
+      coding-implementation: 0.82
+      coding-architecture: 0.78
+      debugging: 0.80
+      agentic-tool-use: 0.80
+      long-context: 0.80
+      speed: 0.60
+      web-research: 0.90
+  - key: grok-4.3
+    title: Grok 4.3
+    provider: xai
+    lineage: grok
+    # Reference-only. Cheap fast mid-tier, mid-pack quality — xAI's long-context
+    # grok option (1M ctx vs Grok 4.5's 500K) and a router/classifier candidate
+    # (default reasoning effort low). ~119 tok/s, TTFT 0.61s. $1.25/$2.50 (doubles
+    # above 200k prompt).
+    fusion_agents: []
+    aliases: [grok-4.3, x-ai/grok-4.3, grok-4-3]
+    priors:
+      coding-implementation: 0.68
+      coding-architecture: 0.50
+      debugging: 0.63
+      agentic-tool-use: 0.65
+      long-context: 0.85
+      speed: 0.70
+      web-research: 0.75
+  - key: grok-build-0.1
+    title: Grok Build 0.1
+    provider: xai
+    lineage: grok
+    # Reference-only. Direct successor to grok-code-fast-1 (hard-retires
+    # 2026-08-15) — mechanical/bounded coding, not general-purpose. 256K ctx,
+    # ~80 tok/s, TTFT 0.59s. AA Intelligence Index 40; vendor-claimed SWE-bench
+    # Verified ~70.8% is unverified independently (no independent confirmation
+    # yet) — treated as a soft signal only. $1/$2.
+    fusion_agents: []
+    aliases: [grok-build-0.1, x-ai/grok-build-0.1, grok-build-0-1, grok-build]
+    priors:
+      coding-implementation: 0.65
+      coding-architecture: 0.38
+      debugging: 0.60
+      agentic-tool-use: 0.73
+      long-context: 0.58
+      speed: 0.58
+      web-research: 0.45
+  - key: claude-sonnet-5
+    title: Claude Sonnet 5
+    provider: anthropic
+    lineage: claude
+    fusion_agents: [claude-coder, sonnet]
+    aliases: [claude-sonnet-5, anthropic/claude-sonnet-5, sonnet-5, claude-sonnet-5-thinking]
+    priors:
+      coding-implementation: 0.88
+      coding-architecture: 0.84
+      debugging: 0.88
+      agentic-tool-use: 0.92
+      long-context: 0.90
+      speed: 0.55
+      web-research: 0.70
+  - key: claude-opus-5
+    title: Claude Opus 5
+    provider: anthropic
+    lineage: claude
+    # The Claude CLI family alias `opus` now resolves HERE, not to 4.8 — which is
+    # why this entry owns the `opus` fusion agent and the `opus` alias. Successor
+    # to Opus 4.8 at identical pricing ($5/$25, 1M ctx, 128K out): step-change on
+    # deep reasoning, long-horizon agentic execution, and code review (high
+    # precision AND recall), below Fable 5 only. Thinking is ON by default and
+    # `thinking: disabled` is rejected above `high` effort; full low..max effort
+    # ladder; 512-token prompt-cache minimum (half of 4.8's).
+    fusion_agents: [opus]
+    aliases: [claude-opus-5, claude-opus-5-thinking, anthropic/claude-opus-5, opus-5, opus]
+    priors:
+      coding-implementation: 0.95
+      coding-architecture: 0.96
+      debugging: 0.95
+      agentic-tool-use: 0.97
+      long-context: 0.90
+      speed: 0.35
+      web-research: 0.72
+  - key: claude-opus-4.8
+    title: Claude Opus 4.8
+    provider: anthropic
+    lineage: claude
+    # Reference-only since Opus 5 shipped: the `opus` CLI family alias no longer
+    # reaches it, so no Fusion agent can spawn it (an explicit
+    # `--model claude-opus-4-8` still works, and stays the documented
+    # cyber-refusal fallback target for Opus 5 / Fable 5).
+    fusion_agents: []
+    aliases: [claude-opus-4.8, claude-opus-4-8, anthropic/claude-opus-4.8, opus-4.8]
+    priors:
+      coding-implementation: 0.93
+      coding-architecture: 0.94
+      debugging: 0.92
+      agentic-tool-use: 0.96
+      long-context: 0.88
+      speed: 0.35
+      web-research: 0.70
+  - key: claude-fable-5
+    title: Claude Fable 5
+    provider: anthropic
+    lineage: claude
+    fusion_agents: []
+    aliases: [claude-fable-5, anthropic/claude-fable-5, fable-5, claude-mythos-5]
+    priors:
+      coding-implementation: 0.97
+      coding-architecture: 0.97
+      debugging: 0.96
+      agentic-tool-use: 0.97
+      long-context: 0.92
+      speed: 0.30
+      web-research: 0.75
+  - key: muse-spark-1.1
+    title: Muse Spark 1.1
+    provider: meta
+    lineage: muse
+    # Reference-only: Meta Model API is public-preview, no CLI relay into Fusion yet.
+    # Tracked for the orchestrator/tool-use niche (MCP Atlas 88.1 vendor-reported,
+    # Terminal-Bench 2.1 80.0, SWE-Bench Pro 61.5, 1M ctx w/ compaction, $1.25/$4.25).
+    fusion_agents: []
+    aliases: [muse-spark, muse-spark-1.1, muse-spark-1-1, meta/muse-spark,
+              meta/muse-spark-1.1, meta-llama/muse-spark-1.1, muse-spark-contemplating]
+    priors:
+      coding-implementation: 0.78
+      coding-architecture: 0.72
+      debugging: 0.76
+      agentic-tool-use: 0.90
+      long-context: 0.85
+      speed: 0.50
+      web-research: 0.80
+  - key: kimi-k3
+    title: Kimi K3
+    provider: moonshot
+    lineage: kimi
+    # Reference-only. Launched 2026-07-16: 2.8T MoE open-weight, 1M ctx (Delta Attention),
+    # always-on thinking. Vendor: Terminal-Bench 2.1 88.3 (board-topping), BrowseComp 91.2,
+    # MCP Atlas 84.2, GPQA 93.5, DeepSWE 67.5. $3/$15 ($0.30 cached input).
+    # OpenRouter moonshotai/kimi-k3 returns reasoning with no content — do NOT list it
+    # in api_fallback.openrouter_models. K2.6 is a separate registry entry below.
+    fusion_agents: []
+    aliases: [kimi-k3, kimi-3, moonshotai/kimi-k3, moonshot/kimi-k3, kimi-k3-thinking]
+    priors:
+      coding-implementation: 0.84
+      coding-architecture: 0.78
+      debugging: 0.82
+      agentic-tool-use: 0.93
+      long-context: 0.88
+      speed: 0.45
+      web-research: 0.88
+  - key: kimi-k2.6
+    title: Kimi K2.6
+    provider: moonshot
+    lineage: kimi
+    # Registered 2026-07-29 for the OpenRouter API rung. Live probe READY (16-token).
+    # Own entry (not an alias of kimi-k3): sharing a modelintel key with k3 would make
+    # `_listed_for_api` treat unlisted kimi-k3 as allow-listed via alias set intersection.
+    # Same lineage family as kimi-k3; OpenRouter id is the alias (x-ai/grok-4.5 pattern).
+    # Do NOT register moonshotai/kimi-k2.7-code (null) or moonshotai/kimi-k3 (reasoning-only).
+    fusion_agents: []
+    aliases: [kimi-k2.6, moonshotai/kimi-k2.6, moonshot/kimi-k2.6]
+    priors:
+      coding-implementation: 0.82
+      coding-architecture: 0.76
+      debugging: 0.80
+      agentic-tool-use: 0.88
+      long-context: 0.85
+      speed: 0.50
+      web-research: 0.80
+  - key: glm-5.2
+    title: GLM 5.2
+    provider: zhipu
+    lineage: glm
+    # Registered 2026-07-29 for the OpenRouter API rung (configs/swarm.yaml
+    # api_fallback.openrouter_models). OpenRouter id z-ai/glm-5.2 probed READY
+    # (16-token). Lineage `glm` is intentionally distinct from kimi/qwen/grok/
+    # codex/claude so it is a legitimate cross-lineage reviewer. BOTH halves
+    # required: this entry plus the swarm.yaml allow-list — allow-list alone
+    # raises "no authoritative lineage" (z-ai is not a known vendor namespace).
+    # API-tier only (no subscription CLI). Priors are conservative placeholders.
+    fusion_agents: []
+    aliases: [glm-5.2, glm-5-2, z-ai/glm-5.2, zhipu/glm-5.2, zai/glm-5.2]
+    priors:
+      coding-implementation: 0.80
+      coding-architecture: 0.72
+      debugging: 0.78
+      agentic-tool-use: 0.75
+      long-context: 0.80
+      speed: 0.60
+      web-research: 0.55
+  - key: ling-3.0-flash
+    title: Ling 3.0 Flash
+    provider: inclusionai
+    lineage: ling
+    # Registered 2026-08-12 (SI-loop revival, operator "cheapest reliable models"
+    # directive). Ant Group's inclusionai/ling — an ultra-cheap fast draft model
+    # ($0.021/$0.063 per M, live-probed READY). Lineage `ling` is intentionally
+    # distinct from qwen/deepseek/glm/kimi/grok/codex/claude. BOTH halves required:
+    # this entry PLUS the swarm.yaml allow-list — allow-list alone raises "no
+    # authoritative lineage" (inclusionai is not a known vendor namespace).
+    # API-tier only (no subscription CLI). Priors are conservative placeholders.
+    fusion_agents: []
+    aliases: [ling-3.0-flash, ling-3-0-flash, inclusionai/ling-3.0-flash]
+    priors:
+      coding-implementation: 0.55
+      coding-architecture: 0.50
+      debugging: 0.55
+      agentic-tool-use: 0.55
+      long-context: 0.60
+      speed: 0.85
+      web-research: 0.50
+  - key: ling-2.6-flash
+    title: Ling 2.6 Flash
+    provider: inclusionai
+    lineage: ling
+    # Registered 2026-08-12 alongside ling-3.0-flash. Even cheaper
+    # ($0.010/$0.030 per M, live-probed READY). Same `ling` lineage and the same
+    # both-halves requirement (modelintel entry + swarm.yaml allow-list).
+    fusion_agents: []
+    aliases: [ling-2.6-flash, ling-2-6-flash, inclusionai/ling-2.6-flash]
+    priors:
+      coding-implementation: 0.50
+      coding-architecture: 0.46
+      debugging: 0.50
+      agentic-tool-use: 0.50
+      long-context: 0.55
+      speed: 0.88
+      web-research: 0.46
+  - key: gemini-3.1-pro
+    title: Gemini 3.1 Pro
+    provider: google
+    lineage: gemini
+    # Reference-only. Frontier all-rounder: SWE-bench-V 80.6, GPQA 94.3, ARC-AGI-2 77.1,
+    # 1M ctx. Weak agentic terminal (TB 2.0 68.5). $2/$12 (>200k ctx: $4/$18).
+    fusion_agents: []
+    aliases: [gemini-3.1-pro, google/gemini-3.1-pro, gemini-3-1-pro, gemini-3.1-pro-preview,
+              google/gemini-3.1-pro-preview-customtools, gemini-3.1-pro-preview-customtools]
+    priors:
+      coding-implementation: 0.85
+      coding-architecture: 0.84
+      debugging: 0.83
+      agentic-tool-use: 0.78
+      long-context: 0.92
+      speed: 0.60
+      web-research: 0.80
+  - key: gemini-3.6-flash
+    title: Gemini 3.6 Flash
+    provider: google
+    lineage: gemini
+    # Reference-only. Launched 2026-07-21 GA as Google's "workhorse" tier — NOT a Pro.
+    # Uses ~17% fewer output tokens than 3.5 Flash at higher quality — the token
+    # saving matters here as latency, not price. DeepSWE 49 (3.5 Flash: 37).
+    # Knowledge cutoff Mar 2026.
+    # No 3.5/3.6 Pro exists: the Pro line still tops out at 3.1 Pro (Feb 2026).
+    fusion_agents: []
+    aliases: [gemini-3.6-flash, google/gemini-3.6-flash, gemini-3-6-flash, gemini-36-flash]
+    priors:
+      coding-implementation: 0.72
+      coding-architecture: 0.50
+      debugging: 0.66
+      agentic-tool-use: 0.82
+      long-context: 0.85
+      speed: 0.92
+      web-research: 0.65
+  - key: gemini-3.5-flash-lite
+    title: Gemini 3.5 Flash Lite
+    provider: google
+    lineage: gemini
+    # Reference-only. GA 2026-07-21 — Google's bulk/mechanical tier, below 3.6
+    # Flash the "workhorse": reducers, classification, extraction, formatting,
+    # high-volume subagents — NOT for complex coding. 1M ctx. Fastest model in
+    # the registry at 459 tok/s output (TTFT ~11s). AA Intelligence Index 36,
+    # Terminal-Bench 2.1 54%, SWE-bench Pro 54.2%. $0.30/$2.50.
+    fusion_agents: []
+    aliases: [gemini-3.5-flash-lite, google/gemini-3.5-flash-lite,
+              gemini-3-5-flash-lite, gemini-35-flash-lite]
+    priors:
+      coding-implementation: 0.55
+      coding-architecture: 0.35
+      debugging: 0.50
+      agentic-tool-use: 0.63
+      long-context: 0.78
+      speed: 0.95
+      web-research: 0.55
+  - key: deepseek-v4-pro
+    title: DeepSeek V4 Pro
+    provider: deepseek
+    lineage: deepseek
+    # Reference-only. Best open-weight coder (MIT, 1.6T MoE/49B active): SWE-bench-V 80.6
+    # (Pro-Max), LiveCodeBench 93.5, Codeforces 3206. $0.435/$0.87 — cheapest frontier-class.
+    fusion_agents: []
+    aliases: [deepseek-v4-pro, deepseek/deepseek-v4-pro, deepseek-v4-pro-max, deepseek-v4]
+    priors:
+      coding-implementation: 0.85
+      coding-architecture: 0.78
+      debugging: 0.82
+      agentic-tool-use: 0.80
+      long-context: 0.85
+      speed: 0.65
+      web-research: 0.60
+  - key: minimax-m3
+    title: MiniMax M3
+    provider: minimax
+    lineage: minimax
+    # Reference-only. Open-weight, 1M ctx + native video/image input: SWE-bench Pro 59.0,
+    # SWE-bench-V ~80.5. ~$1.20-2.40/M out.
+    fusion_agents: []
+    aliases: [minimax-m3, minimax/minimax-m3, minimax-m3-preview]
+    priors:
+      coding-implementation: 0.84
+      coding-architecture: 0.75
+      debugging: 0.80
+      agentic-tool-use: 0.82
+      long-context: 0.85
+      speed: 0.60
+      web-research: 0.60
+  - key: qwen3.7-max
+    title: Qwen3.7 Max
+    provider: alibaba
+    lineage: qwen
+    # Reference-only. Proprietary flagship (mid-May 2026): leads 5/6 coding benches vs open
+    # peers, SWE-bench Pro 60.6, SWE-bench-V 80.4. $7.50/M out.
+    fusion_agents: []
+    aliases: [qwen3.7-max, qwen-3.7-max, qwen/qwen3.7-max, qwen3-7-max]
+    priors:
+      coding-implementation: 0.84
+      coding-architecture: 0.78
+      debugging: 0.81
+      agentic-tool-use: 0.83
+      long-context: 0.80
+      speed: 0.55
+      web-research: 0.60
+  - key: qwen3-coder-flash
+    title: Qwen3 Coder Flash
+    provider: alibaba
+    lineage: qwen
+    # Registered 2026-07-26 for the low-cost TEST profile (configs/test-profile.yaml).
+    # Coder-specialised, 1M ctx, $0.20/M in / $0.97/M out on OpenRouter — the best
+    # capability-per-dollar coder found in the <=$2/$8 bench budget sweep. API-tier
+    # only (no subscription CLI); api_policy allows it because the qwen lineage is
+    # neither claude nor gpt. Priors are conservative placeholders relative to
+    # qwen3.7-max (its flagship sibling) — replace with measured win-rates once the
+    # optimizer has samples; do NOT promote this into production lane_floors on the
+    # strength of these numbers alone.
+    fusion_agents: []
+    aliases: [qwen3-coder-flash, qwen-3-coder-flash, qwen/qwen3-coder-flash,
+              qwen3coder-flash, qwen3-coder-flash-instruct]
+    priors:
+      coding-implementation: 0.74
+      coding-architecture: 0.58
+      debugging: 0.70
+      agentic-tool-use: 0.68
+      long-context: 0.82
+      speed: 0.88
+      web-research: 0.45
+  - key: claude-haiku-4.5
+    title: Claude Haiku 4.5
+    provider: anthropic
+    lineage: claude
+    fusion_agents: []
+    aliases: [claude-haiku-4.5, claude-haiku-4-5, anthropic/claude-haiku-4.5, haiku-4.5]
+    priors:
+      coding-implementation: 0.60
+      coding-architecture: 0.40
+      debugging: 0.55
+      agentic-tool-use: 0.80
+      long-context: 0.70
+      speed: 0.95
+      web-research: 0.45

@@ -1,0 +1,26 @@
+diff --git a/loops/omniagentos_loops/instances/grandfather_clock_html.py b/loops/omniagentos_loops/instances/grandfather_clock_html.py
+index f644416e..975356a3 100644
+--- a/loops/omniagentos_loops/instances/grandfather_clock_html.py
++++ b/loops/omniagentos_loops/instances/grandfather_clock_html.py
+@@ -470,9 +470,11 @@ def generate(**kwargs: Any) -> dict[str, Any]:
+     suppresses every future publish (see the module docstring).
+     """
+     html_content = _generate_clock_html()
++    # The candidate must stay byte-deterministic or the template's
++    # content-digest idempotency key changes every tick, and the receipt guard
++    # stops protecting the effect from a replayed superstep (P1/P7).
+     return {
+         "html": html_content,
+-        "run_id": new_run_id(),
+         "artifact_name": "clock.html",
+         "size_bytes": len(html_content),
+     }
+@@ -573,7 +575,7 @@ def publish(**kwargs: Any) -> dict[str, Any]:
+             "error": "No HTML content in candidate",
+         }
+ 
+-    run_id = str(candidate.get("run_id") or "")
++    run_id = str(candidate.get("run_id") or "") or new_run_id()
+     if not re.fullmatch(RUN_ID_PATTERN, run_id):
+         # Refusing here rather than minting one: a run id invented at FILING
+         # time is not the run's identity, it is the filer's, and `verify` would

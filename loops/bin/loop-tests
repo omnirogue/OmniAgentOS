@@ -1,0 +1,39 @@
+#!/bin/sh
+# loop-tests — run the loops suite in the LOOPS venv.
+#
+# The production venv has no LangGraph and pyproject's testpaths is ["tests"],
+# so `make test` neither collects nor could run these. This script is the ONLY
+# way the loops suite is executed, and it is what the report's test evidence
+# comes from.
+#
+#   loops/bin/loop-tests                 # unit + template + kill-drill suite
+#   loops/bin/loop-tests -k approval     # narrowed
+#   loops/bin/loop-tests --counterfeits  # + the counterfeit corpus (slow)
+set -eu
+
+HERE=$(cd -- "$(dirname -- "$0")" && pwd)
+LOOPS_DIR=$(dirname -- "$HERE")
+REPO_ROOT=$(dirname -- "$LOOPS_DIR")
+if [ -n "${OMNIAGENTOS_LOOPS_VENV:-}" ]; then
+    VENV_PY="$OMNIAGENTOS_LOOPS_VENV/bin/python"
+else
+    VENV_PY="${OMNIAGENTOS_LOOPS_ROOT:-$REPO_ROOT/var/loops}/venv/bin/python"
+fi
+
+if [ ! -x "$VENV_PY" ]; then
+    echo "loop-tests: loops venv missing at $VENV_PY" >&2
+    exit 127
+fi
+
+PYTHONPATH="$REPO_ROOT:$LOOPS_DIR${PYTHONPATH:+:$PYTHONPATH}"
+export PYTHONPATH
+
+# --counterfeits must be the FIRST argument; everything after it is forwarded to
+# pytest verbatim ("$@" is never re-split, so -k 'a or b' survives).
+if [ "${1:-}" = "--counterfeits" ]; then
+    shift
+    exec "$VENV_PY" -m pytest "$LOOPS_DIR/tests" -q -p no:cacheprovider "$@"
+fi
+
+exec "$VENV_PY" -m pytest "$LOOPS_DIR/tests" -q -p no:cacheprovider \
+    --ignore="$LOOPS_DIR/tests/counterfeits" "$@"

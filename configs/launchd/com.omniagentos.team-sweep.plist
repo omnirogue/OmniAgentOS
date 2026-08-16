@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  Evidence attribution sweep, every 15 minutes (P3's omniagentos.team.sweep).
+
+  Feeds the 07:00 report: commits, PRs and session attempts become task_evidence
+  rows here, and the report only ever READS. Fifteen minutes is the cadence that
+  keeps the board's evidence fresh enough that "done" and "verified" can happen
+  in the same working session; the sweep is idempotent (UNIQUE(kind, repo, ref)),
+  so a re-run can never inflate a number.
+
+  Same launchd discipline as the report: absolute interpreter, absolute paths,
+  no PATH dependency for the python itself. `gh` and `git` DO need PATH — the
+  sweep shells out to both — hence the homebrew entries below. A source that
+  cannot be reached alerts once and the sweep continues (exit 2 only when EVERY
+  source failed, which is an instrument failure, not a quiet zero).
+-->
+<plist version="1.0">
+<dict>
+	<key>Label</key>
+	<string>com.omniagentos.team-sweep</string>
+	<key>EnvironmentVariables</key>
+	<dict>
+		<key>PATH</key>
+		<string>/usr/local/bin:/opt/homebrew/bin:/usr/bin:/bin:/usr/sbin:/sbin</string>
+	</dict>
+	<key>ProgramArguments</key>
+	<array>
+		<string>/Users/youruser/OmniAgentOS/.venv/bin/python</string>
+		<string>-m</string>
+		<string>omniagentos.team.sweep</string>
+		<string>--once</string>
+		<string>--db</string>
+		<string>/Users/youruser/OmniAgentOS/var/runtime/state.sqlite3</string>
+	</array>
+	<key>WorkingDirectory</key>
+	<string>/Users/youruser/OmniAgentOS</string>
+	<key>StartInterval</key>
+	<integer>900</integer>
+	<key>RunAtLoad</key>
+	<false/>
+	<key>KeepAlive</key>
+	<false/>
+	<key>StandardOutPath</key>
+	<string>/Users/youruser/OmniAgentOS/var/log/team-sweep.log</string>
+	<key>StandardErrorPath</key>
+	<string>/Users/youruser/OmniAgentOS/var/log/team-sweep.log</string>
+</dict>
+</plist>

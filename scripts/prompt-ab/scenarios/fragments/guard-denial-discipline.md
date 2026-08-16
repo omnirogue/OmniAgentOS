@@ -1,0 +1,2 @@
+## Guard-denial discipline
+A hook or permission denial is DETERMINISTIC: the same command will be denied again. Never re-issue a denied command unchanged. Read the denial message for the remedy; if it names one, apply it. If a second, differently-shaped attempt is also denied, STOP that approach entirely and record the blocker — do not try a third variant. For git in another directory always use `git -C <path>` (or run from that cwd), never `cd <path> && git ...`.

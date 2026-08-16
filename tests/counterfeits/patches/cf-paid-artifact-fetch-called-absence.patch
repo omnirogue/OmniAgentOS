@@ -1,0 +1,15 @@
+diff --git a/omniagentos/scheduler/loop_effects.py b/omniagentos/scheduler/loop_effects.py
+index 0c76d13e..463bc914 100644
+--- a/omniagentos/scheduler/loop_effects.py
++++ b/omniagentos/scheduler/loop_effects.py
+@@ -646,9 +646,7 @@ def _download_artifact(url: str, destination: Path) -> dict[str, Any]:
+     except httpx.HTTPError as exc:
+         with contextlib.suppress(OSError):
+             temporary.unlink()
+-        # Never absence: the prediction this is fetching has already been
+-        # created and paid for. See ``_after_billable_work``.
+-        raise _after_billable_work(_from_transport(exc, str(exc))) from exc
++        raise _from_transport(exc, str(exc)) from exc
+     except BaseException:
+         with contextlib.suppress(OSError):
+             temporary.unlink()

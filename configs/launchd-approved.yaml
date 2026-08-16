@@ -1,0 +1,152 @@
+# configs/launchd-approved.yaml
+#
+# RECORD, NOT ACTUATOR.
+#
+# This file is a written record of which launchd labels a human has approved to
+# run on this machine, why each one exists, and when that approval happened.
+# It is DATA ONLY. Nothing in the S18 package reads this file to start, stop,
+# boot, unload or otherwise actuate any job; no code path in this repo may load
+# a job *because* it appears here. Its only jobs are to make the approved set
+# reviewable and to give a gate something non-vacuous to check.
+#
+# Seeding provenance
+#   - Candidate set: every plist rendered under var/launchd/rendered/.
+#   - Admitted: only those observed LOADED on the machine on 2026-08-03.
+#   - `approved_on` is the date the rendered plist was written by the
+#     human-run installer for that job (the recorded human action that put it
+#     on this machine), taken from the plist's mtime.
+#   - 8 rendered labels are installed-but-not-loaded today; none of them are in
+#     this manifest, because the manifest records what a human approved AND is
+#     actually running, not what happens to be on disk.
+#
+# Withholding policy
+#   A label that is currently under an observation window — a corrected
+#   classifier logging in observe mode, with no signalling path — does NOT
+#   enter this manifest until its flags have been diffed against reality for a
+#   full 7 days with no false positives. The observe window is a prerequisite
+#   for approval, not a consequence of it. Adding such a label early is the
+#   failure mode this file exists to prevent.
+#
+# Adding an entry
+#   Requires all three keys (label, reason, approved_on) and a real human
+#   decision on the recorded date. An entry with a missing or invented
+#   approved_on is worse than no entry.
+
+version: 1
+schema: launchd-approved/v1
+recorded_on: 2026-08-03
+recorded_from: var/launchd/rendered
+actuator: false
+
+withheld_policy:
+  observe_window_days: 7
+  rule: >-
+    A label whose classifier is running in observe mode may not be approved
+    until 7 consecutive days of observed flags have been diffed against reality
+    with no false positives. Observation alone is never approval.
+
+approved:
+  - label: com.omniagentos.api
+    reason: >-
+      FastAPI control plane on 127.0.0.1:8485. Every CLI, dashboard and agent in
+      the system reaches state through it; without it the whole runtime is dark.
+    approved_on: 2026-08-01
+    source: var/launchd/rendered/com.omniagentos.api.plist
+
+  - label: com.omniagentos.runner
+    reason: >-
+      Step-polling execution worker. Drains queued run steps; queued work sits
+      forever if it is not running.
+    approved_on: 2026-08-01
+    source: var/launchd/rendered/com.omniagentos.runner.plist
+
+  - label: com.omniagentos.routines
+    reason: >-
+      Scheduled-routine dispatcher. Fires the user's recurring cloud/local
+      routines at their configured times.
+    approved_on: 2026-08-01
+    source: var/launchd/rendered/com.omniagentos.routines.plist
+
+  - label: com.omniagentos.archi-morning
+    reason: >-
+      Morning refresh of ARCHI.md / ARCHI.json so the architecture memory that
+      every agent reads first does not go stale.
+    approved_on: 2026-07-31
+    source: var/launchd/rendered/com.omniagentos.archi-morning.plist
+
+  - label: com.omniagentos.modelintel
+    reason: >-
+      Daily model-intelligence refresh (omniagentos.modelintel.daily) that keeps
+      the model/pricing/capability catalogue current for routing decisions.
+    approved_on: 2026-07-31
+    source: var/launchd/rendered/com.omniagentos.modelintel.plist
+
+  - label: com.omniagentos.provider-sentinel
+    reason: >-
+      Watches provider reachability and credential health so a silently expired
+      key surfaces as an alert instead of as a night of failed runs.
+    approved_on: 2026-07-31
+    source: var/launchd/rendered/com.omniagentos.provider-sentinel.plist
+
+  - label: com.omniagentos.health-sentinel
+    reason: >-
+      Periodic system health probe (--quiet). Reports; the remediation arm is
+      owned and reviewed separately and is not approved by this entry.
+    approved_on: 2026-08-01
+    source: var/launchd/rendered/com.omniagentos.health-sentinel.plist
+
+  - label: com.omniagentos.comms-slack-socket
+    reason: >-
+      Slack Socket Mode ingestion. Long-lived connection that delivers inbound
+      Slack events in real time.
+    approved_on: 2026-08-03
+    source: var/launchd/rendered/com.omniagentos.comms-slack-socket.plist
+
+  - label: com.omniagentos.comms-slack-sweep
+    reason: >-
+      Reconciliation poller for Slack. Backfills anything the socket connection
+      missed while it was down; the hybrid pair is the delivery guarantee.
+    approved_on: 2026-08-03
+    source: var/launchd/rendered/com.omniagentos.comms-slack-sweep.plist
+
+  - label: com.omniagentos.edc-gmail-poll
+    reason: >-
+      Polls all Executive Decision Center Gmail and IMAP sources so new mail is
+      available to the continuous decision-triage workflow.
+    approved_on: 2026-08-13
+    source: configs/launchd/com.omniagentos.edc-gmail-poll.plist
+
+  - label: com.omniagentos.edc-triage
+    reason: >-
+      Runs Executive Decision Center triage on the continuously ingested mail
+      stream so decisions and follow-ups are surfaced promptly.
+    approved_on: 2026-08-13
+    source: configs/launchd/com.omniagentos.edc-triage.plist
+
+  - label: com.omniagentos.steward.alerts
+    reason: >-
+      Steward alert monitor (--once per interval). Turns threshold breaches into
+      operator-visible alerts.
+    approved_on: 2026-07-31
+    source: var/launchd/rendered/com.omniagentos.steward.alerts.plist
+
+  - label: com.omniagentos.steward.briefing
+    reason: >-
+      Steward morning briefing generator. Produces the daily operator briefing
+      from knowledge-backed state.
+    approved_on: 2026-07-31
+    source: var/launchd/rendered/com.omniagentos.steward.briefing.plist
+
+  - label: com.omniagentos.steward.comms
+    reason: >-
+      Steward comms digest. Summarises inbound communications into the daily
+      operator view.
+    approved_on: 2026-07-31
+    source: var/launchd/rendered/com.omniagentos.steward.comms.plist
+
+  - label: com.omniagentos.steward.metrics
+    reason: >-
+      Goal metric collection (omniagentos.goals.collect --once). Supplies the
+      measurements every other steward job reasons over.
+    approved_on: 2026-07-31
+    source: var/launchd/rendered/com.omniagentos.steward.metrics.plist

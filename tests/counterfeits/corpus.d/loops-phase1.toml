@@ -1,0 +1,96 @@
+# Counterfeit fragment — lane/loops-phase1 (LangGraph loop runtime).
+#
+# The loop runtime's own counterfeits live in loops/tests/counterfeits/ and run
+# in the loops venv (the production venv has no LangGraph). These two entries
+# are the ones that MUST live here instead, because they mutate a production
+# module and are caught by production tests: the loop worker's process boundary.
+
+[[counterfeit]]
+id = "loops-worker-env-inherited"
+patch = "patches/loops-worker-env-inherited.patch"
+rationale = """Drops env=_worker_env() from the loop worker spawn, restoring blanket
+inheritance of the scheduler environment. The scheduler is launched by
+scripts/launch-env.sh and holds all of connections.env, so every payment rail,
+bank token, provider key and OPERATOR_TOKEN becomes one os.environ read away
+inside the loops venv — while every functional loop test stays green, because
+a loop that CAN see more secrets still works."""
+must_fail = [
+  "tests/scheduler/test_loop_jobs.py::test_the_worker_environment_is_scrubbed_not_inherited",
+]
+failure_re = "leaked into the loop worker|leaked|KeyError|assert"
+
+[[counterfeit]]
+id = "loops-worker-db-unbound"
+patch = "patches/loops-worker-db-unbound.patch"
+rationale = """Stops passing --db, so the worker falls back to the ambient default_db_path()
+instead of the store the tick was handed. A programmatic tick then writes its
+approvals and receipts into a DIFFERENT database than the one an operator is
+reading, which makes 'no unapproved sends' unverifiable rather than false —
+the worst kind of defect, because every assertion still passes."""
+must_fail = [
+  "tests/scheduler/test_loop_jobs.py::test_the_worker_is_bound_to_the_store_it_was_handed",
+]
+failure_re = "--db|assert"
+
+[[counterfeit]]
+id = "loops-row-without-instance-module"
+patch = "patches/loops-row-without-instance-module.patch"
+rationale = """Restores the pre-2026-08-01 behaviour: a loop row's instance_module becomes
+OPTIONAL again, and the worker is launched without --instance-module when the row
+does not carry one. The loop runtime registers no tools of its own, so such a
+worker cannot satisfy any template's required_tools and every tick settles
+builtin_failed ('instance is missing required tools') ten minutes after seeding —
+which is exactly what routine rtn_1e5567b9f3314a2c9d76 did in production, all
+day, while every loop test stayed green because they hand-wrote a payload the
+seeding helper could not produce. The mutation keeps the happy path intact: a row
+that DOES name a module still runs, so only the refusal test sees it."""
+must_fail = [
+  "tests/scheduler/test_loop_jobs.py::test_a_loop_row_without_an_instance_module_is_refused_before_the_spawn",
+]
+failure_re = "instance_module|assert"
+
+[[counterfeit]]
+id = "loops-worker-credential-shaped-env"
+patch = "patches/loops-worker-credential-shaped-env.patch"
+rationale = """Drops the loops-boundary post-filter and leans on adapters/common._scrubbed_env
+alone — which is exactly the state a reviewer probed and defeated. That scrub's
+force-deny list has API_KEY/ACCESS_KEY/PRIVATE_KEY/SESSION_KEY but no bare AUTH
+and no bare KEY, and its allowlist keeps XDG_* and OMNIAGENTOS_BRIDGE_SESSION*
+wholesale by PREFIX, so XDG_AUTH and OMNIAGENTOS_BRIDGE_SESSION_AUTH ride
+straight into the loops venv. Every existing scrub test stays green, because the
+named payment/bank/provider credentials it checks are still stripped: the leak
+is in the names nobody enumerated.
+
+READ THE NODE LIST BELOW AS A LAYER MAP, not as three equivalent probes. U-S4
+moved the post-prefix shape closure DOWN into _scrubbed_env, so the two original
+nodes — which observe the worker env end-to-end through os.environ — now go
+green under this mutation: the shared layer catches XDG_AUTH and
+OMNIAGENTOS_BRIDGE_SESSION_AUTH before the loops boundary is ever asked, and
+this counterfeit SURVIVED on precisely that (integration/cap-phase0). They are
+kept because they still pin the composite invariant and fail if both layers go.
+The decisive node is the third, which neutralises the shared layer's
+contribution (it substitutes the pre-closure _scrubbed_env, whose output was
+probe-verified reaching the worker) and therefore fails when the loops-side
+sweep alone is deleted — which is what defense in depth means and what this
+mutation removes."""
+must_fail = [
+  "tests/scheduler/test_loop_jobs.py::test_credential_shaped_names_admitted_by_a_prefix_rule_are_denied_here",
+  "tests/scheduler/test_loop_jobs.py::test_no_variable_the_worker_receives_is_credential_shaped",
+  "tests/scheduler/test_loop_jobs.py::test_the_loops_boundary_denies_what_a_regressed_shared_scrub_admits",
+]
+failure_re = "reached the loop worker|XDG_AUTH|OMNIAGENTOS_BRIDGE_SESSION_AUTH|assert"
+
+[[counterfeit]]
+id = "loops-page-failure-blocks-retry"
+patch = "patches/loops-page-failure-blocks-retry.patch"
+rationale = """Records loop.approval.delivered even when Slack refused the send. The function's
+own already-delivered probe then matches on every later tick, so ONE transient
+500 silently converts into "this human is never paged" and the request expires
+undecided — the audit failure (15/16 approvals expiring unseen) that paging
+exists to prevent, reintroduced by an event row that looks like diligent
+bookkeeping. The happy path is untouched, so every other paging test stays
+green."""
+must_fail = [
+  "tests/scheduler/test_loop_jobs.py::test_a_transient_paging_failure_is_retried_on_the_next_tick",
+]
+failure_re = "the retry must be allowed|fail-then-succeed|delivered|assert"

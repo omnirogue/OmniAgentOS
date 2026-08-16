@@ -1,0 +1,120 @@
+/* SpeedSlider — the composer's one-and-only routing control (D12): a
+   three-detent speed↔quality slider. Topology (solo vs swarm) belongs to the
+   router now, so the old Single|Swarm segment is gone and the track fills the
+   freed row. Theme-aware via the design-system tokens; no hard-coded
+   colours. */
+
+.slider {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  flex: 1 1 18rem;
+  min-width: 16rem;
+  max-width: 34rem;
+}
+
+/* Axis endpoints — visual anchors only (the radiogroup carries the name). */
+.axis {
+  display: flex;
+  justify-content: space-between;
+  padding: 0 2px;
+  color: var(--text-faint, var(--text-muted));
+  font-size: var(--text-micro, var(--text-small));
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.track {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  align-items: stretch;
+  padding: 4px;
+  border: 1px solid var(--border-strong, var(--border));
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--surface) 80%, var(--canvas));
+  touch-action: none; /* let pointer drag own horizontal gestures */
+  user-select: none;
+}
+
+/* Roving-tabindex radiogroup: the checked tick is the focus target, so its
+   focus ring is the group's focus indicator. */
+
+/* The sliding thumb — one element that glides between the three detents, so
+   the control reads as a single slider rather than three separate buttons.
+   It only ever rests ON a detent (drag commits the nearest), keeping the
+   visual state and aria-checked in lockstep. */
+.thumb {
+  position: absolute;
+  top: 4px;
+  bottom: 4px;
+  left: 4px;
+  width: calc((100% - 8px) / 3);
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--accent) 35%, transparent);
+  background: var(--surface);
+  box-shadow: var(--shadow-sm);
+  transform: translateX(calc(var(--pos, 0) * 100%));
+  transition: transform var(--motion-base, 180ms) var(--ease);
+  pointer-events: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .thumb {
+    transition: none;
+  }
+}
+
+.tick {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: var(--space-2) var(--space-2);
+  border: 0;
+  background: transparent;
+  color: var(--text-muted);
+  font: inherit;
+  text-align: center;
+  cursor: pointer;
+  transition: color var(--motion-fast) var(--ease);
+}
+
+.tickActive {
+  color: var(--text);
+}
+
+.tickName {
+  font-size: var(--text-small);
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+.tickCaption {
+  font-size: var(--text-micro, var(--text-small));
+  line-height: 1.3;
+  color: var(--text-faint, var(--text-muted));
+}
+
+.tickActive .tickCaption {
+  color: var(--text-muted);
+}
+
+.tick:focus {
+  outline: none;
+}
+
+.tick:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 999px;
+}
+
+@media (max-width: 34rem) {
+  .tickCaption {
+    display: none;
+  }
+}

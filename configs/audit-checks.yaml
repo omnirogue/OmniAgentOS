@@ -1,0 +1,235 @@
+# Standing audit registry — every standing assertion in the speed/determinism
+# program, with its THRESHOLD and that threshold's PROVENANCE.
+#
+# WHY PROVENANCE IS A REQUIRED FIELD
+# A threshold with no provenance is a number someone made up that nobody can
+# argue with later. `derived` means it came out of measured data on this box and
+# names the measurement; `default-guess` means it is a guess and says so, in the
+# check's own output, every single run. tests/acceptance/s00_audit.sh asserts
+# that every registered threshold carries this field.
+#
+# READ-ONLY CONTRACT
+# scripts/health-sentinel/audit_checks.py is a pure function of (repo tree,
+# config files, ledger). It mutates nothing. A check that CANNOT RUN reports
+# `fail`, never `skip` — silence may never be mistaken for a pass.
+#
+# Run it:   .venv/bin/python scripts/health-sentinel/health_sentinel.py --audit
+# JSON:     ... --audit --json
+# Subset:   ... --audit --audit-only lane_brief
+
+version: 1
+owner: scripts/health-sentinel/audit_checks.py
+last_reviewed: 2026-08-03
+
+# --------------------------------------------------------------------------- detectors
+
+detectors:
+
+  blocked_session:
+    # Consumed by scripts/health-sentinel/blocked_sessions.py (--watch-blocked).
+    # T: minutes an unanswered tool_use must sit before the session is called
+    # blocked. This is MEANT to be the p90 of answered assistant/tool_use ->
+    # next-record gaps. That distribution has not been computed, so this is a
+    # guess and the provenance says so. Produce the real number with:
+    #   health_sentinel.py --watch-blocked --gap-scan --window-days 7 --json
+    # and read `assistant_tool_use_gap_p90_minutes`.
+    threshold_minutes: 15
+    provenance: default-15min-unmeasured
+    # Condition (iii)'s documented supersession. An unanswered tool_use for one
+    # of these can only ever be answered by a human, so the session's own
+    # pendingBackgroundAgentCount cannot explain the silence. Without this,
+    # account-3 session 8279631d (111.2 minutes on ExitPlanMode, the single most
+    # expensive block measured) is excluded, because the PREVIOUS turn ended
+    # with pendingBackgroundAgentCount: 2 and a turn still in flight has not
+    # written its own turn_duration record yet.
+    human_input_tools:
+      - ExitPlanMode
+      - AskUserQuestion
+    dedupe:
+      key: [sessionId, tool_use_id]
+      re_alert_multiple: 4          # re-alert only at 4xT, then 8xT, 12xT ...
+      provenance: default-guess-4x-unmeasured
+      log: var/log/blocked-session-alerts.jsonl
+    payload_keys: [sessionId, account, cwd, gitBranch, tool_name, minutes_blocked]
+    payload_provenance: >-
+      derived-from-threat-model: these stores hold credentials and customer data,
+      so an alert must be safe to read on a phone. No transcript content, ever.
+    tail_bytes: 65536
+    tail_bytes_provenance: >-
+      derived: mean record size across the 2,318-record 6.8MB account-3
+      transcript is ~3KB, so 64KB reliably contains the last complete record and
+      the turn_duration that precedes it. One escalation to 1MB, then the file is
+      reported undecidable rather than read whole.
+
+# --------------------------------------------------------------------------- checks
+
+checks:
+
+  config_digest:
+    enabled: true
+    threshold: sha256-equality
+    provenance: >-
+      derived: the tracked template configs/canonical-claude-settings.json
+      carries _meta.merged_permissions_sha256, computed over the union of
+      permissions.{allow,deny,ask} from settings.json and settings.local.json
+      across the three accounts, deduped and sorted. Equality is the assertion.
+    accounts:
+      - .claude
+      - .claude-account-2
+      - .claude-account-3
+    template: configs/canonical-claude-settings.json
+    managed_keys: [agentPushNotifEnabled, statusLine, defaultMode, permissions]
+    degrade: >-
+      When the template is absent (another package owns it) this reports
+      `fail: template-missing` with the observed digest, and never crashes.
+
+  mcp_roster:
+    enabled: true
+    threshold: roster subset-of approved; every approved entry justified; no ${VAR} resolving empty
+    provenance: >-
+      derived: scripts/gates/mech_gate.sh --check-mcp-roster already enforces
+      exactly this pair; the audit re-asserts it on a standing cadence so the
+      roster cannot re-accrete between gate runs. The 11-server accretion that
+      motivated configs/mcp-approved.yaml happened entirely between gates.
+    # .mcp.json is the file the agent runtime loads, so it is what gets audited.
+    # This said tools/mcp-servers.json until 2026-08-07, on the premise that
+    # .mcp.json was a tracked symlink to it -- broken by 00000000 (2026-08-02),
+    # after which this check reported OK about 2 servers while 11 shipped.
+    # `mirror` is asserted to AGREE with `roster`: a reviewed file passing while
+    # a divergent one is what loads is the failure this pair exists to catch.
+    roster: .mcp.json
+    mirror: tools/mcp-servers.json
+    approved: configs/mcp-approved.yaml
+
+  never_wired:
+    enabled: true
+    window_days: 30
+    threshold: every file added inside the window has >=1 call site outside its own tests
+    provenance: default-guess-30d
+    # The window is a GUESS and the check prints that provenance in its own
+    # evidence string every run, so nobody can mistake it for a measured number.
+    patterns:
+      - "scripts/*.sh"
+      - "omniagentos/*.py"
+      - "omniagentos/**/*.py"
+    ignore:
+      - "**/__init__.py"
+      - "**/conftest.py"
+
+  pump_ledger_wiring:
+    enabled: true
+    # REPORT-ONLY until a week of per-lane hourly dispatch data exists. The
+    # threshold is meant to be p99 of per-lane hourly dispatch rate from
+    # swarm_attempts, rounded up to the next multiple of 5. Measured 2026-08-03:
+    # 899 swarm_attempts rows total, ZERO inside the last 24h, newest row
+    # 2026-08-01T11:28:39Z. There is no distribution to take a p99 of.
+    report_only: true
+    threshold: null
+    provenance: insufficient-data-report-only (p99 needs a week of swarm_attempts; 0 rows in 24h on 2026-08-03)
+    pumps: [rework, review, verdict, sim]
+    pump_ledger_run_id: swr_pumpledger        # omniagentos/swarm/dal.py:117
+    window_hours: 24
+    identical_verdict_hash_run: 5
+    identical_verdict_hash_run_provenance: default-guess-K5-unmeasured
+    db: var/runtime/state.sqlite3
+
+  soak_window_diff:
+    enabled: true
+    threshold: declared mode == effective mode, and the window is not past closes_at
+    provenance: >-
+      derived-from-FEATURE-FLAGS.md: each row below is a flag that document
+      declares as observe/shadow. The check reads the live environment and
+      reports the diff, so an observe window that quietly became enforce, or one
+      that never closed, is one screen instead of a document read.
+    windows:
+      - name: reflection-rearm
+        env: OMNIAGENTOS_REFLECTION_REARM_MODE
+        declared_mode: "off"
+        default_when_unset: "off"
+        source: FEATURE-FLAGS.md:61
+      - name: context-capsule
+        env: OMNIAGENTOS_CONTEXT_CAPSULE
+        declared_mode: "off"
+        default_when_unset: "off"
+        source: FEATURE-FLAGS.md:63
+      - name: blocked-session-push
+        env: OMNIAGENTOS_BLOCKED_SESSION_PUSH
+        declared_mode: "disarmed"
+        default_when_unset: "disarmed"
+        source: scripts/health-sentinel/ARM.md
+
+  lane_brief:
+    enabled: true
+    min_age_minutes: 60
+    threshold: a clone older than min_age_minutes must hold a non-empty brief unless its declared class is exempt
+    provenance: >-
+      derived: measured 2026-08-03, 2 of 70 clones under var/swarm/clones carry
+      no brief (connectors-sweep, sim-workspace). There are TWO lane creators —
+      omniagentos/swarm/spawn.py:323 write_task_md writes var/task.md, while
+      scripts/new-lane.sh created clones with git clone + mkdir -p $DEST/var and
+      contained ZERO occurrences of task.md or LANE-BRIEF in 95 lines. The
+      exemption is a DECLARED CLASS in var/LANE-CLASS, not a path blocklist,
+      because quarantining a whole creator's output is how this check gets muted
+      in week two.
+    root: var/swarm/clones
+    brief_paths: [var/task.md, LANE-BRIEF.md, var/LANE-BRIEF.md]
+    class_marker: var/LANE-CLASS
+    exempt_classes:
+      - infrastructure     # a shared workspace with no task of its own
+      - sandbox            # a throwaway probe clone
+    known_classes:
+      - task               # the normal case: a lane that owns a task and MUST have a brief
+      - infrastructure
+      - sandbox
+
+  single_signer:
+    enabled: true
+    window_days: 30
+    threshold: ">=2 distinct signing keys across the window"
+    provenance: >-
+      default-guess-30d-window. The promotion table named below does not exist
+      on this box today, so this check reports `fail: cannot-run` with that
+      reason rather than a silent pass — single-signer risk being UNMEASURED is
+      itself the finding.
+    db: var/runtime/state.sqlite3
+    table: promotions
+    signer_column: signing_key_id
+    timestamp_column: created_at
+
+  unscheduled_heartbeat:
+    enabled: true
+    threshold: every declared artifact newer than its declared max_age_hours
+    provenance: >-
+      derived-from-a-structural-gap: health_sentinel.py:951 check_launchd()
+      compares RENDERED -> INSTALLED -> LOADED plists. A correct script that is
+      not a launchd label AT ALL is invisible to it — there is no plist to find
+      missing. configs/expected-heartbeats.yaml closes that class by asserting
+      the ARTIFACT instead of the schedule.
+    registry: configs/expected-heartbeats.yaml
+
+  loopback_connectors:
+    enabled: true
+    connect_timeout_seconds: 1.5
+    threshold: every declared loopback base_url accepts a TCP connect unless annotated expected_down
+    provenance: >-
+      derived: configs/connectors.yaml declares 54 base_urls, three of them
+      loopback — http://127.0.0.1:4700 (Globex, x2 capabilities) and
+      https://127.0.0.1:8443 (LiteLLM -> OpenRouter proxy). Both verified DEAD
+      2026-08-03 while 127.0.0.1:8485 (the API) was up.
+    connectors: configs/connectors.yaml
+    policy: >-
+      NOTIFY ONLY, NEVER RESTART. The :8443 proxy spends real money under a
+      $50/day cap enforced by a separate loaded watchdog
+      (com.youruser.litellm-spendguard), and its log ends in a CLEAN shutdown.
+      An auto-restarter here would race a guard whose entire job is to stop that
+      process.
+
+  provider_daily_spend:
+    enabled: true
+    threshold: warn when spend/cap > 0.80; fail when spend/cap > 1.00
+    provenance: >-
+      design-final 2026-08-05: 80% is the independent early-warning threshold;
+      100% is the bypass counterfeit threshold proving a guard failure from the
+      provider_call_usage ledger rather than from guard-owned state.
+    caps: configs/spend-caps.yaml
+    providers: [moonshot, fireworks]

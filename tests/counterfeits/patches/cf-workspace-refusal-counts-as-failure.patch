@@ -1,0 +1,27 @@
+diff --git a/omniagentos/scheduler/gate_runner.py b/omniagentos/scheduler/gate_runner.py
+index 7b318f72..91b7c30a 100644
+--- a/omniagentos/scheduler/gate_runner.py
++++ b/omniagentos/scheduler/gate_runner.py
+@@ -701,22 +701,6 @@ def produce_gate_evidence(
+                 exc,
+             )
+             return GateEvidenceOutcome(status="unavailable", evidence=None, detail=str(exc))
+-    # MUST precede the GateEvidenceRefusal clause it is a subclass of. The
+-    # workspace was unusable, so nothing about this run was judged: that is
+-    # `unavailable` (the NULL/NULL, excluded-from-the-acceptance-floor bucket),
+-    # not `refused` (which settles gate_passed=0 and counts toward auto-pause).
+-    # It is the settlement-side half of the workspace configuration: a probe can
+-    # only prove the workspace was clean when the job spawned, and the tree can
+-    # go dirty at any point before the gate runs. Classifying the cause is what
+-    # makes that race harmless; narrowing the window never could.
+-    except GateWorkspaceUnusable as exc:
+-        logger.warning(
+-            "gate workspace unusable for routine %s run %s: %s",
+-            request.routine_id,
+-            request.run_id,
+-            exc,
+-        )
+-        return GateEvidenceOutcome(status="unavailable", evidence=None, detail=str(exc))
+     except GateEvidenceRefusal as exc:
+         logger.warning(
+             "gate execution refused for routine %s run %s: %s",

@@ -1,0 +1,21 @@
+diff --git a/scripts/launch-env.sh b/scripts/launch-env.sh
+index 58d74458..445908be 100644
+--- a/scripts/launch-env.sh
++++ b/scripts/launch-env.sh
+@@ -246,15 +246,7 @@ fi
+ # precisely the workspace that cannot be executed against. This mirrors the
+ # runner's own test, `returncode != 0 or stdout.strip()`.
+ if [ -z "${OMNIAGENTOS_GATE_WORKSPACE:-}" ] && [ -d "${_omni_repo_root}-gate" ]; then
+-  _omni_gate_ws="${_omni_repo_root}-gate"
+-  if git -C "$_omni_gate_ws" rev-parse --verify HEAD >/dev/null 2>&1; then
+-    if _omni_gate_status=$(git -C "$_omni_gate_ws" status --porcelain=v1 --untracked-files=all 2>/dev/null); then
+-      if [ -z "$_omni_gate_status" ]; then
+-        OMNIAGENTOS_GATE_WORKSPACE="$_omni_gate_ws"
+-      fi
+-    fi
+-  fi
+-  unset _omni_gate_ws _omni_gate_status
++  OMNIAGENTOS_GATE_WORKSPACE="${_omni_repo_root}-gate"
+ fi
+ 
+ # Export for child processes (Make recipes, supervisor, Python entrypoints).

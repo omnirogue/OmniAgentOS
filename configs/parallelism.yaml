@@ -1,0 +1,71 @@
+# Cross-lane parallelism knobs (Phase 3). Consumed by omniagentos/scope/config.py.
+#
+# Deliberately NOT part of configs/swarm.yaml: scope locking spans the runner,
+# the session lane, longhaul and swarm — they all take locks out of the one
+# resource_locks table (migration 059) — so filing it under one lane's config
+# would misstate what the mechanism is.
+#
+# Every value here is a DEFAULT. The matching environment variable overrides it
+# in BOTH directions, so a host can be flipped without editing this file:
+#
+#   OMNIAGENTOS_SCOPE_LOCKS=off|shadow|enforce   (also accepts 1/0/true/false)
+#   OMNIAGENTOS_SCOPE_TTL_S=90
+#   OMNIAGENTOS_SCOPE_STARVATION_S=300
+
+scope_locks:
+  # off      — nothing written, nothing refused (the default; ships dark).
+  # shadow   — lock rows ARE written, conflicts are recorded but never refused.
+  #            This is the soak: because the rows are real, the contention it
+  #            measures is the contention enforcement would actually have hit.
+  # enforce  — a conflicting claim is refused and the claimant parks.
+  #
+  # QUOTED on purpose: YAML parses a bare `off` as the boolean false. The parser
+  # coerces that back to the off mode anyway, but the quotes keep the file
+  # honest about which of the three modes is selected.
+  #
+  # H-35: stay on shadow until L11 fencing is integrated. Do not set enforce
+  # here before collision_safety.fencing_ready is true (see below).
+  mode: "shadow"  # Grok ships shadow-by-default for measurement. OmniAgentOS may differ—intentional product divergence; do not "sync" this to enforce/off because the sibling differs.
+
+  # Lock lease, seconds. A holder renews well inside this; a holder that dies
+  # has its locks reclaimed once it lapses. Must exceed the renew interval of
+  # the slowest lane with margin — a lease that lapses under a LIVE worker is
+  # worse than no lease at all, because the next claimant then acquires
+  # legitimately and both write.
+  ttl_seconds: 90
+
+  # How long a parked waiter may sit before the scheduler escalates it.
+  # Declared here in T3.2; the escalation itself lands with the scheduler.
+  starvation_seconds: 300
+
+# H-35 — unified collision-safety controls (scope locks + worktree isolation).
+#
+# Production collision safety must not go dark-enforce while L11 git fencing
+# (commit-lock renewal + generation fencing) is still unintegrated. This block
+# is the explicit shadow / enforce / rollback surface:
+#
+#   mode: off | shadow | enforce
+#     Intent. OMNIAGENTOS_COLLISION_SAFETY overrides in both directions.
+#     A value of "rollback" is accepted as "step down to shadow".
+#   fencing_ready: false until L11 lands (or OMNIAGENTOS_L11_FENCING_READY=1).
+#   allow_enforce: operator brake — false blocks enforce even if fencing_ready.
+#   require_shadow_evidence / shadow_evidence_path: optional second gate.
+#
+# effective_collision_mode() never returns enforce while the gate is closed;
+# enforce intent silently measures in shadow instead. Rollback is always
+# allowed (enforce → shadow → off) via mode or env.
+collision_safety:
+  mode: "shadow"
+  # L11 git-fencing merged to main 2026-07-26 — fencing gate open. Lock
+  # enforcement (mode) deliberately stays shadow: smallest honest step past
+  # H-35; flip mode to enforce only after a recorded shadow soak.
+  fencing_ready: true
+  allow_enforce: true
+  require_shadow_evidence: false
+  # shadow_evidence_path: null  # set after a recorded multi-day shadow soak
+  # Per-lane worktree flags stay false until executor cwd follows worktrees
+  # (see omniagentos.worktrees.lanes). Swarm worktrees remain in swarm.yaml.
+  worktrees:
+    runner: false
+    session: false
+    longhaul: false

@@ -1,0 +1,10 @@
+--- a/omniagentos/swarm/summary.py
++++ b/omniagentos/swarm/summary.py
+@@ -234,6 +234,7 @@
+ ) -> float:
+     """``40*min(1, speedup/parallelism_ratio) + 25*utilization +
+     25*first_attempt_rate + 10*(1 - rate_limit_stall_frac) - penalty``,
++    COUNTERFEIT_SURVIVOR_MARKER: no test binds this docstring line.
+     clamped to [0, 100].
+
+     An undefined observation contributes no points.  This is intentionally

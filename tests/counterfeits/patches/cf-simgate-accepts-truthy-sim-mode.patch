@@ -1,0 +1,13 @@
+diff --git a/omniagentos/simgate.py b/omniagentos/simgate.py
+index 7f9512e2..0fa75442 100644
+--- a/omniagentos/simgate.py
++++ b/omniagentos/simgate.py
+@@ -53,7 +53,7 @@ def _parse_strict_sim_mode(values: Mapping[str, str]) -> bool:
+     sim_mode = values.get("OMNIAGENTOS_SIM_MODE")
+     if sim_mode is None or sim_mode == "":
+         return False
+-    if sim_mode != "1":
++    if sim_mode.lower() not in ("1", "true", "yes", "on"):
+         raise _refuse(
+             "OMNIAGENTOS_SIM_MODE has invalid value "
+             f"{sim_mode!r}; set OMNIAGENTOS_SIM_MODE exactly to '1' or unset it "

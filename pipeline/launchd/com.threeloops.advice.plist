@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>EnvironmentVariables</key>
+	<dict>
+		<key>PATH</key>
+		<string>/usr/local/bin:/opt/homebrew/bin:/usr/bin:/bin:/usr/sbin:/sbin:/Users/youruser/.local/bin</string>
+	</dict>
+	<key>Label</key>
+	<string>com.threeloops.advice</string>
+	<key>ProgramArguments</key>
+	<array>
+		<string>/Users/youruser/OmniAgentOS/.venv/bin/python</string>
+		<string>/Users/youruser/OmniAgentOS/pipeline/bridge/advice_writer.py</string>
+		<string>--loops-root</string>
+		<string>/Users/youruser/OmniAgentOS/var/loopqueue</string>
+		<string>--repo</string>
+		<string>/Users/youruser/OmniAgentOS</string>
+	</array>
+	<key>RunAtLoad</key>
+	<true/>
+	<key>StandardErrorPath</key>
+	<string>/Users/youruser/OmniAgentOS/var/loopqueue/logs/advice.err</string>
+	<key>StandardOutPath</key>
+	<string>/Users/youruser/OmniAgentOS/var/loopqueue/logs/advice.log</string>
+	<key>StartInterval</key>
+	<integer>300</integer>
+	<key>WorkingDirectory</key>
+	<string>/Users/youruser/OmniAgentOS/pipeline</string>
+</dict>
+</plist>

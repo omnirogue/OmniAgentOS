@@ -1,0 +1,24 @@
+# benchmark: {{ title }}
+
+[[Home]]
+
+## Summary
+
+- **Runs:** {{ total }}
+- **By state:** {{ state_summary }}
+- **Total cost:** {{ total_cost }}
+- **Estimated:** {{ estimated_flag }}
+
+## Runs
+
+{% if rows %}
+| Run | Harness | Arm | Model | State | Tokens | Cost | Wall (ms) |
+|---|---|---|---|---|---|---|---|
+{% for row in rows %}
+| [[{{ row.run_id }}]] | {{ row.harness }} | {{ row.arm }} | {{ row.model }} | {{ row.state }} | {{ row.tokens }} | {{ row.cost }} | {{ row.wall_ms }} |
+{% endfor %}
+{% else %}
+_No runs recorded._
+{% endif %}
+
+## Notes (human)

@@ -1,0 +1,73 @@
+# Continuous Self-Improvement — safe human pipeline ON
+#
+#   run → AWAITING_HUMAN → csi approve → csi implement (worktree) → human merges
+# CSI never merges main. Live planners off. Frozen surfaces enforced.
+#
+# Enabled routines (offline evidence + vault skill-note proposals):
+#   design, self_learning, routing, skills, tool_calls, speed, quality, tech_debt
+
+# FROZEN. CSI is Phase 1 of the engine consolidation — 'freeze, do not delete';
+# its capabilities are to be ported to the Swarm scheduler, not run here.
+# This flag read `true` while the module docstring said off and NOTHING invoked
+# csi — a config that claims a capability the system does not have. Making it
+# honest so a future reader is not misled into thinking self-improvement is live.
+enabled: false
+global_halt: false
+max_merges_per_day: 2
+planner_timeout_s: 900
+wall_clock_budget_s: 5400
+observation_window_days: 7
+min_panel_size: 2
+use_live_planners: false
+
+frozen_surfaces:
+  - omniagentos/selfimprove/**
+  - omniagentos/csi/**
+  - omniagentos/scheduler/routines*.py
+  - configs/policy.yaml
+  - configs/roots.yaml
+  - configs/self_improvement.yaml
+  - omniagentos/gates/**
+  - omniagentos/grants/**
+
+routines:
+  design:
+    id: design
+    window_days: 7
+    planners: [grok, sol]
+    enabled: true
+  self_learning:
+    id: self_learning
+    window_days: 7
+    planners: [grok, sol, kimi]
+    enabled: true
+  routing:
+    id: routing
+    window_days: 14
+    planners: [grok, sol]
+    enabled: true
+  skills:
+    id: skills
+    window_days: 7
+    planners: [grok, sol]
+    enabled: true
+  tool_calls:
+    id: tool_calls
+    window_days: 2
+    planners: [grok, sol]
+    enabled: true
+  speed:
+    id: speed
+    window_days: 2
+    planners: [grok, sol]
+    enabled: true
+  quality:
+    id: quality
+    window_days: 2
+    planners: [grok, sol]
+    enabled: true
+  tech_debt:
+    id: tech_debt
+    window_days: 30
+    planners: [grok, sol, kimi]
+    enabled: true

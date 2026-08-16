@@ -1,0 +1,82 @@
+# Company -> repo registry (plan of record: devtasks/multi-company-workos-0813/PLAN.md
+# decision 9). Consumed by the team dispatcher (compute-pool bridge), the GitHub
+# protection rollout (scripts/ops/repo_protection_rollout.py), and sweep evidence
+# expansion.
+#
+# Shape per company slug:
+#   display_name: human name
+#   github:       list of repos; each entry is either a plain "owner/repo" string
+#                 (attribution confirmed) or a mapping {repo: "owner/repo",
+#                 confirmed: false} when the company assignment is a best guess
+#                 from repo naming/recon, not a the operator-confirmed fact.
+#   local_paths:  absolute paths of local checkouts on this machine.
+#
+# Estate recon 2026-08-13 (gh account example-org, admin everywhere). Empty repos
+# (no default branch) are still listed — the protection rollout detects and skips
+# them; keeping them here keeps the registry complete.
+
+companies:
+  globex:
+    display_name: Globex
+    github:
+      - repo: Globex/content-studio-poster
+        confirmed: false
+      - repo: Globex/ai-transcripts
+        confirmed: false
+      - repo: example-org/ContentStudioPoster # empty repo (no default branch)
+        confirmed: false
+    local_paths: []
+
+  acmeuni:
+    display_name: AcmeUni (Acme University)
+    github:
+      - example-org/acmeuniunlimited.com # PUBLIC repo
+      - example-org/acmeuni.example
+      - repo: example-org/ai-pro-hub-access
+        confirmed: false
+    local_paths: []
+
+  hooli:
+    display_name: Hooli
+    github: [] # recon 2026-08-13: zero Hooli repos exist on GitHub
+    local_paths: []
+
+  initech:
+    display_name: Initech
+    github:
+      - Globex/initech
+      - Globex/initech-cs-sim-handoff
+      - Globex/initech-cs-sim-2026-08-01 # empty repo (no default branch)
+      - example-org/initech-xai
+      - example-org/initech-cs-sim
+      - example-org/initech-fb-roi
+      - example-org/initech-variant-final
+      - example-org/initech_cognitiveenhancer
+      - repo: example-org/email-replier-2
+        confirmed: false
+      - repo: example-org/email-replier-new # collaborator 'initech' (write) pushes here
+        confirmed: false
+      - repo: example-org/cx-approval-console
+        confirmed: false
+      - repo: example-org/sms-dashboard
+        confirmed: false
+    local_paths:
+      - /Users/youruser/Repos/initech-product
+
+  omniagentos:
+    display_name: OmniAgentOS
+    github:
+      - Globex/OmniAgentOS # serving repo — protection rollout SKIPS it (already compliant)
+      - Globex/OmniAgentOS-sandbox
+      - Globex/OmniAgentOS-Improvement-Plans
+      - example-org/OmniAgentOS-core-engine-prototype
+      - example-org/OmniAgentOS-Estate
+      - example-org/omniagentos
+      - repo: example-org/ThreeLoops
+        confirmed: false
+      - repo: example-org/CrewAI-Control # empty repo (no default branch)
+        confirmed: false
+      - repo: example-org/bolt # empty repo (no default branch)
+        confirmed: false
+    local_paths:
+      - /Users/youruser/OmniAgentOS

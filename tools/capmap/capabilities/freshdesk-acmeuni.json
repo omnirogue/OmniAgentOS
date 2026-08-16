@@ -1,0 +1,18 @@
+{
+  "id": "freshdesk-acmeuni",
+  "company": "acmeuni",
+  "kind": "external-service",
+  "host": "owner-mac",
+  "repo": "/Users/youruser/Work/Ops",
+  "what_it_does": "Records ACMEUNI Freshdesk API health from the integrations probe snapshot.",
+  "why_it_matters": "ACMEUNI support operations depend on Freshdesk access.",
+  "blast_radius": "ACMEUNI customer support workflows.",
+  "verification": {"type": "snapshot_field", "source": "/Users/youruser/Work/Ops/var/integrations-health.json", "field": "integrations.freshdesk-acmeuni.status", "checked_at_field": "integrations.freshdesk-acmeuni.checked_at"},
+  "exit_semantics": {"UP": "ok", "DOWN": "down", "SUSPENDED": "degraded", "NO-CRED": "cannot_evaluate"},
+  "cadence_seconds": 900,
+  "staleness_slo_seconds": 2700,
+  "escalation_tier": "high",
+  "owner": "acmeuni-ops",
+  "last_verified": null,
+  "last_status": "UNVERIFIED"
+}

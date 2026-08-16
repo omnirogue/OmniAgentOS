@@ -1,0 +1,28 @@
+.globalContainer {
+  display: grid;
+  place-items: center;
+  min-height: 100vh;
+  padding: var(--space-5);
+  background: var(--surface);
+}
+
+.routeContainer {
+  display: grid;
+  place-items: center;
+  min-height: calc(100vh - 4rem);
+  padding: var(--space-5);
+}
+
+.wrapper {
+  max-width: 500px;
+  width: 100%;
+}
+
+.digestText {
+  margin-top: var(--space-6);
+  font-size: var(--text-small);
+  color: var(--text-muted);
+  text-align: center;
+  font-family: var(--font-mono);
+  word-break: break-all;
+}

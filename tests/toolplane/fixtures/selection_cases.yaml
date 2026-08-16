@@ -1,0 +1,377 @@
+# Tool-selection cases for the Phase-2 WP0 retrieval benchmark.
+#
+# Each case: a natural-language need, the one tool that answers it, and the ids the caller
+# is not allowed to see. Scored by tests/toolplane/test_selection_fixtures.py as top-5 hit
+# rate against catalog_100 / catalog_250 / catalog_500.
+#
+#   kind: plain         a straightforward request; baseline recall
+#   kind: adversarial   the catalog holds a genuine near-twin of the answer (named in note)
+#   kind: invisibility  the obvious top hit is in hidden_ids and must never surface at any
+#                       rank; expected_tool_id is the best visible alternative
+#
+# Queries are written the way a user asks -- task-framed, not a restatement of the tool's
+# own description. They keep one or two lexical anchors on purpose: the retriever is BM25,
+# so a query sharing no vocabulary with any tool is unanswerable by construction and would
+# measure nothing.
+version: 1
+cases:
+- id: sel_001
+  catalog: catalog_100
+  query: react with a thumbs up emoji to a teammate's post
+  expected_tool_id: slack.add_reaction
+  hidden_ids: []
+  kind: plain
+  note: direct lexical match on reaction and emoji
+- id: sel_002
+  catalog: catalog_100
+  query: close down an old project channel but keep its history readable
+  expected_tool_id: slack.archive_channel
+  hidden_ids: []
+  kind: adversarial
+  note: Twin is slack.unarchive_channel; query targets hiding and making read-only
+- id: sel_003
+  catalog: catalog_100
+  query: delete the legacy-tests repository for good
+  expected_tool_id: github.delete_repository
+  hidden_ids: []
+  kind: plain
+  note: direct lexical match on delete and repository
+- id: sel_004
+  catalog: catalog_100
+  query: show me open pull requests waiting on the backend repository
+  expected_tool_id: github.list_pull_requests
+  hidden_ids: []
+  kind: adversarial
+  note: Twin is github.search_pull_requests; query targets listing within a specific repository
+- id: sel_005
+  catalog: catalog_100
+  query: who are our newest customers
+  expected_tool_id: stripe.list_customers
+  hidden_ids:
+  - stripe.search_customers
+  kind: invisibility
+  note: Hiding stripe.search_customers forces fallback to list_customers
+- id: sel_006
+  catalog: catalog_100
+  query: refund a customer payment that went through stripe
+  expected_tool_id: stripe.refund_charge
+  hidden_ids: []
+  kind: plain
+  note: direct lexical match on refund and charge
+- id: sel_007
+  catalog: catalog_100
+  query: send a picture message with a media attachment to a customer's phone
+  expected_tool_id: twilio.send_mms_message
+  hidden_ids: []
+  kind: adversarial
+  note: Twin is twilio.send_sms_message; query specifically asks for media attachment
+- id: sel_008
+  catalog: catalog_100
+  query: look through recently sent and received messages
+  expected_tool_id: twilio.list_messages
+  hidden_ids:
+  - twilio.search_messages
+  kind: invisibility
+  note: Hiding twilio.search_messages forces fallback to list_messages
+- id: sel_009
+  catalog: catalog_100
+  query: archive an old page instead of deleting it
+  expected_tool_id: notion.archive_page
+  hidden_ids: []
+  kind: plain
+  note: direct lexical match on archive and page
+- id: sel_010
+  catalog: catalog_100
+  query: read a page's properties without pulling its block contents
+  expected_tool_id: notion.get_page
+  hidden_ids: []
+  kind: adversarial
+  note: Twin is notion.get_block_children; query wants page properties excluding block contents
+- id: sel_011
+  catalog: catalog_100
+  query: find records inside a task database
+  expected_tool_id: notion.search_workspace
+  hidden_ids:
+  - notion.query_database
+  kind: invisibility
+  note: Hiding notion.query_database forces fallback to searching the workspace
+- id: sel_012
+  catalog: catalog_100
+  query: stop the pipeline that is currently running
+  expected_tool_id: gitlab.cancel_pipeline
+  hidden_ids: []
+  kind: plain
+  note: direct lexical match on cancel and pipeline
+- id: sel_013
+  catalog: catalog_100
+  query: open a new issue for the broken login flow
+  expected_tool_id: gitlab.create_issue
+  hidden_ids: []
+  kind: adversarial
+  note: Twin is github.create_issue; query specifically targets gitlab instead of github
+- id: sel_014
+  catalog: catalog_100
+  query: put together an unpaid order for a customer to approve
+  expected_tool_id: shopify.create_draft_order
+  hidden_ids: []
+  kind: adversarial
+  note: Twin is shopify.create_order; query specifies draft order review
+- id: sel_015
+  catalog: catalog_100
+  query: find orders matching a fulfillment status
+  expected_tool_id: shopify.search_orders
+  hidden_ids: []
+  kind: plain
+  note: direct lexical match on search and orders
+- id: sel_016
+  catalog: catalog_100
+  query: add a new recipient to our marketing list
+  expected_tool_id: sendgrid.add_marketing_contact
+  hidden_ids: []
+  kind: plain
+  note: direct lexical match on marketing and contact
+- id: sel_017
+  catalog: catalog_100
+  query: add a task for writing the docs
+  expected_tool_id: asana.create_task
+  hidden_ids: []
+  kind: plain
+  note: direct lexical match on create and task
+- id: sel_018
+  catalog: catalog_250
+  query: remove a stale branch from the remote
+  expected_tool_id: bitbucket.delete_branch
+  hidden_ids: []
+  kind: plain
+  note: direct lexical match on branch and remote
+- id: sel_019
+  catalog: catalog_250
+  query: give the cardholder their money back on a captured payment
+  expected_tool_id: square.create_refund
+  hidden_ids: []
+  kind: adversarial
+  note: Twin is square.cancel_payment; query targets captured transaction refund instead of pending authorization void
+- id: sel_020
+  catalog: catalog_250
+  query: register a new customer profile
+  expected_tool_id: square.upsert_customer
+  hidden_ids:
+  - square.create_customer
+  kind: invisibility
+  note: Hiding square.create_customer forces fallback to upsert_customer to add profile
+- id: sel_021
+  catalog: catalog_250
+  query: stop sending campaign emails to someone who opted out
+  expected_tool_id: mailchimp.unsubscribe_member
+  hidden_ids: []
+  kind: adversarial
+  note: Twin is mailchimp.delete_list_member; query requests status update to unsubscribed
+- id: sel_022
+  catalog: catalog_250
+  query: add a contact to our audience list
+  expected_tool_id: mailchimp.update_list_member
+  hidden_ids:
+  - mailchimp.add_list_member
+  kind: invisibility
+  note: Hiding mailchimp.add_list_member forces fallback to update_list_member
+- id: sel_023
+  catalog: catalog_250
+  query: add a subissue under an existing parent issue
+  expected_tool_id: linear.create_subissue
+  hidden_ids: []
+  kind: plain
+  note: direct lexical match on subissue and parent
+- id: sel_024
+  catalog: catalog_250
+  query: stop the workflow that is running and all its jobs
+  expected_tool_id: circleci.cancel_workflow
+  hidden_ids: []
+  kind: plain
+  note: direct lexical match on cancel and workflow
+- id: sel_025
+  catalog: catalog_250
+  query: look up one pipeline by its id
+  expected_tool_id: circleci.get_pipeline
+  hidden_ids:
+  - circleci.get_pipeline_by_id
+  kind: invisibility
+  note: Hiding circleci.get_pipeline_by_id forces fallback to get_pipeline for lookup
+- id: sel_026
+  catalog: catalog_250
+  query: take the funds we authorized earlier for this order
+  expected_tool_id: paypal.capture_order
+  hidden_ids: []
+  kind: adversarial
+  note: Twin is paypal.authorize_order; query specifies capturing funds instead of just reserving
+- id: sel_027
+  catalog: catalog_250
+  query: send money to several recipients at once
+  expected_tool_id: paypal.create_payout
+  hidden_ids: []
+  kind: plain
+  note: direct lexical match on pay and batch
+- id: sel_028
+  catalog: catalog_250
+  query: add a new person to the CRM with their email and phone
+  expected_tool_id: hubspot.create_contact
+  hidden_ids: []
+  kind: plain
+  note: direct lexical match on contact and CRM
+- id: sel_029
+  catalog: catalog_250
+  query: log the time I worked on this issue
+  expected_tool_id: jira.add_worklog
+  hidden_ids: []
+  kind: plain
+  note: direct lexical match on worklog and issue
+- id: sel_030
+  catalog: catalog_250
+  query: kick off a job that takes input parameters
+  expected_tool_id: jenkins.build_job_with_parameters
+  hidden_ids: []
+  kind: adversarial
+  note: Twin is jenkins.build_job; query targets specific parameters
+- id: sel_031
+  catalog: catalog_250
+  query: check the current balance on a linked bank account
+  expected_tool_id: plaid.get_balance
+  hidden_ids: []
+  kind: plain
+  note: direct lexical match on ledger and balances
+- id: sel_032
+  catalog: catalog_250
+  query: run a SOQL query against our objects
+  expected_tool_id: salesforce.execute_soql_query
+  hidden_ids: []
+  kind: plain
+  note: direct lexical match on query and syntax
+- id: sel_033
+  catalog: catalog_250
+  query: look up a page by its title in a space
+  expected_tool_id: confluence.get_page_by_title
+  hidden_ids: []
+  kind: adversarial
+  note: Twin is confluence.get_page; query specifies searching by title within a space
+- id: sel_034
+  catalog: catalog_250
+  query: find invoices over a certain amount for one customer
+  expected_tool_id: quickbooks.search_invoices
+  hidden_ids: []
+  kind: plain
+  note: direct lexical match on invoice and customer
+- id: sel_035
+  catalog: catalog_500
+  query: deploy a new containerized application with replicas to our cluster
+  expected_tool_id: kubernetes.create_deployment
+  hidden_ids: []
+  kind: plain
+  note: direct lexical match on deployment and replicas
+- id: sel_036
+  catalog: catalog_500
+  query: raise a new invoice for a client
+  expected_tool_id: xero.create_invoice
+  hidden_ids: []
+  kind: plain
+  note: direct lexical match on invoice and receivables
+- id: sel_037
+  catalog: catalog_500
+  query: reply to a customer inside an open conversation
+  expected_tool_id: intercom.reply_to_conversation
+  hidden_ids: []
+  kind: plain
+  note: direct lexical match on conversation and reply
+- id: sel_038
+  catalog: catalog_500
+  query: archive an item off the board
+  expected_tool_id: monday.archive_item
+  hidden_ids: []
+  kind: adversarial
+  note: Twin is monday.delete_item; query specifies archiving instead of permanently deleting
+- id: sel_039
+  catalog: catalog_500
+  query: set up a new workspace in our organization
+  expected_tool_id: terraform.create_workspace
+  hidden_ids: []
+  kind: plain
+  note: direct lexical match on workspace and provision
+- id: sel_040
+  catalog: catalog_500
+  query: return money to the customer for a settled transaction
+  expected_tool_id: braintree.refund_transaction
+  hidden_ids: []
+  kind: adversarial
+  note: Twin is braintree.void_transaction; query specifies settled payment transaction refund instead of pending authorized void
+- id: sel_041
+  catalog: catalog_500
+  query: opt a profile in to our email list
+  expected_tool_id: klaviyo.subscribe_to_list
+  hidden_ids: []
+  kind: plain
+  note: direct lexical match on subscribe and list
+- id: sel_042
+  catalog: catalog_500
+  query: add a subtask under a parent task
+  expected_tool_id: clickup.create_subtask
+  hidden_ids: []
+  kind: adversarial
+  note: Twin is clickup.create_task; query specifies nesting under a parent task
+- id: sel_043
+  catalog: catalog_500
+  query: check whether a monitor is currently in alert
+  expected_tool_id: datadog.get_monitor_status
+  hidden_ids: []
+  kind: plain
+  note: direct lexical match on monitor and status
+- id: sel_044
+  catalog: catalog_500
+  query: list the cards on a board
+  expected_tool_id: trello.list_cards
+  hidden_ids:
+  - trello.get_card
+  - trello.list_lists
+  - trello.get_board
+  kind: invisibility
+  note: Hiding trello.get_card forces fallback to list_cards to find details
+- id: sel_045
+  catalog: catalog_500
+  query: set up a new source to collect events from our app
+  expected_tool_id: segment.create_source
+  hidden_ids: []
+  kind: plain
+  note: direct lexical match on source and ingest
+- id: sel_046
+  catalog: catalog_500
+  query: add several records to a table in one call
+  expected_tool_id: airtable.create_records
+  hidden_ids: []
+  kind: adversarial
+  note: Twin is airtable.create_record; query targets bulk inserting multiple records
+- id: sel_047
+  catalog: catalog_500
+  query: schedule an online session with registration and QA
+  expected_tool_id: zoom.create_webinar
+  hidden_ids:
+  - zoom.create_meeting
+  kind: invisibility
+  note: Hiding zoom.create_meeting forces fallback to create_webinar to schedule a session
+- id: sel_048
+  catalog: catalog_500
+  query: show all the corporate card charges from last month
+  expected_tool_id: brex.list_card_transactions
+  hidden_ids: []
+  kind: adversarial
+  note: Twin is brex.list_cash_transactions; query specifies corporate credit card charges instead of cash transactions
+- id: sel_049
+  catalog: catalog_500
+  query: pull a project's full settings including its DSN
+  expected_tool_id: sentry.get_project_details
+  hidden_ids: []
+  kind: adversarial
+  note: Twin is sentry.get_project; query specifies full configuration and keys instead of basic info
+- id: sel_050
+  catalog: catalog_500
+  query: approve the pending order so it can ship
+  expected_tool_id: netsuite.approve_sales_order
+  hidden_ids: []
+  kind: plain
+  note: direct lexical match on approve and sales order

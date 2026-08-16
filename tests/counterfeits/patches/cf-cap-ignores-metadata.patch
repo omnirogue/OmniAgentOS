@@ -1,0 +1,28 @@
+diff --git a/omniagentos/employee_transcripts/storage.py b/omniagentos/employee_transcripts/storage.py
+index dd11f48..4be545f 100644
+--- a/omniagentos/employee_transcripts/storage.py
++++ b/omniagentos/employee_transcripts/storage.py
+@@ -260,21 +260,8 @@ class TranscriptStorageService:
+                 f"source must be one of {TRANSCRIPT_SOURCES}", kind="validation"
+             )
+         _validate_filename(filename)
+-        # Cap filename size at 512 bytes (encoded)
+-        filename_bytes = len(filename.encode("utf-8"))
+-        if filename_bytes > 512:
+-            raise TranscriptStorageError(
+-                f"SIZE_CAP: filename is {filename_bytes} bytes and exceeds 512 bytes",
+-                kind="size_cap",
+-            )
+-        # Cap meta_json size at 64 KiB (encoded)
+-        if meta_json is not None:
+-            meta_json_bytes = len(meta_json.encode("utf-8"))
+-            if meta_json_bytes > 65536:
+-                raise TranscriptStorageError(
+-                    f"SIZE_CAP: meta_json is {meta_json_bytes} bytes and exceeds 65536 bytes",
+-                    kind="size_cap",
+-                )
++        # COUNTERFEIT: metadata size caps removed entirely — an 8MB filename or
++        # an 8MB meta_json now rides past the content cap into the database.
+         if not isinstance(content, bytes):
+             raise TranscriptStorageError("content must be bytes", kind="validation")
+         if len(content) > self.max_bytes:

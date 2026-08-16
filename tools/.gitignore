@@ -1,0 +1,5 @@
+# Runtime state written by the local MCP servers (sqlite db, any custom
+# memory.jsonl an operator points here) — never committed. The library
+# itself (README, configs, installer, examples) is static and IS tracked.
+state/*
+!state/.gitkeep

@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<!-- Product-scoped OmniAgentOS job: blocked-session detector, every 5 min.
+     Deliberately SEPARATE from com.omniagentos.health-sentinel (1800s):
+     a stall detector and a drift audit have different SLOs, and sharing a label
+     means a slow audit starves detection. -->
+<dict>
+    <key>Label</key><string>{{LABEL}}</string>
+    <key>ProgramArguments</key>{{PROGRAM_ARGS}}
+    <key>WorkingDirectory</key><string>{{WORKING_DIR}}</string>
+    <key>StartInterval</key><integer>{{INTERVAL}}</integer>
+    <key>RunAtLoad</key><false/>
+    <key>StandardOutPath</key><string>{{WORKING_DIR}}/var/log/blocked-session-detector.log</string>
+    <key>StandardErrorPath</key><string>{{WORKING_DIR}}/var/log/blocked-session-detector.log</string>
+</dict>
+</plist>

@@ -1,0 +1,14 @@
+You are Fable, chief architect, performing the R3 MERGE. Two teams built the same spec (docs/ui-redesign/chat-v2/SPEC.md) independently:
+- TREE-Q = /Users/youruser/OmniAgentOS-wtQ (3 Qwen workers; reports: TEAM-Q-REPORT.md, TEAMK-BOARD-REPORT.md, TASKDETAIL-REPORT.md in its docs/ui-redesign/chat-v2/)
+- TREE-K = /Users/youruser/OmniAgentOS-wtK (Kimi; report: TEAM-KIMI-REPORT.md — claims 1159 backend + 271 frontend tests passing)
+- MAIN (your cwd) = /Users/youruser/OmniAgentOS — v1 + loops/audit merges. DO NOT touch: omniagentos/api/main.py router registrations except adding nothing new (no new routers needed — chats/board changes are in existing routers), the loops/system_jobs files, omni-ops/connections/pulse/routines features, docs/.
+
+YOUR JOB: for EACH domain — (a) chat backend (omniagentos/chats/, api/routes/chats.py, sessions/supervisor.py, memory/runner_hook.py, migration), (b) chat frontend (app/chats, features/chats), (c) board backend (intake.py /api/board + ETA + migration), (d) board frontend + dock (app/board, features/board), (e) task detail (app/activity, features/taskdetail) — compare both trees' implementations against SPEC.md's contracts and their own reports. Pick the better implementation per file/feature (judge: contract fidelity, code quality, test coverage, honesty fallbacks), then graft any superior individual pieces from the loser. Write the merged result into MAIN.
+
+CRITICAL MERGE RULES:
+1. Main already has omniagentos/db/migrations/086_control_plane.sql (another session). The teams' 086_board_project_scope.sql MUST be renumbered to the next free number in main's migrations dir (check first — likely 087) and its filename+internal references updated.
+2. Preserve main's unrelated concurrent-session files (audit/, context/, swarm/barriers.py, taskcontract/store.py, migrations 086_control_plane.sql) — never overwrite or delete files that don't belong to the chat/board/task-detail domains.
+3. ChatDTO/envelope/SSE contracts must match SPEC PART 3 exactly; where the trees deviate from each other, choose one coherent contract and make backend+frontend agree.
+4. Tests: bring the winner's tests for each domain (renumber/dedupe as needed).
+5. Write docs/ui-redesign/chat-v2/MERGE-REPORT.md: per-domain winner + why (≤6 lines each), pieces grafted from the loser, files written, conflicts resolved, anything left for the verification ladder.
+Be surgical and complete. No preamble.

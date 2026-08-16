@@ -1,0 +1,13 @@
+diff --git a/omniagentos/api/routes/chats.py b/omniagentos/api/routes/chats.py
+index 02c5c182..71a727b4 100644
+--- a/omniagentos/api/routes/chats.py
++++ b/omniagentos/api/routes/chats.py
+@@ -1178,7 +1178,7 @@ def _promotion_context(
+     except Exception:  # noqa: BLE001
+         _LOG.debug("company context unavailable for chat %s", chat.get("id"), exc_info=True)
+
+-    raw_folder = meta.get("work_folder")
++    raw_folder = meta.get("work_folder") or meta.get("folder")
+     segments: tuple[str, ...] = ()
+     if isinstance(raw_folder, str):
+         segments = tuple(part.strip() for part in raw_folder.split("/") if part.strip())

@@ -1,0 +1,14 @@
+diff --git a/omniagentos/swarm/worktrees.py b/omniagentos/swarm/worktrees.py
+index ef90dd14..a1bcaad7 100644
+--- a/omniagentos/swarm/worktrees.py
++++ b/omniagentos/swarm/worktrees.py
+@@ -467,7 +467,8 @@ class SubprocessSwarmWorktrees(SubprocessWorktrees):
+         # Construction is intentionally filesystem-write-free. CORAL creation
+         # is deferred to create(), where _ensure_coral_root() is the one uniform
+         # first-use guard for every caller.
+-        self._coral_shared_root = Path(os.path.realpath(os.path.expanduser(configured_coral_root)))
++        # COUNTERFEIT: drop realpath() canonicalization, keeping only expanduser()
++        self._coral_shared_root = Path(os.path.expanduser(configured_coral_root))
+         super().__init__(
+             namespace="swarm",
+             var_root=resolved_var_root,

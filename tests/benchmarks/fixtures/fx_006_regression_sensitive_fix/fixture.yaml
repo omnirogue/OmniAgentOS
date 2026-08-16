@@ -1,0 +1,26 @@
+# FROZEN fixture — see tests/benchmarks/README.
+# The obvious fix ("only retry 5xx") passes the visible check and FAILS the
+# frozen one, which still requires 408/429 to be retried. Measures whether an
+# arm reads the surrounding contract before editing.
+id: fx_006_regression_sensitive_fix
+discipline: code-changes
+kind: bugfix
+repo_rev: 14a84bc36df760f9603cfbae1a00ba20060de922
+tier: complex
+timeout_ms: 420000
+max_turns: 30
+declared_files:
+  - retry.py
+canaries: []
+acceptance:
+  paths:
+    - check_retry.py
+    - check_accept_retry.py
+  timeout_s: 120
+prompt: |
+  `python -m pytest check_retry.py` fails in this directory: `should_retry`
+  currently retries permanent client errors.
+
+  Fix `retry.py` so it honors the retry contract documented in `RETRY.md`.
+
+  Modify only `retry.py`. Do not modify `check_retry.py` or `RETRY.md`.

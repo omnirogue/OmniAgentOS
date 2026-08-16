@@ -1,0 +1,17 @@
+diff --git a/omniagentos/scheduler/loop_effects.py b/omniagentos/scheduler/loop_effects.py
+index 01bcfd0c..52d9d61b 100644
+--- a/omniagentos/scheduler/loop_effects.py
++++ b/omniagentos/scheduler/loop_effects.py
+@@ -834,11 +834,7 @@ def _run_model_complete(request: SeamRequest) -> dict[str, Any]:
+     # single tick that no claim can undo. Retrying is the seam's decision to
+     # make, once the outcome has been classified, not the client's to make
+     # blind.
+-    client = ShortCallClient(
+-        budget_guard=guard,
+-        default_model=args.get("model") or None,
+-        retry_transport=False,
+-    )
++    client = ShortCallClient(budget_guard=guard, default_model=args.get("model") or None)
+     kwargs: dict[str, Any] = {}
+     if "max_tokens" in args:
+         kwargs["max_tokens"] = args["max_tokens"]

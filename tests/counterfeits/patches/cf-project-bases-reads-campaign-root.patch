@@ -1,0 +1,13 @@
+diff --git a/omniagentos/projects/store.py b/omniagentos/projects/store.py
+index 7e05d243..5a790136 100644
+--- a/omniagentos/projects/store.py
++++ b/omniagentos/projects/store.py
+@@ -376,7 +376,7 @@ class ProjectStore:
+             # If org_companies / org_products table does not exist in the context
+             return []
+ 
+-        raw_bases = os.environ.get("OMNIAGENTOS_PROJECT_BASES", "")
++        raw_bases = os.environ.get("OMNIAGENTOS_SIM_CAMPAIGN_ROOT", "")
+         base_dir = ""
+         if raw_bases:
+             for item in raw_bases.split(os.pathsep):

@@ -1,0 +1,112 @@
+{
+  "_comment": "SHAPE MANIFEST of the real var/reflection/2026-08-05/evidence.json (2,374,444 bytes on disk). Records only the top-level key names, container types, item counts and encoded byte sizes -- no run content, no session text, nothing operational. Tests synthesise a same-shape evidence dict from this so the truncation path is exercised against the REAL proportions (runs = 2 entries / 20 KB, runs_ledger_attempts = 1867 entries / 1.26 MB) without checking a multi-megabyte blob into the repo.",
+  "source": "var/reflection/2026-08-05/evidence.json",
+  "captured_at": "2026-08-08",
+  "total_bytes": 2374444,
+  "top_level": [
+    {
+      "key": "date",
+      "type": "str",
+      "encoded_bytes": 12
+    },
+    {
+      "key": "started_at",
+      "type": "str",
+      "encoded_bytes": 22
+    },
+    {
+      "key": "finished_at",
+      "type": "str",
+      "encoded_bytes": 22
+    },
+    {
+      "key": "runs",
+      "type": "list",
+      "encoded_bytes": 20151,
+      "items": 2
+    },
+    {
+      "key": "attempts",
+      "type": "list",
+      "encoded_bytes": 3593,
+      "items": 5
+    },
+    {
+      "key": "sessions",
+      "type": "list",
+      "encoded_bytes": 320597,
+      "items": 268
+    },
+    {
+      "key": "formation_selections",
+      "type": "list",
+      "encoded_bytes": 5618,
+      "items": 4
+    },
+    {
+      "key": "metacog_memory_candidates",
+      "type": "list",
+      "encoded_bytes": 2,
+      "items": 0
+    },
+    {
+      "key": "session_logs",
+      "type": "list",
+      "encoded_bytes": 2,
+      "items": 0
+    },
+    {
+      "key": "router_shadow_logs",
+      "type": "list",
+      "encoded_bytes": 2,
+      "items": 0
+    },
+    {
+      "key": "openhands_gate_denials",
+      "type": "list",
+      "encoded_bytes": 2,
+      "items": 0
+    },
+    {
+      "key": "runs_ledger_attempts",
+      "type": "list",
+      "encoded_bytes": 1263219,
+      "items": 1867
+    },
+    {
+      "key": "workbook_end_states",
+      "type": "list",
+      "encoded_bytes": 50646,
+      "items": 14
+    },
+    {
+      "key": "harness_transcripts",
+      "type": "dict",
+      "encoded_bytes": 170725,
+      "items": 6
+    },
+    {
+      "key": "compiled_learnings",
+      "type": "list",
+      "encoded_bytes": 50177,
+      "items": 7
+    },
+    {
+      "key": "failure_tags",
+      "type": "list",
+      "encoded_bytes": 1427,
+      "items": 6
+    },
+    {
+      "key": "bytes_read",
+      "type": "int",
+      "encoded_bytes": 8
+    },
+    {
+      "key": "caps_hit",
+      "type": "list",
+      "encoded_bytes": 975,
+      "items": 12
+    }
+  ]
+}

@@ -1,0 +1,17 @@
+version: 1
+fixture_id: CR-AD-01
+domain: creative
+workstream: ad_batch
+seed: 40201
+scenario_id: northstar-creative-ad-batch-v1
+required_context: [brand_voice, audience, forbidden_terms, offer]
+required_grants: [asset_read, draft_write]
+expected_events: [brief.accepted, drafts.generated, review.completed, export.staged]
+expected_outcome: reviewed_batch
+expected_actions: [read_brief, draft_copy, run_style_check]
+tolerances:
+  batch_size: 20
+  forbidden_term_hits: 0
+  off_brief_items: 0
+  reviewer_score_min: 3
+fault_ids: [F-20, F-26]

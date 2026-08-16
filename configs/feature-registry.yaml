@@ -1,0 +1,299 @@
+# Curated axis of the dual-axis feature registry (unified plan B-1).
+# Read by scripts/feature_registry/registry.py; docs: docs/testing/FEATURE-REGISTRY.md.
+#
+# WHY THIS FILE IS SEPARATE FROM configs/feature-health.yaml
+#   feature-health.yaml is an owner-governed surface (unified plan section 2,
+#   DO-NOT-REBUILD register) and may be extended only through its own channel.
+#   This overlay is keyed by the SAME feature names and carries the metadata the
+#   registry needs. The two key sets must match exactly — the generator refuses
+#   when either side has a feature the other does not.
+#
+# selectors decide which GENERATED items belong to a feature:
+#   route_areas       fnmatch over ARCHI.json's third route field (the area tag)
+#   route_prefixes    literal path prefix over ARCHI.json's route path
+#   launchd_labels    fnmatch over ARCHI.json launchd job labels
+#   migration_patterns fnmatch over migration filenames (ARCHI + migrations dir)
+#   livesim_categories fnmatch over configs/livesim-registry.yaml categories
+# An item claimed by two features goes to the most SPECIFIC selector, with an
+# alphabetical tiebreak, and the multi-claim is published in `contested`.
+# Items claimed by nobody are published in `unattributed` — never dropped.
+# Leaving a selector list empty is a legitimate statement ("no generated item of
+# this kind belongs to this feature"), not a gap to be papered over.
+schema: feature-registry-curated.v1
+features:
+  jira:
+    stable_id: feat.jira
+    aliases: []
+    criticality: medium
+    blast_radius: subsystem
+    expected_behavior: >-
+      Jira connector authenticates, syncs issues under the configured project
+      key, and refuses unknown project keys with a 400 that names the allowed set.
+    selectors:
+      route_areas: [jira]
+      route_prefixes: []
+      launchd_labels: []
+      migration_patterns: ['*jira*']
+      livesim_categories: []
+      ui_paths: []
+  goals:
+    stable_id: feat.goals
+    aliases: [objectives]
+    criticality: high
+    blast_radius: estate
+    expected_behavior: >-
+      Goal and company-goal CRUD stay live and the goal collectors keep producing
+      progress rows on their tick.
+    selectors:
+      route_areas: [goals, company_goals, categories]
+      route_prefixes: []
+      launchd_labels: []
+      migration_patterns: ['*goal*']
+      livesim_categories: []
+      ui_paths: [/goals]
+  routines:
+    stable_id: feat.routines
+    aliases: [schedules]
+    criticality: high
+    blast_radius: estate
+    expected_behavior: >-
+      Routines tick on schedule, record runs with cost, and survive a restart
+      without double-firing.
+    selectors:
+      route_areas: [routines]
+      route_prefixes: []
+      launchd_labels: ['com.omniagentos.routines']
+      migration_patterns: ['*routine*']
+      livesim_categories: []
+      ui_paths: [/routines]
+  tasks:
+    stable_id: feat.tasks
+    aliases: [board]
+    criticality: critical
+    blast_radius: estate
+    expected_behavior: >-
+      Intake admits work, the board claims and transitions tasks under contract,
+      and dispatch routes every claimed task exactly once.
+    selectors:
+      route_areas: [intake, collab, board_files]
+      route_prefixes: []
+      launchd_labels: ['com.omniagentos.backlog-executor']
+      migration_patterns: ['*task*', '*board*', '*intake*', '*contract*']
+      livesim_categories: []
+      ui_paths: [/board, /activity, /approvals]
+  single_agent:
+    stable_id: feat.single_agent
+    aliases: [solo]
+    criticality: critical
+    blast_radius: estate
+    expected_behavior: >-
+      A single agent session starts, streams, settles its usage, and closes with
+      a terminal state recorded.
+    selectors:
+      route_areas: [sessions, chats]
+      route_prefixes: []
+      launchd_labels: ['com.omniagentos.blocked-session-detector']
+      migration_patterns: ['*session*', '*chat*']
+      livesim_categories: []
+      ui_paths: [/chat, /chats, /sessions, /agents]
+  multi_agent:
+    stable_id: feat.multi_agent
+    aliases: [swarm]
+    criticality: critical
+    blast_radius: estate
+    expected_behavior: >-
+      Swarm planning produces a bundle, the runner provisions lanes, and every
+      lane's outcome is attributable to its dispatch decision.
+    selectors:
+      route_areas: [swarm, grok_ops, models_formation]
+      route_prefixes: []
+      launchd_labels: ['com.omniagentos.runner', 'com.omniagentos.swarm-optimizer',
+                       'com.omniagentos.agent-watchdog', 'com.omniagentos.planner-canary']
+      migration_patterns: ['*swarm*', '*dispatch*', '*runner*']
+      livesim_categories: [orchestration]
+      ui_paths: [/swarm, /runs, /executions, /grok]
+  dag:
+    stable_id: feat.dag
+    aliases: [graph_runtime]
+    criticality: high
+    blast_radius: subsystem
+    expected_behavior: >-
+      Graph runtime executes node DAGs in dependency order and CBM outcomes are
+      recorded per node.
+    selectors:
+      route_areas: [graph, cbm]
+      route_prefixes: []
+      launchd_labels: []
+      migration_patterns: ['*graph*', '*cbm*', '*dag*']
+      livesim_categories: []
+      ui_paths: [/graph]
+  memory:
+    stable_id: feat.memory
+    aliases: [recall]
+    criticality: high
+    blast_radius: estate
+    expected_behavior: >-
+      Facts and memories persist, recall returns them for the right scope, and
+      the session ledger stays append-only and chain-sealed.
+    selectors:
+      route_areas: [knowledge, memlife, session_ledger]
+      route_prefixes: []
+      launchd_labels: []
+      migration_patterns: ['*memor*', '*knowledge*', '*fact*', '*ledger*']
+      livesim_categories: [memory, context]
+      ui_paths: [/memory, /memlife, /knowledge, /vault]
+  skill_injection:
+    stable_id: feat.skill_injection
+    aliases: [skills]
+    criticality: medium
+    blast_radius: subsystem
+    expected_behavior: >-
+      The right skills are selected for a task and injected into the prompt
+      within the configured budget.
+    selectors:
+      route_areas: []
+      route_prefixes: [/skills]
+      launchd_labels: []
+      migration_patterns: ['*skill*']
+      livesim_categories: [skills]
+      ui_paths: [/skills]
+  tool_injection:
+    stable_id: feat.tool_injection
+    aliases: [tools]
+    criticality: medium
+    blast_radius: subsystem
+    expected_behavior: >-
+      Tools and mounts are offered to an agent only where the broker permits
+      them, and file search stays scoped to the granted mounts.
+    selectors:
+      route_areas: [mounts, workfs, filesearch]
+      route_prefixes: []
+      launchd_labels: []
+      migration_patterns: ['*tool*', '*mount*', '*grant*']
+      livesim_categories: [tools_permissions, files_fs]
+      ui_paths: [/files, /connections, /capabilities]
+  allocation:
+    stable_id: feat.allocation
+    aliases: [org]
+    criticality: high
+    blast_radius: estate
+    expected_behavior: >-
+      Projects, org hierarchy and accounts stay consistent, and allocation picks
+      a provisioned agent for every accepted request.
+    selectors:
+      route_areas: [projects, hierarchy, org, orgdims, accounts, access, provision]
+      route_prefixes: []
+      launchd_labels: []
+      migration_patterns: ['*project*', '*alloc*', '*account*', '*agent*']
+      livesim_categories: []
+      ui_paths: [/projects, /organization, /orgdims, /accounts]
+  # ---- landed since 2026-07-31 (registered 2026-08-11, feature-health.yaml
+  # sibling entries) ----------------------------------------------------------
+  team_work_os:
+    stable_id: feat.team_work_os
+    aliases: [team]
+    criticality: high
+    blast_radius: estate
+    expected_behavior: >-
+      Team Work OS ingests attribution evidence, scores and verifies board
+      tasks, and produces the scheduled team report without silent drops.
+    selectors:
+      route_areas: [team]
+      route_prefixes: []
+      launchd_labels: ['com.omniagentos.team-report', 'com.omniagentos.team-sweep']
+      migration_patterns: ['*team*']
+      livesim_categories: []
+      ui_paths: [/team]
+  landing_pipeline:
+    stable_id: feat.landing_pipeline
+    aliases: [gate_loop, threeloops]
+    criticality: critical
+    blast_radius: estate
+    expected_behavior: >-
+      The gate-loop assembles and lands trains, publish-queue drains claims on
+      its timer, and the ledger stays append-only and readable under
+      claim/park contention.
+    selectors:
+      route_areas: []
+      route_prefixes: []
+      # ARCHI does not inventory these plists (they live under
+      # pipeline/launchd/, not the com.omniagentos.* set ARCHI tracks), so
+      # this selector honestly documents ownership even though it currently
+      # attributes zero ARCHI-sourced launchd items.
+      launchd_labels: ['com.threeloops.*']
+      migration_patterns: []
+      livesim_categories: []
+      ui_paths: []
+  account_pool:
+    stable_id: feat.account_pool
+    aliases: [accounts]
+    criticality: high
+    blast_radius: estate
+    expected_behavior: >-
+      The pool of provider accounts rotates, pauses and resumes cleanly, and
+      quota/cooldown state never silently strands a healthy account.
+    selectors:
+      # Contests with allocation's existing accounts/account selectors (both
+      # entries pre-date this split); most-specific + alphabetical tiebreak
+      # awards these to account_pool, which is the semantically correct owner
+      # (omniagentos/accounts + omniagentos/routing/account_pool.py, not
+      # allocation's org/project hierarchy). See report note.
+      route_areas: [accounts]
+      route_prefixes: []
+      launchd_labels: []
+      migration_patterns: ['*account*']
+      livesim_categories: []
+      ui_paths: [/accounts]
+  control_plane:
+    stable_id: feat.control_plane
+    aliases: [loopdeck, engine]
+    criticality: high
+    blast_radius: estate
+    expected_behavior: >-
+      The LoopDeck engine API serves runs, tasks, approvals, budgets and
+      disciplines consistently with the loop ledger it reads from.
+    selectors:
+      # Contests with api_ui's existing broad `control` area claim; alphabetical
+      # tiebreak (api_ui < control_plane) keeps those routes attributed to
+      # api_ui in generated output today — this selector documents the true
+      # owner and shows up in `contested` rather than silently losing. See
+      # report note.
+      route_areas: [control]
+      route_prefixes: []
+      launchd_labels: []
+      migration_patterns: ['*control_plane*']
+      livesim_categories: []
+      ui_paths: [/control-plane]
+  northstar_cert:
+    stable_id: feat.northstar_cert
+    aliases: [nscert]
+    criticality: medium
+    blast_radius: subsystem
+    expected_behavior: >-
+      The certification instrument seeds holdouts, records cadence results and
+      files gap findings without an instrument error reading as a candidate
+      defect.
+    selectors:
+      route_areas: []
+      route_prefixes: []
+      launchd_labels: []
+      migration_patterns: []
+      livesim_categories: []
+      ui_paths: []
+  api_ui:
+    stable_id: feat.api_ui
+    aliases: [dashboard]
+    criticality: high
+    blast_radius: estate
+    expected_behavior: >-
+      The API serves the dashboard's surfaces with correct empty states, and
+      health, notifications and briefings render without a stale cache.
+    selectors:
+      route_areas: [system, control, today, pulse, notifications, alerts, briefings,
+                    artifacts_preview, voice, comms]
+      route_prefixes: []
+      launchd_labels: ['com.omniagentos.api', 'com.omniagentos.dashboard',
+                       'com.omniagentos.remote-proxy']
+      migration_patterns: ['*notification*', '*briefing*', '*alert*']
+      livesim_categories: [api_endpoints]
+      ui_paths: [/today, /pulse, /system, /alerts, /briefing, /comms, /updates, /design, /suggestions, /artifacts]

@@ -1,0 +1,30 @@
+.categoryGrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(20rem, 1fr)); gap: var(--space-3); }
+.categoryCard { min-width: 0; }
+.categoryHeading { display: flex; align-items: baseline; justify-content: space-between; gap: var(--space-2); margin-bottom: var(--space-3); }
+.categoryHeading h3 { margin: 0; font-size: var(--text-h3); }
+.categoryHeading span { color: var(--text-muted); font-size: var(--text-small); }
+
+.skillList { padding: 0; margin: 0; list-style: none; display: flex; flex-direction: column; gap: var(--space-3); }
+.skillList li { padding-top: var(--space-3); border-top: 1px solid var(--border); }
+.skillList li:first-child { padding-top: 0; border-top: none; }
+
+.skillRow { display: flex; align-items: baseline; justify-content: space-between; gap: var(--space-2); flex-wrap: wrap; }
+.skillName { font-weight: 600; color: var(--text); overflow-wrap: anywhere; }
+.skillName a { color: inherit; text-decoration: none; }
+.skillName a:hover { text-decoration: underline; }
+.skillDescription { margin: var(--space-1) 0 0; color: var(--text-muted); overflow-wrap: anywhere; }
+.symlinkTarget { margin: var(--space-1) 0 0; color: var(--text-faint, var(--text-muted)); font-size: var(--text-small); font-family: var(--font-mono, monospace); overflow-wrap: anywhere; }
+
+.empty { margin: 0; color: var(--text-muted); }
+.unavailable { margin: 0; color: var(--danger); overflow-wrap: anywhere; }
+
+.dormantSection { opacity: 0.72; }
+.dormantList { padding: 0; margin: 0; list-style: none; display: flex; flex-direction: column; gap: var(--space-2); }
+.dormantList li { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; align-items: center; gap: var(--space-2); padding: var(--space-2) 0; border-top: 1px solid var(--border); }
+.dormantList li:first-child { border-top: none; }
+.dormantNote { margin: var(--space-2) 0 var(--space-3); color: var(--text-muted); font-size: var(--text-small); }
+
+.repoSkillMeta { display: flex; align-items: center; gap: var(--space-2); margin-top: var(--space-1); }
+
+.detailMeta { display: flex; align-items: center; gap: var(--space-2); flex-wrap: wrap; margin: var(--space-2) 0 var(--space-4); }
+.detailDescription { color: var(--text-muted); margin: 0 0 var(--space-4); }

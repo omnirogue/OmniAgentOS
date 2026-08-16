@@ -1,0 +1,23 @@
+You are Fable, chief architect, working in the git worktree /Users/youruser/OmniAgentOS-wtTest (branch chat-test) of OmniAgentOS. You have full tool access. The chat v2 (ChatSurface, composer deck, ChatTurnBridge, board dock) is merged here, plus a critical fix: the bridge now reads the LIVE CLI transcript (omniagentos/sessions/transcript.py) — solo AND swarm flows are verified working.
+
+The stack is RUNNING: API on http://127.0.0.1:8486 (session token: `cat var/secrets/sessions-token`; mutating calls need header X-Session-Token). The API was started with OMNIAGENTOS_API_BASE_URL=http://127.0.0.1:8486 and OMNIAGENTOS_API_PORT=8486 — if you restart it, keep those.
+
+PHASE 1 — INDEPENDENT VERIFICATION (redo both tests yourself, fix anything that fails for you):
+1. SOLO: POST /api/chats {"title":"Fable solo"} → POST /api/chats/{id}/messages {"content":"Reply with exactly: FABLE-SOLO-OK"} → poll GET /api/chats/{id}/messages every 10s up to 3min until a role="agent" turn appears. Assert content present.
+2. SWARM: POST /api/chats/{id}/spawn {"goal":"Reply with exactly FABLE-SWARM-OK","count":2} → GET /api/board?parent_task_id=<companion> until all children reach done/completed (up to 5min). Assert both tasks visible on the unfiltered /api/board and their sessions produced output.
+3. If anything fails: diagnose to root cause, fix it (code or env), re-test until green. Run `uv run pytest tests/chats tests/sessions -q` after any backend change — keep all green.
+
+PHASE 2 — FOLDERS: COLOR-CODED + EDITABLE (implement fully):
+Context: chat folders are free-text strings in chats.meta_json.folder. Sidebar (dashboard/src/features/chats/ChatSidebar.tsx) groups by them.
+Backend (omniagentos/):
+- New migration (verify next free number in omniagentos/db/migrations/ — main currently has through 087): `chat_folders(name TEXT PRIMARY KEY, color TEXT NOT NULL, position INTEGER, created_at, updated_at)`.
+- ChatStore: folder registry methods (list with colors, rename (moves all chats to the new name, re-key registry row), set_color, delete (chats fall back to Inbox)).
+- Routes (api/routes/chats.py): GET /api/chats/folders now returns {folders:[{name,color,chat_count}]}; POST /api/chats/folders/{name}/rename {new_name}; POST /api/chats/folders/{name}/color {color}; keep backward compat with the old {folders:[string]} consumers if any remain (search the dashboard first and update them).
+- Palette: 8 folder colors as named tokens (no hex in API — store the token name: gray, red, orange, yellow, green, teal, blue, violet).
+- pytest for all of it.
+Frontend (dashboard/):
+- theme.css additions ONLY (tokens.ts is FROZEN): --ds-folder-{gray,red,orange,yellow,green,teal,blue,violet} for dark+light.
+- ChatSidebar: folder groups render a colored dot (var(--ds-folder-<color>)); folder context menu gains "Rename…" (inline edit) and a color swatch row (8 tokens); new-folder creation lets you pick a color. Design primitives only, zero inline styles (swatch dots via CSS classes), dark-mode-safe, keyboard reachable.
+- vitest for the folder color/rename logic.
+PHASE 3 — Write docs/ui-redesign/chat-v2/FABLE-TEST-FOLDERS-REPORT.md: test evidence (timestamps, ids), any fixes, the folder implementation, files changed, verification output.
+RULES: no git mutations (no commit/branch/push), no new dependencies, keep every pinned contract, work only in this worktree.

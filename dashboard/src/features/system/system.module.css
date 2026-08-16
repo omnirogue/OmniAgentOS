@@ -1,0 +1,369 @@
+/* System transparency surface — panels for map / agents / skills / improvers / log. */
+
+.visionLine {
+  font-size: var(--text-small);
+  color: var(--text-muted);
+  line-height: 1.6;
+  margin: 0;
+}
+.visionLine strong {
+  color: var(--text);
+  font-weight: 600;
+}
+
+/* ── file-path affordance ─────────────────────────────────────────── */
+
+.pathChip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  max-width: 100%;
+  flex-wrap: wrap;
+}
+.pathLabel {
+  font-size: var(--text-micro);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-faint);
+}
+.pathCode {
+  font-family: var(--font-mono);
+  font-size: var(--text-micro);
+  color: var(--text-muted);
+  background: var(--overlay);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 0.1em 0.45em;
+  overflow-x: auto;
+  white-space: nowrap;
+  max-width: min(100%, 46rem);
+}
+.copyBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3em;
+  font-size: var(--text-micro);
+  color: var(--text-muted);
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 0.15em 0.5em;
+  cursor: pointer;
+}
+.copyBtn:hover {
+  color: var(--text);
+  border-color: var(--border-strong);
+}
+.editableNote {
+  font-size: var(--text-micro);
+  color: var(--text-faint);
+  margin: var(--space-2) 0 0;
+  font-style: italic;
+}
+
+/* ── map panel ────────────────────────────────────────────────────── */
+
+.mmdSource {
+  margin: 0;
+  padding: var(--space-4);
+  background: var(--overlay);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  overflow-x: auto;
+  max-height: 32rem;
+  overflow-y: auto;
+  font-family: var(--font-mono);
+  font-size: var(--text-small);
+  line-height: 1.55;
+  color: var(--text);
+  white-space: pre;
+}
+.metaRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-4);
+  align-items: center;
+  margin-bottom: var(--space-3);
+  font-size: var(--text-micro);
+  color: var(--text-faint);
+}
+.archiBody {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: var(--space-5);
+  background: var(--surface-raised);
+  max-height: 42rem;
+  overflow-y: auto;
+}
+
+/* ── filters ──────────────────────────────────────────────────────── */
+
+.filterBar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  align-items: flex-end;
+  margin-bottom: var(--space-4);
+}
+.filterField {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3em;
+  min-width: 12rem;
+}
+.filterLabel {
+  font-size: var(--text-micro);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-faint);
+}
+.chipRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-bottom: var(--space-4);
+}
+.chip {
+  font-size: var(--text-micro);
+  color: var(--text-muted);
+  background: var(--surface-raised);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 0.25em 0.75em;
+  cursor: pointer;
+}
+.chip:hover {
+  border-color: var(--border-strong);
+  color: var(--text);
+}
+.chipActive {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-text, #fff);
+}
+
+/* ── agent row expansion ──────────────────────────────────────────── */
+
+.expandBtn {
+  background: transparent;
+  border: none;
+  color: var(--accent);
+  cursor: pointer;
+  font-size: var(--text-small);
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3em;
+}
+.agentName {
+  font-weight: 600;
+  color: var(--text);
+}
+.mutedCell {
+  color: var(--text-muted);
+  font-size: var(--text-small);
+}
+.faintCell {
+  color: var(--text-faint);
+  font-size: var(--text-micro);
+}
+.detailPanel {
+  border: 1px solid var(--border);
+  border-top: none;
+  border-radius: 0 0 var(--radius-md) var(--radius-md);
+  padding: var(--space-4);
+  background: var(--surface-raised);
+  margin-bottom: var(--space-3);
+}
+.editRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  align-items: flex-end;
+  margin-bottom: var(--space-3);
+}
+.editField {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3em;
+  min-width: 9rem;
+}
+.promptPre {
+  margin: var(--space-3) 0 0;
+  padding: var(--space-4);
+  background: var(--overlay);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  overflow: auto;
+  max-height: 34rem;
+  font-family: var(--font-mono);
+  font-size: var(--text-small);
+  line-height: 1.55;
+  color: var(--text);
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+/* ── improver loop cards ──────────────────────────────────────────── */
+
+.loopCard {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: var(--space-4);
+  background: var(--surface-raised);
+  margin-bottom: var(--space-4);
+}
+.loopHead {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-3);
+  align-items: baseline;
+  justify-content: space-between;
+}
+.loopLabel {
+  font-family: var(--font-mono);
+  font-weight: 600;
+  color: var(--text);
+  font-size: var(--text-body);
+}
+.loopMeta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  font-size: var(--text-micro);
+  color: var(--text-faint);
+  margin-top: var(--space-2);
+}
+.logTail {
+  margin: var(--space-3) 0 0;
+  padding: var(--space-3);
+  background: var(--overlay);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  overflow-x: auto;
+  max-height: 14rem;
+  overflow-y: auto;
+  font-family: var(--font-mono);
+  font-size: var(--text-micro);
+  line-height: 1.5;
+  color: var(--text-muted);
+  white-space: pre;
+}
+
+/* ── improver prompt editor ───────────────────────────────────────── */
+
+.promptEditWrap {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3em;
+  margin-top: var(--space-3);
+}
+.promptEditor {
+  width: 100%;
+  margin-top: 0.2em;
+  padding: var(--space-4);
+  background: var(--overlay);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  min-height: 18rem;
+  max-height: 44rem;
+  resize: vertical;
+  font-family: var(--font-mono);
+  font-size: var(--text-small);
+  line-height: 1.55;
+  color: var(--text);
+  tab-size: 2;
+}
+.promptEditor:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 1px var(--accent);
+}
+.promptEditor:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+.saveRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+  margin-top: var(--space-3);
+}
+.byteCount {
+  font-size: var(--text-micro);
+  color: var(--text-faint);
+  font-variant-numeric: tabular-nums;
+}
+.byteCountOver {
+  color: var(--danger);
+  font-weight: 600;
+}
+.policyHint {
+  font-size: var(--text-micro);
+  color: var(--text-faint);
+  margin: var(--space-2) 0 0;
+  font-style: italic;
+}
+.historyBlock {
+  margin-top: var(--space-3);
+  padding-left: var(--space-3);
+  border-left: 2px solid var(--border);
+}
+
+/* ── improvement-log timeline ─────────────────────────────────────── */
+
+.timeline {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+.logEntry {
+  border-left: 2px solid var(--border-strong);
+  padding: 0 0 0 var(--space-4);
+}
+.logEntryHead {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-3);
+  align-items: baseline;
+}
+.logTs {
+  font-family: var(--font-mono);
+  font-size: var(--text-micro);
+  color: var(--text-faint);
+}
+.logSummary {
+  color: var(--text);
+  font-size: var(--text-small);
+  margin: var(--space-1) 0 0;
+}
+.changeList {
+  margin: var(--space-2) 0 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2em;
+}
+.changeItem {
+  font-size: var(--text-micro);
+  color: var(--text-muted);
+  display: flex;
+  gap: var(--space-2);
+  align-items: baseline;
+}
+.changePath {
+  font-family: var(--font-mono);
+  color: var(--text-faint);
+}
+
+/* Inline-style migration (no-restricted-syntax): combined cell/row classes. */
+.summaryCell { composes: faintCell; max-width: 26rem; }
+.metaRowSpaced { composes: metaRow; margin-top: var(--space-4); }
+.clickableRow { cursor: pointer; }
+.descCell { composes: faintCell; margin-left: 1.3em; max-width: 38rem; }
+.detailCell { padding: 0; }
+.badgeRow { display: flex; gap: var(--space-2); flex-wrap: wrap; }
+.loopMetaSpaced { composes: loopMeta; margin-top: var(--space-3); }
+.historyToggle { margin-top: var(--space-3); }

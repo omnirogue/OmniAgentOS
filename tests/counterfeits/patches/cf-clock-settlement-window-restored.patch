@@ -1,0 +1,17 @@
+diff --git a/tests/test_grandfather_clock_gate.py b/tests/test_grandfather_clock_gate.py
+index 8148e258..1c7a454d 100644
+--- a/tests/test_grandfather_clock_gate.py
++++ b/tests/test_grandfather_clock_gate.py
+@@ -389,6 +389,12 @@ def get_artifact_path() -> Path:
+             f"expected {stamped_dir}"
+         )
+ 
++    if age > 3600:
++        _refuse(
++            f"{artifact} is stamped {raw_stamp}, {age / 60:.1f} minutes old — outside "
++            "the 60-minute settlement window. The run being graded did not produce it"
++        )
++
+     days_old = (_clock_day(now) - stamped_day).days
+     if days_old > MAX_ARTIFACT_AGE_DAYS:
+         _refuse(

@@ -1,0 +1,15 @@
+# corpus.d/merge-gate-history-sweep.toml — counterfeits owned by lane
+# `merge-gate-history-sweep`. The entry re-opens the gap between what the merge
+# gate MEASURES (the three-dot net diff) and what it MERGES (`--no-ff`, so every
+# commit in merge-base..candidate lands in main's history). Nothing downstream
+# can catch this one: once the merge commit exists, the blob is in main forever
+# and no later gate re-reads history.
+
+[[counterfeit]]
+id = "cf-merge-gate-secret-scan-net-diff-only"
+patch = "patches/cf-merge-gate-secret-scan-net-diff-only.patch"
+rationale = "Puts BOTH secret scans in scripts/merge-gate.sh back on `git diff --name-only HEAD...$CANDIDATE_SHA` — the hoisted MERGE_GATE_PINNED=1 refusal and the standard ladder check — which is how the gate shipped. That diff is the NET tree delta between main and the candidate tip, while the gate merges with `git merge --no-ff` (trial-merge, and the real merge after it), so a branch that adds `secrets/counterfeit.env` in commit 1 and deletes it in commit 2 presents a perfectly clean net diff and still lands the secret blob in main's history permanently. The realistic regression is not an attacker crafting that sequence but the ordinary one: a developer commits a real .env, notices, deletes it in the next commit, and every path-shaped check the gate owns then reports `ok` — so the counterfeit proves the property end to end, with a real secret really committed. With the patch applied that branch earns MERGE GATE: PASS; without it the gate sweeps merge-base..candidate and refuses, naming a path that is not in the tip tree at all."
+must_fail = [
+  "tests/scripts/test_merge_gate_history_sweep.py::test_secret_added_then_deleted_across_commits_is_refused",
+]
+failure_re = "AN ADD-THEN-DELETE SECRET SURVIVED THE NET DIFF|did not bind exactly once"

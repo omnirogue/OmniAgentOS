@@ -1,0 +1,430 @@
+/* Routines feature content classes. Page-level layout/header come from the shared
+   <Page>/<PageHeader> (@/design) — see app/routines and app/routines/new, following
+   features/steward/steward.module.css and features/capabilities/capabilities.module.css's
+   conventions. */
+.muted { color: var(--text-muted); font-size: var(--text-small); }
+.faint { color: var(--text-faint); font-size: var(--text-micro); }
+.row { display: flex; align-items: center; gap: var(--space-2); flex-wrap: wrap; }
+.mono { font-family: var(--font-mono); }
+
+.backLink {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  color: var(--text-muted);
+  font-size: var(--text-small);
+  text-decoration: none;
+}
+.backLink:hover { color: var(--text); }
+
+.actionsRow { display: flex; align-items: center; gap: var(--space-2); }
+
+.autoPauseNote {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+  color: var(--danger);
+  font-size: var(--text-small);
+}
+
+/* ---------------------------------------------------------------- create-routine flow */
+
+.createGrid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 22rem;
+  gap: var(--space-5);
+  align-items: start;
+}
+
+@media (max-width: 64rem) {
+  .createGrid { grid-template-columns: 1fr; }
+}
+
+.formGrid { display: grid; gap: var(--space-4); }
+.formRow { display: grid; grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr)); gap: var(--space-3); }
+.fieldGroup { display: grid; gap: var(--space-1); }
+.fieldLabel { display: block; margin-bottom: var(--space-1); }
+.fieldHint { color: var(--text-faint); font-size: var(--text-micro); margin: 0; }
+.sectionTitle { margin: 0 0 var(--space-3); font-size: var(--text-h3); }
+
+.requiredChecklist { display: grid; gap: var(--space-2); margin-top: var(--space-2); }
+.checklistItem { display: flex; align-items: center; gap: var(--space-2); font-size: var(--text-small); }
+
+.stickyPanel { position: sticky; top: var(--space-4); display: grid; gap: var(--space-4); }
+
+.errorList { display: grid; gap: var(--space-1); margin: 0; padding-left: var(--space-4); }
+
+
+/* ---------------------------------------------------------------- Loops page */
+
+.loopsHero {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.eyebrowText {
+  color: var(--text-faint);
+  font-size: var(--text-micro);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-weight: 600;
+}
+
+.loopsLead {
+  color: var(--text-muted);
+  margin: 0;
+  max-width: 62ch;
+}
+
+.loopsGrid {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.loopsMain {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.loopsSide {
+  display: grid;
+  gap: var(--space-4);
+}
+
+@media (min-width: 72rem) {
+  .loopsGrid {
+    grid-template-columns: minmax(0, 1fr) 22rem;
+    align-items: start;
+  }
+  .loopsSide {
+    position: sticky;
+    top: var(--space-4);
+  }
+}
+
+/* Loops table — the main list with countdown, sparkline, run state, actions. */
+
+.loopNameCell { display: grid; gap: var(--space-1); }
+.loopNamePrimary { font-weight: 600; }
+.loopDescription {
+  color: var(--text-muted);
+  font-size: var(--text-small);
+  line-height: 1.4;
+}
+
+.countdownCell {
+  display: grid;
+  gap: var(--space-1);
+  font-variant-numeric: tabular-nums;
+}
+.countdownValue { font-weight: 600; }
+.countdownMuted { color: var(--text-faint); font-size: var(--text-micro); }
+
+.sparklineCell {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+.sparklineLabel {
+  color: var(--text-muted);
+  font-size: var(--text-small);
+  font-variant-numeric: tabular-nums;
+  min-width: 3rem;
+  text-align: right;
+}
+
+.liveStateDot {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--text-small);
+}
+
+/* RecentRunsPanel timeline */
+
+.panelHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: var(--space-3);
+  margin-bottom: var(--space-3);
+}
+.panelTitle {
+  margin: 0;
+  font-size: var(--text-h3);
+  font-weight: 600;
+}
+.panelSubtitle {
+  color: var(--text-muted);
+  font-size: var(--text-small);
+  margin: var(--space-1) 0 0;
+}
+.refreshIcon {
+  color: var(--text-faint);
+  flex-shrink: 0;
+  margin-top: var(--space-1);
+}
+
+.timeline {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--space-2);
+  max-height: 28rem;
+  overflow-y: auto;
+}
+.timelineRow {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-1);
+  border-bottom: 1px solid var(--border-soft, var(--border));
+  transition: background-color var(--duration-fast, 160ms) ease-out;
+}
+.timelineRow:last-child { border-bottom: none; }
+.timelineRow:hover { background-color: var(--bg-soft); }
+
+.timelineDot {
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  margin-top: 0.45rem;
+  background-color: var(--text-faint);
+  transition: transform var(--duration-fast, 160ms) ease-out;
+}
+.timelineDot[data-tone="ok"] { background-color: var(--ok); }
+.timelineDot[data-tone="danger"] { background-color: var(--danger); }
+.timelineDot[data-tone="warn"] { background-color: var(--warn); }
+.timelineRow:hover .timelineDot { transform: scale(1.2); }
+
+.timelineBody { display: grid; gap: var(--space-1); min-width: 0; }
+.timelineHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+.timelineName {
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.timelineMeta {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+  color: var(--text-muted);
+  font-size: var(--text-small);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Recommended loops card */
+
+.recommendations {
+  display: grid;
+  gap: var(--space-3);
+}
+.recommendationRow {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  align-items: center;
+  transition: border-color var(--duration-fast, 160ms) ease-out,
+    background-color var(--duration-fast, 160ms) ease-out;
+}
+.recommendationRow:hover {
+  border-color: var(--accent);
+  background-color: var(--bg-soft);
+}
+.recommendationBody { display: grid; gap: var(--space-1); min-width: 0; }
+.recommendationTitle {
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.recommendationMeta {
+  color: var(--text-muted);
+  font-size: var(--text-small);
+}
+.recommendationTags {
+  display: flex;
+  gap: var(--space-1);
+  flex-wrap: wrap;
+  margin-top: var(--space-1);
+}
+
+.acceptingLabel { color: var(--text-faint); font-size: var(--text-small); }
+
+/* System loops section — read-only launchd / CSI / remote job listing. */
+
+.systemJobsHeader {
+  padding: var(--space-4) var(--space-4) 0;
+}
+.systemJobsHeader .panelHeader { margin-bottom: var(--space-2); }
+
+.summaryStrip {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+  padding-bottom: var(--space-3);
+}
+
+.statusCell {
+  display: grid;
+  gap: var(--space-1);
+  max-width: 22rem;
+}
+
+.healthReason {
+  color: var(--text-faint);
+  font-size: var(--text-micro);
+  line-height: 1.4;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.candidateNote {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-1);
+  color: var(--accent);
+  font-size: var(--text-micro);
+  line-height: 1.4;
+}
+.candidateNote > svg { flex-shrink: 0; margin-top: 0.15em; }
+
+.categoryCell {
+  display: grid;
+  gap: var(--space-1);
+  justify-items: start;
+}
+
+.sourcePath {
+  font-family: var(--font-mono);
+  color: var(--text-faint);
+  font-size: var(--text-micro);
+  display: block;
+  max-width: 18rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+
+/* ---------------------------------------------------------------- create-routine additional layout helpers
+ * Needed because `new/page.tsx` composes form fields with vertical spacing
+ * that was previously expressed as inline styles. */
+
+.fieldGroupSpaced { display: grid; gap: var(--space-1); margin-top: var(--space-3); }
+.formRowSpaced { display: grid; grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr)); gap: var(--space-3); margin-top: var(--space-3); }
+.fieldHintSpaced { color: var(--text-faint); font-size: var(--text-micro); margin: var(--space-2) 0 0; }
+.fieldHintSpacedLg { color: var(--text-faint); font-size: var(--text-micro); margin: var(--space-3) 0 0; }
+.backLinkArrow { display: inline-block; transform: rotate(180deg); }
+.fullWidth { width: 100%; }
+
+.formTextarea {
+  display: block;
+  width: 100%;
+  min-height: 4.5rem;
+  padding: var(--space-2) var(--space-3);
+  margin: 0;
+  font: inherit;
+  color: inherit;
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  resize: vertical;
+  line-height: 1.5;
+}
+.formTextarea:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 1px var(--accent);
+}
+
+/* Model Formation Panel */
+
+.formationSection {
+  display: grid;
+  gap: var(--space-2);
+  padding: var(--space-3) 0;
+  border-bottom: 1px solid var(--border-soft, var(--border));
+}
+.formationSection:last-child { border-bottom: none; }
+
+.plannerRow {
+  display: flex;
+  gap: var(--space-4);
+  flex-wrap: wrap;
+  align-items: flex-start;
+}
+.plannerLabel {
+  font-size: var(--text-micro);
+  color: var(--text-muted);
+  margin-bottom: var(--space-1);
+}
+
+.ladderRow {
+  display: flex;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+  align-items: center;
+}
+.ladderItem {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+.ladderRung {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: 999px;
+  background-color: var(--bg-soft);
+  color: var(--text-muted);
+  font-size: var(--text-small);
+  font-weight: 600;
+}
+
+.floorTier {
+  display: grid;
+  gap: var(--space-2);
+  margin-bottom: var(--space-2);
+}
+.tierLabel {
+  font-size: var(--text-small);
+  color: var(--text-muted);
+  font-weight: 500;
+}
+.floorModels {
+  display: flex;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+
+.roleCell {
+  font-weight: 500;
+}
+
+.effortLabel {
+  display: inline-flex;
+  align-items: center;
+}
+
+.tableScroll {
+  overflow-x: auto;
+}

@@ -1,0 +1,45 @@
+/* Layout only — colors/typography come from the shared design tokens via the
+   Stat/Badge/Table/Select primitives this feature composes. */
+
+.statGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
+  gap: var(--space-4);
+}
+
+.filterRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  align-items: flex-end;
+}
+
+.filterField {
+  min-width: 12rem;
+}
+
+.detail {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.detailGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
+  gap: var(--space-3);
+}
+
+.runsTable {
+  font-size: var(--text-sm, 0.85rem);
+}
+
+.mono {
+  font-family: var(--font-mono, ui-monospace, SFMono-Regular, Menlo, monospace);
+  font-size: 0.85em;
+  word-break: break-all;
+}
+
+.muted {
+  color: var(--text-muted);
+}

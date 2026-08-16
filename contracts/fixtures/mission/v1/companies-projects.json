@@ -1,0 +1,72 @@
+[
+  {
+    "type": "company",
+    "id": "comp_alpha",
+    "name": "Alpha Robotics",
+    "slug": "alpha-robotics",
+    "shared_infrastructure": false,
+    "archived": false,
+    "status": "active"
+  },
+  {
+    "type": "company",
+    "id": "comp_beta",
+    "name": "Beta Shared Hosting",
+    "slug": "beta-shared",
+    "shared_infrastructure": true,
+    "archived": true,
+    "status": "archived"
+  },
+  {
+    "type": "project",
+    "id": "proj_mission_rail",
+    "company_id": "comp_alpha",
+    "name": "Mission Command Rail",
+    "kind": "project",
+    "archived": false,
+    "organization_context": {
+      "company_id": "comp_alpha",
+      "company_slug": "alpha-robotics",
+      "product_id": "prod_mission",
+      "product_slug": "mission-command",
+      "initiative_id": "init_p0",
+      "goal_ids": ["goal_fixtures"],
+      "epic_id": "epic_mission_surface"
+    }
+  },
+  {
+    "type": "project",
+    "id": "proj_routing",
+    "company_id": "comp_alpha",
+    "name": "Routing Truth",
+    "kind": "project",
+    "archived": false,
+    "organization_context": {
+      "company_id": "comp_alpha",
+      "company_slug": "alpha-robotics",
+      "product_id": "prod_routing",
+      "product_slug": "routing",
+      "initiative_id": null,
+      "goal_ids": [],
+      "epic_id": null
+    }
+  },
+  {
+    "type": "project",
+    "id": "proj_legacy_beta",
+    "company_id": null,
+    "inherited_company_id": "comp_beta",
+    "name": "Legacy Beta Scratch",
+    "kind": "scratch",
+    "archived": true,
+    "organization_context": {
+      "company_id": "comp_beta",
+      "company_slug": "beta-shared",
+      "product_id": null,
+      "product_slug": null,
+      "initiative_id": null,
+      "goal_ids": [],
+      "epic_id": null
+    }
+  }
+]

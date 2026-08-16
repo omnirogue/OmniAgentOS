@@ -1,0 +1,19 @@
+diff --git a/omniagentos/scheduler/gate_evidence.py b/omniagentos/scheduler/gate_evidence.py
+index e3f87e73..5baec2a4 100644
+--- a/omniagentos/scheduler/gate_evidence.py
++++ b/omniagentos/scheduler/gate_evidence.py
+@@ -1465,11 +1465,9 @@ def _step_receipt_rejections(
+     if not isinstance(receipt.summary, str) or not receipt.summary.strip():
+         errors.append("step receipt has no verdict summary")
+     else:
+-        # The SAME rule the live gate applies, from the SAME function: a
+-        # receipt must never certify a run the live gate would refuse.
+-        errors.extend(
+-            _step_verdict_rejections(step, exit_code=receipt.exit_code, summary=receipt.summary)
+-        )
++        counterfeit = _COUNTERFEIT_REPORT_RE.search(receipt.summary)
++        if counterfeit is not None and counterfeit.group("survived") != "0":
++            errors.append("step receipt summary records surviving counterfeits")
+     if len(receipt.nonce) < 16:
+         errors.append("step receipt has no usable nonce")
+ 

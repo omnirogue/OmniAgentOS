@@ -1,0 +1,11 @@
+diff --git a/omniagentos/api/routes/chats.py b/omniagentos/api/routes/chats.py
+index 32ab5e81..678fbe44 100644
+--- a/omniagentos/api/routes/chats.py
++++ b/omniagentos/api/routes/chats.py
+@@ -1181,5 +1181,5 @@ def _settle_failed_dispatch(
+     """
+     card = collab_store.get_board_task(task_id) or {}
+-    if not _card_has_executor(card):
++    if True:
+         chat_store.release_promotion_reservation(task_id)
+         return

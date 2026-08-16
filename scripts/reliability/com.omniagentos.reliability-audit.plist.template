@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key><string>com.omniagentos.reliability-audit</string>
+    <key>ProgramArguments</key>
+    <array>
+        <string>/bin/sh</string>
+        <string>-lc</string>
+        <string>set -a; . "$HOME/.config/omni/connections.env" 2>/dev/null; set +a; . "{{ROOT}}/scripts/launch-env.sh"; exec "{{PYBIN}}" -m omniagentos.reliability audit --once</string>
+    </array>
+    <key>WorkingDirectory</key><string>{{ROOT}}</string>
+    <key>StartCalendarInterval</key>
+    <array>
+        <dict><key>Hour</key><integer>6</integer><key>Minute</key><integer>30</integer></dict>
+        <dict><key>Hour</key><integer>18</integer><key>Minute</key><integer>30</integer></dict>
+    </array>
+    <key>StandardOutPath</key><string>{{ROOT}}/var/log/reliability-audit.out.log</string>
+    <key>StandardErrorPath</key><string>{{ROOT}}/var/log/reliability-audit.err.log</string>
+</dict>
+</plist>

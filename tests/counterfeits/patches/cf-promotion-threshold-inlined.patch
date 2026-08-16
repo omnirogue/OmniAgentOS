@@ -1,0 +1,14 @@
+--- a/omniagentos/chats/intent.py
++++ b/omniagentos/chats/intent.py
+@@ -334,8 +334,9 @@ def _evaluate_promotion(
+         return PROMOTION_SHADOW
+ 
+     try:
+-        min_agreement = float(class_cfg["min_agreement"])
+-        min_suggestions = int(class_cfg["min_suggestions"])
++        # COUNTERFEIT: D4 thresholds inlined — config monkeypatch no longer moves the bar.
++        min_agreement = 0.90
++        min_suggestions = 100
+     except (KeyError, TypeError, ValueError):
+         return PROMOTION_SHADOW
+ 

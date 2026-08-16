@@ -1,0 +1,23 @@
+--- a/omniagentos/tracelab/metrics.py
++++ b/omniagentos/tracelab/metrics.py
+@@ -56,8 +56,10 @@
+ 
+     @property
+     def tool_error_rate(self) -> float | None:
++        # COUNTERFEIT: swap favourable empty-set default (was 0.0-as-perfect,
++        # "fixed" to another favourable lie) instead of representing unknown.
+         if not self.n_tool_calls:
+-            return None
++            return 0.0
+         return self.n_tool_errors / self.n_tool_calls
+ 
+     @property
+@@ -66,7 +68,7 @@
+         maximal run of consecutive error results) — episodes recover, not
+         individual errors, so this can genuinely reach 1.0."""
+         if not self.error_episodes:
+-            return None
++            return 0.0
+         return self.errors_recovered / self.error_episodes
+ 
+     def to_row(self) -> dict[str, object]:

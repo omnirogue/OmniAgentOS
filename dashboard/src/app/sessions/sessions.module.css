@@ -1,0 +1,155 @@
+.statusWrapper {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.footerButtons {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-2);
+}
+
+.detailsGrid {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.badgeRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.approvalCard {
+  margin-top: var(--space-2);
+}
+
+.approvalActions {
+  display: flex;
+  gap: var(--space-2);
+}
+
+.mutedSub {
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  margin: 4px 0 8px;
+}
+
+.mutedText {
+  color: var(--text-muted);
+}
+
+.transcriptContainer {
+  font-family: var(--font-mono);
+  display: grid;
+  gap: var(--space-3);
+  max-height: 350px;
+  overflow-y: auto;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: var(--space-3);
+  background: var(--overlay);
+}
+
+.transcriptEntry {
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 6px;
+}
+
+.transcriptMeta {
+  color: var(--text-muted);
+  margin-bottom: 2px;
+}
+
+.transcriptContent {
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.groupsStack {
+  display: grid;
+  gap: var(--space-5);
+}
+
+.groupSection {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.groupHeading {
+  margin: 0;
+  font-size: 0.95rem;
+  color: var(--text-muted);
+}
+
+.titleCell {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.editTitleBtn {
+  opacity: 0.7;
+}
+
+.titleEditForm {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.companySelect {
+  background: var(--surface);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 4px 8px;
+  font: inherit;
+}
+
+.companyCustomForm {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.agentCell {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+}
+
+.transcriptHeaderRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+.liveTailToggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+.attachRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+
+.attachCode {
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+  background: var(--overlay);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 4px 8px;
+  word-break: break-all;
+}

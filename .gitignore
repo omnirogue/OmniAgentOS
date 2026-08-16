@@ -1,0 +1,86 @@
+# python
+.venv/
+# A4 hermetic lane's dedicated venv (make test-hermetic) — never committed.
+# Bare pattern on purpose: a trailing-slash pattern only matches a directory,
+# and this must also cover a stray SYMLINK named .venv-hermetic (which the
+# lane's guard script refuses to install through).
+.venv-hermetic
+.venv-hermetic.preparing
+__pycache__/
+*.pyc
+.mypy_cache/
+.pytest_cache/
+.ruff_cache/
+dist/
+
+# runtime state and secrets (never committed)
+var/*
+!var/.gitkeep
+var/secrets/
+/auth-codex.cache
+
+# Legacy runtime outputs that must never re-enter source control.  The Grok
+# launcher now writes new state below ignored var/runtime/ instead.
+/ledger/runs-*.jsonl
+/ledger/leases-*.jsonl
+/ledger/sessions/
+/sessions/
+/configs/genomes/*
+!/configs/genomes/demo-general.json
+/vault/state/
+
+# per-case run logs (transient, noise; curated log-book is in vault/playbook and vault/leaderboard)
+vault/runs/
+
+# node
+dashboard/node_modules/
+dashboard/.next/
+dashboard/.next-build/
+dashboard/out/
+dashboard/next-env.d.ts
+dashboard/tsconfig.tsbuildinfo
+
+# os
+.DS_Store
+# Coverage artifacts are local only — never commit a partial .coverage that
+# misleads as package-wide (M-10). Use configs/coverage_policy.yaml to gate.
+.coverage
+.coverage.*
+coverage.json
+coverage.xml
+htmlcov/
+.fusion/
+
+# Local comparison & untracked directories
+.codex/
+docs/Agent_Orchestration_System_Lean/
+vault/disciplines/code-changes.md
+ledger/runs-202607.jsonl
+
+# tool scratch dirs (session-local, never commit)
+.playwright-mcp/
+.claude/worktrees/
+/reference-fleetcap/
+/uv-sync.log
+
+# Symlinked lane environments. A trailing-slash pattern matches directories
+# only, so `.venv/` does NOT match a SYMLINK named .venv — which is how both of
+# these were committed as mode 120000 pointing at an absolute local path.
+.venv
+dashboard/node_modules
+
+# secrets — never committed (test-fixture canaries under tests/ are re-included)
+.env
+.env.*
+*.env
+*.pem
+*.key
+credentials*.json
+secrets*
+service-account*.json
+!tests/**/*.env
+!configs/simulation-run.env
+
+
+# in-repo simulation campaign root (recreated by sim tests; never committed)
+omniagentos/campaign123/

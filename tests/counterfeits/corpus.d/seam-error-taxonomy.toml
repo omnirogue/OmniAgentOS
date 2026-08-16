@@ -1,0 +1,190 @@
+# Counterfeit fragment — lane/seam-error-taxonomy.
+#
+# Six entries, one per invariant, and every one of them is a mutation somebody
+# would plausibly write. The through-line: the seam has FOUR answers and two
+# separate questions (what happens to the idempotency claim, and who keeps the
+# money), and every counterfeit below collapses one of those distinctions into
+# the cheap answer. The cheap answer is always "nothing happened" — which is
+# the only answer that lets a paid call be made a second time.
+
+# --- F1: the whole taxonomy, deleted -------------------------------------
+[[counterfeit]]
+id = "cf-model-transport-collapsed-to-absence"
+patch = "patches/cf-model-transport-collapsed-to-absence.patch"
+rationale = """Restores the shipped defect verbatim: every ``LLMTransportError`` out of
+``ShortCallClient`` becomes ``SeamUnavailable``. It reads as the obvious simplification —
+"a transport error means we could not reach the model" — and ``LLMTransportError`` is even
+named as though that were true. It is not: ``llm/client.py:163`` raises it for HTTP 429 and
+every 5xx, where the server ANSWERED, and ``:169-171`` raises it for read timeouts and
+socket errors, where the request had already been written and may have been billed.
+``unavailable`` is ABSENCE, and absence is the one outcome that RELEASES the worker's
+idempotency claim (``receipts._attempt`` -> ``store.idem_release``), so under this patch a
+rate-limited or timed-out paid model call erases its own receipt, refunds its reservation
+and is re-issued by the next tick — and because a released claim never consumes an attempt,
+it repeats for ever instead of escalating to a human. Unreachable on main only because
+``INSTANCE_CAPABILITIES`` grants ``model.complete`` to one instance that does not call it;
+it goes live the moment an operator grants the capability."""
+must_fail = [
+  "tests/scheduler/test_seam_error_taxonomy.py::test_a_server_that_answered_is_a_refusal_not_absence",
+  "tests/scheduler/test_seam_error_taxonomy.py::test_an_ambiguous_transport_failure_fails_closed_as_unknown",
+  "tests/scheduler/test_seam_error_taxonomy.py::test_a_reached_authority_keeps_the_reservation_charged",
+]
+failure_re = "releases the idempotency claim|must never be re-run|cannot be shown to have missed|assert"
+
+# --- F1: the tempting half-fix -------------------------------------------
+[[counterfeit]]
+id = "cf-timeout-read-as-absence"
+patch = "patches/cf-timeout-read-as-absence.patch"
+rationale = """Keeps the 429/5xx split — so the headline defect looks fixed — and then hands
+the ambiguous case back to absence: a ``TimeoutError`` is read as "we never got there".
+This is the over-correction a reader reaches for once the first counterfeit has been
+caught, and it is wrong for a reason that is invisible in the exception itself. urllib
+raises the SAME ``TimeoutError`` for a timeout while connecting (nothing was sent) and a
+timeout while reading the reply (the request was written in full and the provider may have
+generated, and charged for, the entire completion). Nothing observable distinguishes them,
+so treating them alike can only be done in the direction that costs nothing to be wrong
+about — UNKNOWN, claim retained, next tick refuses. Calling it absence releases the claim
+for a call that may have run, which is the exact hazard the receipt exists to stop."""
+must_fail = [
+  "tests/scheduler/test_seam_error_taxonomy.py::test_an_ambiguous_transport_failure_fails_closed_as_unknown",
+  "tests/scheduler/test_seam_error_taxonomy.py::test_an_ambiguous_failure_keeps_the_reservation_charged",
+]
+failure_re = "cannot be shown to have missed|assert"
+
+# --- F1: the client re-sends the claimed call ----------------------------
+[[counterfeit]]
+id = "cf-claimed-call-re-sent-by-the-client"
+patch = "patches/cf-claimed-call-re-sent-by-the-client.patch"
+rationale = """Drops ``retry_transport=False`` from the seam's ``ShortCallClient``, restoring
+the library default. Harmless-looking — the retry has been there for every other caller
+since the client was written, and one retry on a 5xx is ordinary good practice — but this
+particular call sits behind an idempotency claim and a budget reservation, and
+``_execute_with_retry`` retries on ANY ``LLMTransportError``, which includes the read
+timeout. That is precisely the failure where the first request may already have been
+received and billed, so the retry pays twice INSIDE one attempt, where no receipt and no
+reservation can see it, let alone undo it. Whether to retry a possibly-billed call is a
+decision for the layer that owns the claim, taken after the failure has been classified;
+it is not the transport's to take blind."""
+must_fail = [
+  "tests/scheduler/test_seam_error_taxonomy.py::test_the_seam_does_not_let_the_client_re_send_a_possibly_billed_request",
+]
+failure_re = "provider requests for one seam call|must not be re-sent blind|assert"
+
+# --- F1/F2: the money question, collapsed into the claim question --------
+[[counterfeit]]
+id = "cf-possibly-billed-call-refunded"
+patch = "patches/cf-possibly-billed-call-refunded.patch"
+rationale = """Makes every failed effect release its reservation, which is what the code did
+before this lane and what "the call did not produce a result, so give the money back" would
+have anyone write. It conflates two different questions: what should happen to the
+idempotency CLAIM (release / record adverse / leave claimed) and whether a provider may
+already have CHARGED us. They are not the same. A Replicate prediction that rendered and
+billed, whose artifact the seam then refuses to download because the URL host is not
+allowlisted, is a refusal whose money was spent; a read timeout is an unknown whose money
+may have been spent; an unclassified handler crash establishes nothing at all. Refunding
+all of them is the same fail-open shape as an expired reservation counting as zero — money
+that may have been spent stops counting against the cap, so the loop gets to spend it
+again — and it fails open in the one subsystem where everything else fails closed."""
+must_fail = [
+  "tests/scheduler/test_seam_error_taxonomy.py::test_a_reached_authority_keeps_the_reservation_charged",
+  "tests/scheduler/test_seam_error_taxonomy.py::test_an_ambiguous_failure_keeps_the_reservation_charged",
+  "tests/scheduler/test_seam_error_taxonomy.py::test_a_handler_crash_charges_rather_than_refunds",
+]
+failure_re = "assert"
+
+# --- F2: expiry as a refund ----------------------------------------------
+[[counterfeit]]
+id = "cf-expired-reservation-is-free-budget"
+patch = "patches/cf-expired-reservation-is-free-budget.patch"
+rationale = """One word: ``expired_unknown`` stops counting as spend. It looks like a
+tautology — an expired reservation is not a settled one, so why would it count as settled
+spend — and it restores the live fail-open Kimi measured on main: reserve $5, advance the
+clock 901 seconds, and the next reserve is admitted against ``settled=0.0``. An expiry is
+NOT evidence that a call did not happen; it is the absence of evidence either way, arriving
+exactly when a process was killed between the reserve and the settle, i.e. mid-effect. Under
+this patch a loop that crashes mid-effect every tick has its full cap restored every TTL,
+so a $10/day cap becomes $10 per 15 minutes — nearly $1,000 a day — and the ledger's own
+report agrees with the ledger's own admission decision the whole time, because they read
+the same constant."""
+must_fail = [
+  "tests/scheduler/test_loop_budget_expiry.py::test_a_leaked_reservation_does_not_become_free_budget",
+  "tests/scheduler/test_loop_budget_expiry.py::test_the_cap_still_binds_across_a_crash_loop",
+  "tests/scheduler/test_loop_budget_expiry.py::test_the_global_ceiling_counts_expired_charges_too",
+]
+failure_re = "free budget|BudgetRefused|assert"
+
+# --- F1: absence proved about the wrong request --------------------------
+[[counterfeit]]
+id = "cf-paid-artifact-fetch-called-absence"
+patch = "patches/cf-paid-artifact-fetch-called-absence.patch"
+rationale = """Restores the live defect this lane found by auditing every ``SeamUnavailable``
+site rather than only the one Kimi reviewed: ``_download_artifact`` classifying its own
+transport failures with plain ``_from_transport``. It looks not merely harmless but
+CORRECT — a refused connection really did fail to reach the artifact host, and
+``_from_transport`` is the module's own definition of absence. The proof is true and about
+the wrong request. That download runs only after a Replicate prediction has been created,
+polled and reported ``succeeded``, so the money is already gone; answering ``unavailable``
+releases the idempotency claim, and the next tick re-enters ``_run_replicate_generate`` at
+the top and buys a SECOND prediction. Absence is a claim about the EFFECT, not about the
+last request the effect happened to make. Unlike the ``model.complete`` path, this one is
+live today: ``replicate.generate`` is granted to ``render_probe`` and running."""
+must_fail = [
+  "tests/scheduler/test_seam_error_taxonomy.py::test_a_failed_artifact_fetch_is_never_absence",
+]
+failure_re = "classified as absence|second prediction|SeamUnavailable|assert"
+
+# --- F1: the post-spend guard, disarmed while still reading as armed ------
+[[counterfeit]]
+id = "cf-post-spend-scope-is-a-no-op"
+patch = "patches/cf-post-spend-scope-is-a-no-op.patch"
+rationale = """The merge-blocker this lane shipped with, restored in the form it would
+actually come back in. ``_billable_scope`` keeps its name, its docstring, its ``with``
+statement at the call site and its ``@contextmanager`` decorator — everything a reader
+greps for is still there — and only the conversion inside it is deleted, with a comment
+that sounds like a correct observation: ``_download_artifact`` really does call
+``_after_billable_work`` on its own transport failures, so the scope really does look like
+duplicated work. It is not. The download is the LAST request ``replicate.generate`` makes;
+the poll GETs come before it and are the ones a network transient actually hits, because a
+prediction is polled many times and downloaded once. With the conversion gone, an
+``httpx.ConnectError`` on the first poll after a 201 is ``SeamUnavailable`` again — measured
+on this tree: prediction created, ``outcome=unavailable``, ``reservation=released``,
+``actual_usd=0.0``. ``unavailable`` is the one outcome that RELEASES the worker's
+idempotency claim (``parent_seam`` -> ``EffectUnavailable`` -> ``receipts`` release) AND
+releases the reservation, so the next tick re-enters ``_run_replicate_generate`` at the top
+and pays Replicate a second time for the same image — and because a released claim never
+consumes an attempt, it does that every tick instead of escalating to a human. This is the
+THIRD instance of this family (the model transport collapse, the artifact fetch, this), which
+is why the guard is a scope: a per-call-site wrapper is opt-in, and the next request added
+after the spend will forget to opt in exactly as these three did."""
+must_fail = [
+  "tests/scheduler/test_seam_error_taxonomy.py::test_a_failed_prediction_poll_is_never_absence",
+  "tests/scheduler/test_seam_error_taxonomy.py::test_a_credential_that_vanishes_mid_prediction_is_not_absence",
+]
+failure_re = "classified as absence|second prediction|assert"
+
+# --- F1/F2: the claim is saved and the money is still refunded ------------
+[[counterfeit]]
+id = "cf-post-spend-refusal-keeps-the-refund"
+patch = "patches/cf-post-spend-refusal-keeps-the-refund.patch"
+rationale = """The half-fix that answers the claim question and quietly loses the money one.
+``_after_billable_work`` still downgrades absence to a refusal — so the idempotency claim is
+retained, the ``outcome`` field reads ``refused``, and every test that looks only at the
+exception TYPE stays green — but the new ``SeamRefused`` is built with
+``may_have_billed=error.may_have_billed``, i.e. ``False``, inherited from the
+``SeamUnavailable`` it replaced. It reads like care: don't throw away what the original
+error knew. But what the original error 'knew' is the very thing being corrected — a
+``SeamUnavailable`` says ``may_have_billed=False`` BY CLASS DEFAULT, and the whole point of
+the downgrade is that this default was computed about the wrong request. The module's own
+docstring says these are TWO INDEPENDENT QUESTIONS: what happens to the claim, and whether
+a provider may already have charged. Preserving the flag collapses them again in the
+opposite direction from the original bug. The result is a prediction Replicate rendered and
+billed whose reservation is ``released`` at ``actual_usd=0.0``, so the spend stops counting
+against the cap and the loop may spend it again — the same fail-open shape as an expired
+reservation counting as zero, arriving through a line that looks conscientious. Caught only
+by the assertions that check the RESERVATION STATE rather than the outcome string, which is
+why those assertions are in the poll tests."""
+must_fail = [
+  "tests/scheduler/test_seam_error_taxonomy.py::test_a_failed_prediction_poll_is_never_absence",
+  "tests/scheduler/test_seam_error_taxonomy.py::test_a_credential_that_vanishes_mid_prediction_is_not_absence",
+]
+failure_re = "refunded|free to be spent|assert"

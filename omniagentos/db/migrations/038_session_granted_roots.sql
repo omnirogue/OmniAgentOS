@@ -1,0 +1,16 @@
+-- 038_session_granted_roots.sql
+-- Per-session granted write-roots for the Session Bridge scope (P3).
+--
+-- A session must honor the FULL scope its project was granted -- every validated
+-- root_dir + allowed_dir -- not just its single working dir. These roots are
+-- computed SERVER-SIDE at dispatch (from the project's create-time,
+-- validate_grant_dir-checked grants) and FROZEN onto the session row here, so the
+-- PreToolUse hook can classify a write inside any granted root as in-scope
+-- (auto) instead of parking it, WITHOUT ever trusting a path from the hook
+-- payload. The value is a JSON array of realpaths (NULL/absent = no extra scope,
+-- i.e. exactly the pre-P3 project-dir-only behavior).
+--
+-- Additive + nullable: every existing session simply has no granted roots, and
+-- SELECT * carries the new column through the session serializer with no query
+-- changes.
+ALTER TABLE sessions ADD COLUMN granted_roots TEXT;

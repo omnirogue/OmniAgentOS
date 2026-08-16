@@ -1,0 +1,259 @@
+[
+  {
+    "id": "form_single",
+    "variant": "single-agent",
+    "execution_id": "exec_ready_1",
+    "project_id": "proj_mission_rail",
+    "company_id": "comp_alpha",
+    "formation_binding": {
+      "id": "solo",
+      "implementers": ["grok"],
+      "reviewer": "grok",
+      "planner": "grok",
+      "mechanical_gate": true,
+      "confidence": 0.95,
+      "topology": "single",
+      "reason": "single-agent solo mode",
+      "low_confidence": false
+    },
+    "effective_route": {
+      "role": "worker",
+      "requested_model": "xai/grok-4.5",
+      "effective_model": "xai/grok-4.5",
+      "model_lineage": "xai",
+      "billing_provider": "xai",
+      "transport": "cli",
+      "adapter_key": "cli-grok",
+      "effort": "high",
+      "profile_id": "solo-worker",
+      "profile_revision": 1,
+      "selection_reason": "solo formation identity map",
+      "price_revision": "2026-07-01"
+    }
+  },
+  {
+    "id": "form_planner_impl",
+    "variant": "planner-implementer",
+    "execution_id": "exec_ready_1",
+    "project_id": "proj_mission_rail",
+    "company_id": "comp_alpha",
+    "formation_binding": {
+      "id": "coding",
+      "implementers": ["grok"],
+      "reviewer": "opus",
+      "planner": "opus",
+      "mechanical_gate": true,
+      "confidence": 0.9,
+      "topology": "hierarchical",
+      "reason": "planner then implementer",
+      "low_confidence": false
+    },
+    "effective_route": {
+      "role": "implementer",
+      "requested_model": "xai/grok-4.5",
+      "effective_model": "xai/grok-4.5",
+      "model_lineage": "xai",
+      "billing_provider": "xai",
+      "transport": "cli",
+      "adapter_key": "cli-grok",
+      "effort": "high",
+      "profile_id": null,
+      "profile_revision": null,
+      "selection_reason": "implementer role map",
+      "price_revision": null
+    }
+  },
+  {
+    "id": "form_parallel",
+    "variant": "parallel-team",
+    "execution_id": "exec_ready_1",
+    "project_id": "proj_mission_rail",
+    "company_id": "comp_alpha",
+    "formation_binding": {
+      "id": "coding",
+      "implementers": ["grok", "gemini"],
+      "reviewer": "opus",
+      "planner": "opus",
+      "mechanical_gate": true,
+      "confidence": 0.85,
+      "topology": "parallel",
+      "reason": "parallel implementer pool",
+      "low_confidence": false
+    },
+    "effective_route": {
+      "role": "implementer",
+      "requested_model": "xai/grok-4.5",
+      "effective_model": "xai/grok-4.5",
+      "model_lineage": "xai",
+      "billing_provider": "xai",
+      "transport": "cli",
+      "adapter_key": "cli-grok",
+      "effort": "medium",
+      "profile_id": null,
+      "profile_revision": null,
+      "selection_reason": "parallel pool primary",
+      "price_revision": null
+    }
+  },
+  {
+    "id": "form_seq_fallback",
+    "variant": "sequential-fallback",
+    "execution_id": "exec_incomplete_1",
+    "project_id": "proj_mission_rail",
+    "company_id": "comp_alpha",
+    "formation_binding": {
+      "id": "operations",
+      "implementers": ["grok"],
+      "reviewer": "opus",
+      "planner": "opus",
+      "mechanical_gate": true,
+      "confidence": 0.45,
+      "topology": "sequential",
+      "reason": "fallback sequential after parallel refusal",
+      "low_confidence": true
+    },
+    "effective_route": {
+      "role": "worker",
+      "requested_model": "google/gemini-2.5-pro",
+      "effective_model": "xai/grok-4.5",
+      "model_lineage": "xai",
+      "billing_provider": "xai",
+      "transport": "cli",
+      "adapter_key": "cli-grok",
+      "effort": "medium",
+      "profile_id": null,
+      "profile_revision": null,
+      "selection_reason": "sequential fallback after gemini unavailable",
+      "price_revision": null
+    }
+  },
+  {
+    "id": "form_model_mismatch",
+    "variant": "requested-effective-model-mismatch",
+    "execution_id": "exec_ready_1",
+    "project_id": "proj_routing",
+    "company_id": "comp_alpha",
+    "formation_binding": {
+      "id": "coding",
+      "implementers": ["grok"],
+      "reviewer": "opus",
+      "planner": "opus",
+      "mechanical_gate": true,
+      "confidence": 0.7,
+      "topology": "hierarchical",
+      "reason": "requested model unavailable; effective differs",
+      "low_confidence": false
+    },
+    "effective_route": {
+      "role": "worker",
+      "requested_model": "anthropic/claude-sonnet-4",
+      "effective_model": "xai/grok-4.5",
+      "model_lineage": "xai",
+      "billing_provider": "xai",
+      "transport": "cli",
+      "adapter_key": "cli-grok",
+      "effort": "high",
+      "profile_id": "strict-model",
+      "profile_revision": 2,
+      "selection_reason": "requested anthropic unavailable; routed to grok",
+      "price_revision": "2026-07-01"
+    }
+  },
+  {
+    "id": "form_retry",
+    "variant": "retry",
+    "execution_id": "exec_ready_1",
+    "project_id": "proj_mission_rail",
+    "company_id": "comp_alpha",
+    "formation_binding": {
+      "id": "coding",
+      "implementers": ["grok"],
+      "reviewer": "opus",
+      "planner": "opus",
+      "mechanical_gate": true,
+      "confidence": 0.8,
+      "topology": "hierarchical",
+      "reason": "retry same formation after transient failure",
+      "low_confidence": false
+    },
+    "effective_route": {
+      "role": "worker",
+      "requested_model": "xai/grok-4.5",
+      "effective_model": "xai/grok-4.5",
+      "model_lineage": "xai",
+      "billing_provider": "xai",
+      "transport": "cli",
+      "adapter_key": "cli-grok",
+      "effort": "high",
+      "profile_id": null,
+      "profile_revision": null,
+      "selection_reason": "retry same route",
+      "price_revision": null
+    },
+    "attempt_index": 1
+  },
+  {
+    "id": "form_escalation",
+    "variant": "escalation",
+    "execution_id": "exec_ready_1",
+    "project_id": "proj_mission_rail",
+    "company_id": "comp_alpha",
+    "formation_binding": {
+      "id": "coding",
+      "implementers": ["opus"],
+      "reviewer": "opus",
+      "planner": "opus",
+      "mechanical_gate": true,
+      "confidence": 0.92,
+      "topology": "hierarchical",
+      "reason": "escalated after implementer failure",
+      "low_confidence": false
+    },
+    "effective_route": {
+      "role": "escalation",
+      "requested_model": "xai/grok-4.5",
+      "effective_model": "anthropic/claude-opus-4",
+      "model_lineage": "anthropic",
+      "billing_provider": "anthropic",
+      "transport": "cli",
+      "adapter_key": "cli-claude",
+      "effort": "xhigh",
+      "profile_id": "escalation",
+      "profile_revision": 1,
+      "selection_reason": "escalation ladder step",
+      "price_revision": null
+    }
+  },
+  {
+    "id": "form_partial",
+    "variant": "partial-formation",
+    "execution_id": "exec_incomplete_1",
+    "project_id": "proj_mission_rail",
+    "company_id": "comp_alpha",
+    "formation_binding": {
+      "id": "coding",
+      "implementers": ["grok"],
+      "reviewer": "",
+      "planner": "opus",
+      "mechanical_gate": false,
+      "confidence": 0.3,
+      "topology": null,
+      "reason": "partial binding before reviewer assignment",
+      "low_confidence": true
+    },
+    "effective_route": {
+      "role": "planner",
+      "requested_model": "anthropic/claude-opus-4",
+      "effective_model": "anthropic/claude-opus-4",
+      "model_lineage": "anthropic",
+      "billing_provider": "anthropic",
+      "transport": "cli",
+      "adapter_key": "cli-claude",
+      "effort": "medium",
+      "profile_id": null,
+      "profile_revision": null,
+      "selection_reason": "partial formation planner-only",
+      "price_revision": null
+    }
+  }
+]

@@ -1,0 +1,1325 @@
+# Synthetic tool catalog for the tool-selection benchmark (Phase-2 WP0).
+#
+# Standalone fixture shape -- NOT a file the production loader reads. Each record
+# carries exactly the identity/metadata fields that
+# omniagentos.toolplane.catalog.CatalogEntry indexes for search:
+#   id, namespace, label, compact_hint, description, parameter_names,
+#   input_examples, risk, read_only
+# tests/toolplane/test_selection_fixtures.py maps them onto real CatalogEntry
+# objects and runs omniagentos.toolplane.search over them.
+#
+# Ordering: namespaces interleaved across four product domains, each namespace's
+# tools kept together in id order. catalog_100 is a strict prefix of catalog_250,
+# which is a strict prefix of catalog_500, so the same query can be scored against
+# a growing catalog.
+version: 1
+name: catalog_100
+tools:
+- id: slack.add_reaction
+  namespace: slack
+  label: Add Reaction
+  compact_hint: Add emoji reaction to message.
+  description: Adds an emoji reaction to a specified message in a channel or direct conversation.
+  parameter_names:
+  - channel_id
+  - timestamp
+  - name
+  input_examples:
+  - add a thumbs up emoji to the message
+  - react with a checkmark
+  risk: medium
+  read_only: false
+- id: slack.archive_channel
+  namespace: slack
+  label: Archive Channel
+  compact_hint: Archive a Slack channel.
+  description: Archives a Slack channel to make it read-only and hide it from the active channels list.
+  parameter_names:
+  - channel_id
+  - prevent_reopening
+  input_examples:
+  - 'archive the #temp-project channel'
+  risk: high
+  read_only: false
+- id: slack.get_user_profile
+  namespace: slack
+  label: Get User Profile
+  compact_hint: Retrieve user's profile details.
+  description: Retrieves the profile details, including email, display name, and status, for a specified Slack user.
+  parameter_names:
+  - user_id
+  - include_labels
+  input_examples:
+  - get profile information for John Doe
+  - fetch slack user details
+  risk: low
+  read_only: true
+- id: slack.invite_user
+  namespace: slack
+  label: Invite User
+  compact_hint: Invite user to Slack channel.
+  description: Invites one or more users to join an existing public or private channel in the workspace.
+  parameter_names:
+  - channel_id
+  - user_ids
+  input_examples:
+  - add Alice to the project channel
+  - invite user to the channel
+  risk: medium
+  read_only: false
+- id: slack.kick_user
+  namespace: slack
+  label: Kick User
+  compact_hint: Remove user from Slack channel.
+  description: Removes a specified user from a Slack channel, restricting their access to subsequent conversation.
+  parameter_names:
+  - channel_id
+  - user_id
+  input_examples:
+  - kick John from the channel
+  - remove user from channel
+  risk: high
+  read_only: false
+- id: slack.list_conversations
+  namespace: slack
+  label: List Conversations
+  compact_hint: Retrieve public channels in workspace.
+  description: Fetches a list of all public channels, private channels, or direct messages in the Slack workspace based on the filter criteria.
+  parameter_names:
+  - types
+  - limit
+  - exclude_archived
+  input_examples:
+  - get a list of slack channels
+  - list all public conversations
+  risk: low
+  read_only: true
+- id: slack.post_message
+  namespace: slack
+  label: Post Message
+  compact_hint: Send a message to a Slack channel.
+  description: Posts a new message to a Slack channel or direct message conversation as the authenticated app.
+  parameter_names:
+  - channel_id
+  - text
+  - thread_ts
+  input_examples:
+  - 'send a message to the #general channel'
+  - reply to thread in slack
+  risk: medium
+  read_only: false
+- id: slack.remove_reaction
+  namespace: slack
+  label: Remove Reaction
+  compact_hint: Remove emoji reaction from message.
+  description: Removes a previously added emoji reaction from a specific message in a channel.
+  parameter_names:
+  - channel_id
+  - timestamp
+  - name
+  input_examples:
+  - remove my thumbs up reaction from the message
+  risk: medium
+  read_only: false
+- id: slack.search_conversations
+  namespace: slack
+  label: Search Conversations
+  compact_hint: Search channels by name or purpose.
+  description: Searches through the workspace for public channels that match a specific name query or channel purpose.
+  parameter_names:
+  - query
+  - limit
+  - types
+  input_examples:
+  - find slack channels containing the word marketing
+  - search public channels for engineering
+  risk: low
+  read_only: true
+- id: slack.unarchive_channel
+  namespace: slack
+  label: Unarchive Channel
+  compact_hint: Restore archived Slack channel.
+  description: Unarchives an archived Slack channel, making it active and open for posting messages again.
+  parameter_names:
+  - channel_id
+  - notify_channel
+  input_examples:
+  - unarchive the old project channel
+  risk: medium
+  read_only: false
+- id: slack.update_user_status
+  namespace: slack
+  label: Update User Status
+  compact_hint: Set Slack status message.
+  description: Updates the authenticated user's custom status message, emoji, and expiration duration.
+  parameter_names:
+  - status_text
+  - status_emoji
+  - duration
+  input_examples:
+  - set my status to in a meeting
+  - change slack status to lunch
+  risk: medium
+  read_only: false
+- id: github.add_collaborator
+  namespace: github
+  label: Add Repository Collaborator
+  compact_hint: Add a user as a collaborator.
+  description: Invites a GitHub user to collaborate on the specified repository with given permissions.
+  parameter_names:
+  - owner
+  - repo
+  - username
+  - permission
+  input_examples:
+  - invite octocat to collaborate on next-corpus
+  risk: high
+  read_only: false
+- id: github.create_issue
+  namespace: github
+  label: Create Issue
+  compact_hint: Create a new issue.
+  description: Creates a new issue in a specified repository to track a bug or feature request.
+  parameter_names:
+  - owner
+  - repo
+  - title
+  - body
+  - assignees
+  input_examples:
+  - create an issue for the login bug
+  risk: medium
+  read_only: false
+- id: github.create_pull_request
+  namespace: github
+  label: Create Pull Request
+  compact_hint: Create a new pull request.
+  description: Opens a new pull request to propose changes from a head branch to a base branch.
+  parameter_names:
+  - owner
+  - repo
+  - title
+  - head
+  - base
+  input_examples:
+  - open a PR from feature to main
+  risk: medium
+  read_only: false
+- id: github.create_release
+  namespace: github
+  label: Create Release
+  compact_hint: Create a new GitHub release.
+  description: Deploys a new release for a specified tag, optionally generating release notes.
+  parameter_names:
+  - owner
+  - repo
+  - tag_name
+  - name
+  - body
+  input_examples:
+  - create a draft release for version 1.2.0
+  risk: medium
+  read_only: false
+- id: github.delete_issue_comment
+  namespace: github
+  label: Delete Issue Comment
+  compact_hint: Remove a specific issue comment.
+  description: Permanently deletes an existing comment from an issue or pull request discussion.
+  parameter_names:
+  - owner
+  - repo
+  - comment_id
+  input_examples:
+  - delete comment 987654
+  risk: high
+  read_only: false
+- id: github.delete_repository
+  namespace: github
+  label: Delete Repository
+  compact_hint: Permanently delete a repository.
+  description: Deletes an existing repository and all of its associated issues, wiki, and commits.
+  parameter_names:
+  - owner
+  - repo
+  input_examples:
+  - permanently delete the legacy-tests repo
+  risk: high
+  read_only: false
+- id: github.get_issue
+  namespace: github
+  label: Get Issue Details
+  compact_hint: Retrieve detailed issue information.
+  description: Fetches complete details of a specific issue using its assigned issue number.
+  parameter_names:
+  - owner
+  - repo
+  - issue_number
+  input_examples:
+  - get details for issue 101
+  risk: low
+  read_only: true
+- id: github.list_pull_requests
+  namespace: github
+  label: List Pull Requests
+  compact_hint: List pull requests in a repository.
+  description: Retrieves a list of open or closed pull requests within the specified repository.
+  parameter_names:
+  - owner
+  - repo
+  - state
+  - per_page
+  input_examples:
+  - list pull requests in octocat/hello-world
+  risk: low
+  read_only: true
+- id: github.list_repository_tags
+  namespace: github
+  label: List Repository Tags
+  compact_hint: Retrieve a list of git tags.
+  description: Retrieves all git tags associated with a specific repository in chronological order.
+  parameter_names:
+  - owner
+  - repo
+  - page
+  input_examples:
+  - show all release tags for our backend repo
+  risk: low
+  read_only: true
+- id: github.merge_pull_request
+  namespace: github
+  label: Merge Pull Request
+  compact_hint: Merge an active pull request.
+  description: Merges the changes from a pull request branch into the target base branch of the repository.
+  parameter_names:
+  - owner
+  - repo
+  - pull_number
+  - commit_title
+  input_examples:
+  - merge pull request 42
+  risk: high
+  read_only: false
+- id: github.search_pull_requests
+  namespace: github
+  label: Search Pull Requests
+  compact_hint: Search pull requests across repositories.
+  description: Searches for pull requests using a query filter containing authors, labels, or milestones.
+  parameter_names:
+  - query
+  - sort
+  - order
+  input_examples:
+  - find open pull requests assigned to me
+  risk: low
+  read_only: true
+- id: stripe.cancel_subscription
+  namespace: stripe
+  label: Cancel Subscription
+  compact_hint: Terminate an active customer subscription.
+  description: Cancels an existing customer subscription either immediately or at period end.
+  parameter_names:
+  - subscription_id
+  - cancel_at_period_end
+  input_examples:
+  - cancel the subscription sub_3345 immediately
+  risk: high
+  read_only: false
+- id: stripe.create_charge
+  namespace: stripe
+  label: Create Charge
+  compact_hint: Create a new charge on a customer card.
+  description: Creates a new charge object to bill a credit card or other payment source.
+  parameter_names:
+  - amount
+  - currency
+  - customer
+  - source
+  input_examples:
+  - charge 50 dollars to customer card
+  risk: medium
+  read_only: false
+- id: stripe.create_customer
+  namespace: stripe
+  label: Create Customer
+  compact_hint: Create a new customer profile.
+  description: Creates a new customer object to store contact details and payment methods.
+  parameter_names:
+  - email
+  - name
+  - description
+  - payment_method
+  input_examples:
+  - add a new customer named Jane Doe
+  risk: medium
+  read_only: false
+- id: stripe.create_subscription
+  namespace: stripe
+  label: Create Subscription
+  compact_hint: Subscribe a customer to a pricing plan.
+  description: Creates a subscription contract between a customer and a recurring price.
+  parameter_names:
+  - customer
+  - items
+  - default_payment_method
+  input_examples:
+  - subscribe customer to premium plan
+  risk: high
+  read_only: false
+- id: stripe.delete_customer
+  namespace: stripe
+  label: Delete Customer
+  compact_hint: Permanently delete a customer profile.
+  description: Deletes a customer profile and cancels any of their active subscriptions.
+  parameter_names:
+  - customer_id
+  - cancel_active_subscriptions
+  input_examples:
+  - delete customer profile cus_98765
+  risk: high
+  read_only: false
+- id: stripe.list_customers
+  namespace: stripe
+  label: List Customers
+  compact_hint: Retrieve a list of recent customers.
+  description: Returns a list of your customers sorted by creation date descending.
+  parameter_names:
+  - limit
+  - starting_after
+  input_examples:
+  - show me the most recent stripe customers
+  risk: low
+  read_only: true
+- id: stripe.list_invoices
+  namespace: stripe
+  label: List Invoices
+  compact_hint: Retrieve a list of customer invoices.
+  description: Returns a list of invoices representing customer billing statements.
+  parameter_names:
+  - customer
+  - status
+  - limit
+  input_examples:
+  - show the list of open invoices
+  risk: low
+  read_only: true
+- id: stripe.refund_charge
+  namespace: stripe
+  label: Refund Charge
+  compact_hint: Refund a previously processed charge.
+  description: Initiates a partial or full refund for a charge that has succeeded.
+  parameter_names:
+  - charge
+  - amount
+  - reason
+  input_examples:
+  - refund charge ch_10293 for fifty dollars
+  risk: high
+  read_only: false
+- id: stripe.retrieve_invoice
+  namespace: stripe
+  label: Retrieve Invoice
+  compact_hint: Get details of a single invoice.
+  description: Retrieves the detailed configuration and status of an invoice by ID.
+  parameter_names:
+  - invoice_id
+  - expand_lines
+  input_examples:
+  - get invoice details for in_9988
+  risk: low
+  read_only: true
+- id: stripe.search_customers
+  namespace: stripe
+  label: Search Customers
+  compact_hint: Find customers matching specific query criteria.
+  description: Search for customers using a query string matching email, metadata, or name.
+  parameter_names:
+  - query
+  - limit
+  input_examples:
+  - find customers with email alex@example.com
+  risk: low
+  read_only: true
+- id: stripe.void_invoice
+  namespace: stripe
+  label: Void Invoice
+  compact_hint: Mark an open invoice as void.
+  description: Voids an existing draft or open invoice to prevent collection.
+  parameter_names:
+  - invoice_id
+  - sync_token
+  input_examples:
+  - void invoice in_4567
+  risk: high
+  read_only: false
+- id: twilio.buy_phone_number
+  namespace: twilio
+  label: Buy Phone Number
+  compact_hint: Provision a new active phone number from the pool.
+  description: Purchases a specific local or toll-free telephone number and assigns it to the Twilio project.
+  parameter_names:
+  - area_code
+  - country_code
+  - capabilities
+  input_examples:
+  - buy a new phone number in California
+  risk: high
+  read_only: false
+- id: twilio.create_sms_webhook
+  namespace: twilio
+  label: Create SMS Webhook
+  compact_hint: Configure a webhook endpoint for incoming SMS messages.
+  description: Registers a URL callback that will be triggered whenever a message is sent to an active number.
+  parameter_names:
+  - phone_number_sid
+  - webhook_url
+  - http_method
+  input_examples:
+  - set up a webhook for incoming text messages
+  risk: medium
+  read_only: false
+- id: twilio.get_message_status
+  namespace: twilio
+  label: Get Message Status
+  compact_hint: Retrieve the current delivery status of a sent message.
+  description: Fetches metadata and the specific delivery state for a previously dispatched SMS or MMS.
+  parameter_names:
+  - message_sid
+  input_examples:
+  - check if the text message was delivered
+  risk: low
+  read_only: true
+- id: twilio.initiate_voice_call
+  namespace: twilio
+  label: Initiate Voice Call
+  compact_hint: Establish an outbound telephone call to a destination number.
+  description: Triggers a live outbound voice call to a recipient and executes the specified TwiML instructions.
+  parameter_names:
+  - to_number
+  - from_number
+  - twiml_url
+  input_examples:
+  - start a voice call to the support desk
+  risk: high
+  read_only: false
+- id: twilio.list_incoming_numbers
+  namespace: twilio
+  label: List Incoming Numbers
+  compact_hint: Retrieve active incoming phone numbers under your account.
+  description: Lists all telephone numbers currently active and configured for receiving calls or messages.
+  parameter_names:
+  - limit
+  - country_code
+  input_examples:
+  - list all my purchased phone numbers
+  risk: low
+  read_only: true
+- id: twilio.list_messages
+  namespace: twilio
+  label: List Messages
+  compact_hint: Retrieve a list of recently sent and received messages.
+  description: Queries the Twilio account logs to retrieve a chronological list of recent message transactions.
+  parameter_names:
+  - limit
+  - date_sent
+  input_examples:
+  - show me my recent text messages
+  risk: low
+  read_only: true
+- id: twilio.release_phone_number
+  namespace: twilio
+  label: Release Phone Number
+  compact_hint: Release and cancel ownership of an existing number.
+  description: Disconnects and releases an active phone number back to the carrier pool, terminating its service.
+  parameter_names:
+  - phone_number_sid
+  input_examples:
+  - release the old phone number
+  risk: high
+  read_only: false
+- id: twilio.search_messages
+  namespace: twilio
+  label: Search Messages
+  compact_hint: Find messages matching specific keywords or criteria.
+  description: Searches through inbound and outbound message histories using specific filter parameters and query patterns.
+  parameter_names:
+  - query_string
+  - sender_number
+  - recipient_number
+  input_examples:
+  - find messages containing code or password
+  risk: low
+  read_only: true
+- id: twilio.send_mms_message
+  namespace: twilio
+  label: Send MMS Message
+  compact_hint: Send a message with media attachments to a recipient.
+  description: Dispatches a multimedia message containing images or audio to a cellular phone number.
+  parameter_names:
+  - to_number
+  - from_number
+  - body_text
+  - media_url
+  input_examples:
+  - send a photo message to the customer
+  risk: medium
+  read_only: false
+- id: twilio.send_sms_message
+  namespace: twilio
+  label: Send SMS Message
+  compact_hint: Send an outbound text message to a recipient.
+  description: Dispatches a standard text message to a specified mobile number using a Twilio outbound service.
+  parameter_names:
+  - to_number
+  - from_number
+  - body_text
+  input_examples:
+  - send a text to +15550199
+  risk: medium
+  read_only: false
+- id: twilio.update_voice_webhook
+  namespace: twilio
+  label: Update Voice Webhook
+  compact_hint: Modify the callback URL for handling incoming voice calls.
+  description: Updates the callback endpoint URL that Twilio queries when an incoming phone call is received.
+  parameter_names:
+  - phone_number_sid
+  - voice_url
+  - fallback_url
+  input_examples:
+  - change the voice callback URL for my active number
+  risk: medium
+  read_only: false
+- id: notion.append_block_children
+  namespace: notion
+  label: Append Block Children
+  compact_hint: Add content to block.
+  description: Appends new child blocks to the end of a specified page or container block.
+  parameter_names:
+  - block_id
+  - children
+  input_examples:
+  - append a paragraph to the page
+  - add a list item to the block
+  risk: medium
+  read_only: false
+- id: notion.archive_page
+  namespace: notion
+  label: Archive Page
+  compact_hint: Archive page or database.
+  description: Archives (soft-deletes) an existing page or database by setting its archived flag to true.
+  parameter_names:
+  - page_id
+  - delete_permanently
+  input_examples:
+  - archive this page
+  - delete the page with ID 101
+  risk: high
+  read_only: false
+- id: notion.create_database
+  namespace: notion
+  label: Create Database
+  compact_hint: Create a new database.
+  description: Creates a new database as a child of a specified page, establishing its initial property schema.
+  parameter_names:
+  - parent_id
+  - title
+  - properties
+  input_examples:
+  - create a tasks database on the workspace page
+  risk: medium
+  read_only: false
+- id: notion.create_page
+  namespace: notion
+  label: Create Page
+  compact_hint: Create new Notion page.
+  description: Creates a new page in a database or as a child of another page with the specified properties.
+  parameter_names:
+  - parent_id
+  - properties
+  - content
+  input_examples:
+  - create a new page under my dashboard
+  - add a new page to the meeting notes database
+  risk: medium
+  read_only: false
+- id: notion.get_block_children
+  namespace: notion
+  label: Get Block Children
+  compact_hint: Retrieve block content.
+  description: Retrieves a list of child blocks that belong to a specified block or page.
+  parameter_names:
+  - block_id
+  - page_size
+  input_examples:
+  - read the content of page 456
+  - get child blocks of block 789
+  risk: low
+  read_only: true
+- id: notion.get_database
+  namespace: notion
+  label: Get Database
+  compact_hint: Retrieve database structure.
+  description: Retrieves a database's structure, including title, description, and property schema.
+  parameter_names:
+  - database_id
+  - retrieve_schema
+  input_examples:
+  - fetch the schema of the product database
+  - get database details
+  risk: low
+  read_only: true
+- id: notion.get_page
+  namespace: notion
+  label: Get Page
+  compact_hint: Retrieve a Notion page.
+  description: Retrieves a specific page object by its identifier, including its properties but not its block contents.
+  parameter_names:
+  - page_id
+  - filter_properties
+  input_examples:
+  - get details for page 12345
+  risk: low
+  read_only: true
+- id: notion.query_database
+  namespace: notion
+  label: Query Database
+  compact_hint: Filter and sort database pages.
+  description: Executes a query to retrieve filtered and sorted pages contained within a specific database.
+  parameter_names:
+  - database_id
+  - filter
+  - sorts
+  - page_size
+  input_examples:
+  - find database entries with high priority
+  - get all tasks sorted by due date
+  risk: low
+  read_only: true
+- id: notion.search_workspace
+  namespace: notion
+  label: Search Workspace
+  compact_hint: Search pages and databases.
+  description: Searches across all pages and databases in the workspace matching a text query.
+  parameter_names:
+  - query
+  - filter
+  - sort
+  - page_size
+  input_examples:
+  - search for planning docs
+  - find pages containing launch plan
+  risk: low
+  read_only: true
+- id: notion.update_database
+  namespace: notion
+  label: Update Database
+  compact_hint: Update database schema.
+  description: Updates the schema, title, or properties of an existing database in a workspace.
+  parameter_names:
+  - database_id
+  - title
+  - properties
+  input_examples:
+  - add a new column to the tasks database
+  - rename the database to Project Tracker
+  risk: medium
+  read_only: false
+- id: notion.update_page
+  namespace: notion
+  label: Update Page
+  compact_hint: Update page properties.
+  description: Updates the properties of an existing page without modifying the page content or child blocks.
+  parameter_names:
+  - page_id
+  - properties
+  input_examples:
+  - update the status of page 456 to completed
+  - change page properties
+  risk: medium
+  read_only: false
+- id: gitlab.accept_merge_request
+  namespace: gitlab
+  label: Accept Merge Request
+  compact_hint: Merge a completed merge request.
+  description: Merges the changes proposed in a merge request and integrates them into the target branch.
+  parameter_names:
+  - project_id
+  - merge_request_iid
+  - merge_commit_message
+  input_examples:
+  - accept and merge merge request 12
+  risk: high
+  read_only: false
+- id: gitlab.add_project_member
+  namespace: gitlab
+  label: Add Project Member
+  compact_hint: Grant access to a user.
+  description: Invites a user to a GitLab project with specified access level permissions.
+  parameter_names:
+  - project_id
+  - user_id
+  - access_level
+  input_examples:
+  - add user 789 to our project as a developer
+  risk: high
+  read_only: false
+- id: gitlab.cancel_pipeline
+  namespace: gitlab
+  label: Cancel Pipeline Execution
+  compact_hint: Stop a running CI/CD pipeline.
+  description: Stops the execution of a currently active CI/CD pipeline run in GitLab.
+  parameter_names:
+  - project_id
+  - pipeline_id
+  input_examples:
+  - stop the running pipeline 4567
+  risk: high
+  read_only: false
+- id: gitlab.create_issue
+  namespace: gitlab
+  label: Create GitLab Issue
+  compact_hint: Create a project tracking issue.
+  description: Creates a new issue in a GitLab project to track code changes, bugs, or milestones.
+  parameter_names:
+  - project_id
+  - title
+  - description
+  - labels
+  input_examples:
+  - create a gitlab issue for auth bug
+  risk: medium
+  read_only: false
+- id: gitlab.create_merge_request
+  namespace: gitlab
+  label: Create Merge Request
+  compact_hint: Create a new merge request.
+  description: Creates a new merge request proposing changes from a source branch to a target branch.
+  parameter_names:
+  - project_id
+  - source_branch
+  - target_branch
+  - title
+  input_examples:
+  - create a merge request for feature branch
+  risk: medium
+  read_only: false
+- id: gitlab.create_pipeline
+  namespace: gitlab
+  label: Create Project Pipeline
+  compact_hint: Trigger a new CI/CD pipeline.
+  description: Triggers a new GitLab CI/CD pipeline run for a specific branch or tag.
+  parameter_names:
+  - project_id
+  - ref
+  - variables
+  input_examples:
+  - trigger a pipeline on the main branch
+  risk: medium
+  read_only: false
+- id: gitlab.delete_project
+  namespace: gitlab
+  label: Delete Project
+  compact_hint: Permanently remove a GitLab project.
+  description: Places a project on the deletion queue or deletes it permanently.
+  parameter_names:
+  - project_id
+  input_examples:
+  - permanently delete gitlab project 999
+  risk: high
+  read_only: false
+- id: gitlab.get_project_member
+  namespace: gitlab
+  label: Get Project Member
+  compact_hint: Retrieve member information.
+  description: Fetches information about a specific project member, including their role and access level.
+  parameter_names:
+  - project_id
+  - user_id
+  input_examples:
+  - get details for user 789 in our project
+  risk: low
+  read_only: true
+- id: gitlab.list_merge_requests
+  namespace: gitlab
+  label: List Merge Requests
+  compact_hint: List merge requests in GitLab.
+  description: Retrieves a list of merge requests within a project or across the instance.
+  parameter_names:
+  - project_id
+  - state
+  - scope
+  - order_by
+  input_examples:
+  - show all open merge requests
+  risk: low
+  read_only: true
+- id: gitlab.list_pipeline_jobs
+  namespace: gitlab
+  label: List Pipeline Jobs
+  compact_hint: Retrieve all jobs for a pipeline.
+  description: Lists all execution jobs associated with a specific CI/CD pipeline run.
+  parameter_names:
+  - project_id
+  - pipeline_id
+  - scope
+  input_examples:
+  - get jobs for pipeline 12345
+  risk: low
+  read_only: true
+- id: gitlab.search_merge_requests
+  namespace: gitlab
+  label: Search Merge Requests
+  compact_hint: Search merge requests with parameters.
+  description: Searches for merge requests matching criteria like author, assignee, or label keywords.
+  parameter_names:
+  - project_id
+  - search
+  - state
+  - target_branch
+  input_examples:
+  - search merge requests containing migration
+  risk: low
+  read_only: true
+- id: shopify.adjust_inventory
+  namespace: shopify
+  label: Adjust Inventory
+  compact_hint: Modify stock level of product variant.
+  description: Adjusts physical stock quantity for a specific variant at a location.
+  parameter_names:
+  - inventory_item_id
+  - location_id
+  - available_adjustment
+  input_examples:
+  - add 10 items to inventory for item 44
+  risk: medium
+  read_only: false
+- id: shopify.cancel_order
+  namespace: shopify
+  label: Cancel Order
+  compact_hint: Cancel an active storefront order.
+  description: Cancels an existing order and initiates restock or refund processes.
+  parameter_names:
+  - order_id
+  - reason
+  - email_customer
+  input_examples:
+  - cancel order number 1024
+  risk: high
+  read_only: false
+- id: shopify.create_customer
+  namespace: shopify
+  label: Create Customer
+  compact_hint: Add a new customer account.
+  description: Registers a new customer profile with personal and contact details.
+  parameter_names:
+  - first_name
+  - last_name
+  - email
+  - phone
+  input_examples:
+  - create shopify account for Bob Smith
+  risk: medium
+  read_only: false
+- id: shopify.create_draft_order
+  namespace: shopify
+  label: Create Draft Order
+  compact_hint: Create a draft order for customer review.
+  description: Creates an unpaid draft order invoice that can be sent to customers.
+  parameter_names:
+  - line_items
+  - customer_id
+  - use_customer_default_address
+  input_examples:
+  - draft an order for premium shoes
+  risk: medium
+  read_only: false
+- id: shopify.create_order
+  namespace: shopify
+  label: Create Order
+  compact_hint: Create a new finalized order record.
+  description: Inserts a completed order record into the store database.
+  parameter_names:
+  - line_items
+  - customer_id
+  - shipping_address
+  input_examples:
+  - create a manual order for green t-shirt
+  risk: medium
+  read_only: false
+- id: shopify.create_product
+  namespace: shopify
+  label: Create Product
+  compact_hint: Add a new product to inventory.
+  description: Creates a new product profile including variants and pricing.
+  parameter_names:
+  - title
+  - body_html
+  - vendor
+  - product_type
+  input_examples:
+  - add a new product blue coffee mug
+  risk: medium
+  read_only: false
+- id: shopify.delete_product
+  namespace: shopify
+  label: Delete Product
+  compact_hint: Permanently remove a product from inventory.
+  description: Deletes a product catalog entry and all its variants from the store database.
+  parameter_names:
+  - product_id
+  - force_delete
+  input_examples:
+  - delete product 5566
+  risk: high
+  read_only: false
+- id: shopify.list_customers
+  namespace: shopify
+  label: List Customers
+  compact_hint: Retrieve shopify customer accounts list.
+  description: Retrieves a list of customer profiles who have registered or ordered.
+  parameter_names:
+  - limit
+  - since_id
+  input_examples:
+  - list customer accounts
+  risk: low
+  read_only: true
+- id: shopify.list_orders
+  namespace: shopify
+  label: List Orders
+  compact_hint: Get a list of store orders.
+  description: Retrieves a list of transactions representing orders placed in the store.
+  parameter_names:
+  - status
+  - limit
+  - attribution_app_id
+  input_examples:
+  - get all open orders
+  risk: low
+  read_only: true
+- id: shopify.search_orders
+  namespace: shopify
+  label: Search Orders
+  compact_hint: Find store orders matching query parameters.
+  description: Searches for store orders matching specific financial or fulfillment statuses.
+  parameter_names:
+  - query
+  - limit
+  - order_by
+  input_examples:
+  - search orders for customer email smith
+  risk: low
+  read_only: true
+- id: shopify.update_product
+  namespace: shopify
+  label: Update Product
+  compact_hint: Update details of an existing product.
+  description: Modifies details such as title, description, or tags on an existing product.
+  parameter_names:
+  - product_id
+  - title
+  - vendor
+  input_examples:
+  - update product description for mug
+  risk: medium
+  read_only: false
+- id: sendgrid.add_marketing_contact
+  namespace: sendgrid
+  label: Add Marketing Contact
+  compact_hint: Add an email contact to a marketing list.
+  description: Inserts a new recipient contact into a SendGrid marketing contact list or updates an existing one.
+  parameter_names:
+  - email_address
+  - first_name
+  - last_name
+  - list_ids
+  input_examples:
+  - add user to the marketing contacts list
+  risk: medium
+  read_only: false
+- id: sendgrid.create_api_key
+  namespace: sendgrid
+  label: Create API Key
+  compact_hint: Provision a new API key credential.
+  description: Generates a new API token with specified permissions and access controls for integrating services.
+  parameter_names:
+  - key_name
+  - scopes
+  input_examples:
+  - create a read-only api key
+  risk: high
+  read_only: false
+- id: sendgrid.create_email_template
+  namespace: sendgrid
+  label: Create Email Template
+  compact_hint: Save a new HTML email template.
+  description: Stores a reusable HTML template with dynamic placeholders for transactional messaging workflows.
+  parameter_names:
+  - template_name
+  - html_content
+  - plain_content
+  input_examples:
+  - create an email template for signups
+  risk: medium
+  read_only: false
+- id: sendgrid.delete_email_template
+  namespace: sendgrid
+  label: Delete Email Template
+  compact_hint: Permanently delete an email template.
+  description: Deletes a stored HTML email template, rendering its template ID inactive for future sends.
+  parameter_names:
+  - template_id
+  input_examples:
+  - delete the deprecated template
+  risk: high
+  read_only: false
+- id: sendgrid.delete_marketing_contact
+  namespace: sendgrid
+  label: Delete Marketing Contact
+  compact_hint: Remove a contact from marketing lists.
+  description: Permanently removes a contact and their associated history from all SendGrid marketing lists.
+  parameter_names:
+  - contact_id
+  input_examples:
+  - delete this contact from the marketing list
+  risk: high
+  read_only: false
+- id: sendgrid.list_bounces
+  namespace: sendgrid
+  label: List Bounces
+  compact_hint: Retrieve a list of bounced emails.
+  description: Retrieves a chronological log of all hard and soft email bounces recorded in SendGrid.
+  parameter_names:
+  - start_time
+  - end_time
+  - limit
+  input_examples:
+  - show me all recent email bounces
+  risk: low
+  read_only: true
+- id: sendgrid.revoke_api_key
+  namespace: sendgrid
+  label: Revoke API Key
+  compact_hint: Deactivate and delete an existing API key.
+  description: Permanently revokes a specific API key, blocking any future requests authenticated with that key.
+  parameter_names:
+  - api_key_id
+  input_examples:
+  - revoke the compromised api key
+  risk: high
+  read_only: false
+- id: sendgrid.search_bounces
+  namespace: sendgrid
+  label: Search Bounces
+  compact_hint: Search for bounced emails by address.
+  description: Queries SendGrid email delivery logs to check if specific email addresses have bounced.
+  parameter_names:
+  - email_address
+  input_examples:
+  - search if user email has bounced
+  risk: low
+  read_only: true
+- id: sendgrid.send_bulk_email
+  namespace: sendgrid
+  label: Send Bulk Email
+  compact_hint: Send emails to multiple recipients in one request.
+  description: Dispatches a marketing campaign or broadcast email to a list of multiple target recipients.
+  parameter_names:
+  - to_emails
+  - from_email
+  - subject
+  - body_html
+  input_examples:
+  - send the weekly newsletter to all subscribers
+  risk: medium
+  read_only: false
+- id: sendgrid.send_single_email
+  namespace: sendgrid
+  label: Send Single Email
+  compact_hint: Send an email to a single recipient.
+  description: Dispatches an individual transactional or marketing email message to a specified recipient.
+  parameter_names:
+  - to_email
+  - from_email
+  - subject
+  - body_html
+  input_examples:
+  - send a notification email to the admin
+  risk: medium
+  read_only: false
+- id: sendgrid.update_email_template
+  namespace: sendgrid
+  label: Update Email Template
+  compact_hint: Modify an existing HTML email template.
+  description: Updates the layout or content of an existing saved email template in SendGrid.
+  parameter_names:
+  - template_id
+  - template_name
+  - html_content
+  input_examples:
+  - update the signup welcome template
+  risk: medium
+  read_only: false
+- id: asana.add_comment
+  namespace: asana
+  label: Add Comment
+  compact_hint: Add a task comment.
+  description: Adds a new comment or story to an existing task in the workspace.
+  parameter_names:
+  - task_id
+  - text
+  - is_pinned
+  input_examples:
+  - comment on task 123 that it is delayed
+  risk: medium
+  read_only: false
+- id: asana.archive_project
+  namespace: asana
+  label: Archive Project
+  compact_hint: Archive a project.
+  description: Archives an existing project, hiding it from the active list but preserving its historical data.
+  parameter_names:
+  - project_id
+  - notification_setting
+  input_examples:
+  - archive the Q2 project
+  risk: high
+  read_only: false
+- id: asana.create_project
+  namespace: asana
+  label: Create Project
+  compact_hint: Create a project.
+  description: Creates a new project in a specified workspace or team.
+  parameter_names:
+  - workspace_id
+  - team_id
+  - name
+  - notes
+  input_examples:
+  - create project called Marketing Campaign
+  risk: medium
+  read_only: false
+- id: asana.create_task
+  namespace: asana
+  label: Create Task
+  compact_hint: Create a task.
+  description: Creates a new task in a specified project, workspace, or section.
+  parameter_names:
+  - workspace_id
+  - project_id
+  - name
+  - notes
+  - assignee
+  input_examples:
+  - create a task to write documentation
+  - add task assign to the operator
+  risk: medium
+  read_only: false
+- id: asana.delete_project
+  namespace: asana
+  label: Delete Project
+  compact_hint: Delete a project.
+  description: Permanently deletes an entire project, including all tasks and subtasks within it.
+  parameter_names:
+  - project_id
+  - bypass_trash
+  input_examples:
+  - delete the test project
+  risk: high
+  read_only: false
+- id: asana.delete_task
+  namespace: asana
+  label: Delete Task
+  compact_hint: Delete task permanently.
+  description: Permanently deletes a specific task and all its associated subtasks and attachments.
+  parameter_names:
+  - task_id
+  - force_delete
+  input_examples:
+  - delete task 789 permanently
+  risk: high
+  read_only: false
+- id: asana.get_project
+  namespace: asana
+  label: Get Project
+  compact_hint: Retrieve project details.
+  description: Retrieves metadata for a specific project, including owner, status, and custom fields.
+  parameter_names:
+  - project_id
+  - opt_fields
+  input_examples:
+  - fetch project metadata for Q3 launch
+  - get project 999
+  risk: low
+  read_only: true
+- id: asana.get_task
+  namespace: asana
+  label: Get Task
+  compact_hint: Retrieve task details.
+  description: Retrieves full details of a specific task, including assignee, subtasks, and custom fields.
+  parameter_names:
+  - task_id
+  - opt_fields
+  input_examples:
+  - get info for task 123
+  - fetch details of task 456
+  risk: low
+  read_only: true
+- id: asana.list_tasks
+  namespace: asana
+  label: List Tasks
+  compact_hint: List tasks in project.
+  description: Retrieves a list of tasks in a specific project, section, or assigned to a user.
+  parameter_names:
+  - project_id
+  - section_id
+  - assignee
+  - completed_since
+  input_examples:
+  - get tasks in project 555
+  - list tasks assigned to me
+  risk: low
+  read_only: true
+- id: asana.update_project
+  namespace: asana
+  label: Update Project
+  compact_hint: Update project metadata.
+  description: Updates an existing project's name, description, owner, or status color.
+  parameter_names:
+  - project_id
+  - name
+  - notes
+  - owner
+  input_examples:
+  - rename project 111 to Website Redesign
+  risk: medium
+  read_only: false
+- id: asana.update_task
+  namespace: asana
+  label: Update Task
+  compact_hint: Update a task.
+  description: Modifies the details, assignee, or status of an existing task.
+  parameter_names:
+  - task_id
+  - name
+  - notes
+  - assignee
+  - completed
+  input_examples:
+  - mark task 456 as completed
+  - assign task 123 to John
+  risk: medium
+  read_only: false
+- id: bitbucket.approve_pull_request
+  namespace: bitbucket
+  label: Approve Pull Request
+  compact_hint: Approve a pull request.
+  description: Submits an official approval signature for a specified pull request.
+  parameter_names:
+  - workspace
+  - repo_slug
+  - pull_request_id
+  input_examples:
+  - approve pull request 15
+  risk: medium
+  read_only: false

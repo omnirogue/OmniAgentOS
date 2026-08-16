@@ -1,0 +1,49 @@
+# Integration-branch discipline — roles, batch paths, verdict policy, promotion.
+#
+# Formation rationale (a):
+#   One aggregate Anthropic review per *integration branch*, never per lane.
+#   That cuts Anthropic load by ~40x versus per-lane opus. The three-family
+#   separation is intentional: xai (coder) -> openai/sol (lane review +
+#   integrate) -> anthropic (aggregate verdict). Reviewer lineage must differ
+#   from implementer lineage at every hop.
+#
+# Standing caveat (b):
+#   gemini (coder_mechanical) is NEVER assigned security, isolation, blinding,
+#   or verification surfaces. It once rewrote inode containment as a string
+#   prefix with 43 tests still green, and its CLI auto-enabled YOLO unprompted.
+#
+# Effort flag (c):
+#   `--effort` is a claude-CLI *session* flag and must precede `-p`. Placed
+#   after `-p` the CLI rejects it. Mis-diagnosed as "unsupported" on
+#   2026-07-29; the flag is valid when ordered correctly.
+#
+# High-risk floor (d):
+#   swarm.yaml's claude-only high_risk floor is intentionally NOT extended to
+#   sol. Merging is deterministic code (scripts/merge-gate.sh + friends); the
+#   integrator never routes through lane floors.
+#
+# gate_targets validation (2026-07-29, this worktree):
+#   `pytest -q -rs tests/doctrine` and `pytest -q -rs tests/gates_scripts`
+#   both exist and are the intended skip-free promotion gates. If a later
+#   suite introduces skips, substitute the nearest real skip-free target and
+#   document it here.
+
+integration:
+  branch_prefix: integration/batch
+  protected_branches: [main]
+  batch:
+    state_file: var/integration/current-batch.json
+    worktree_root: var/integration/worktrees
+  roles:
+    coder:              {harness: cli-grok,   model: grok-4.5,      effort: high, can_merge_to_main: false}
+    coder_mechanical:   {harness: cli-gemini, model: gemini-3.6-flash, effort: null, can_merge_to_main: false}
+    lane_reviewer:      {harness: cli-codex,  model: gpt-5.6-sol,   effort: null, can_merge_to_main: false}
+    integrator:         {harness: cli-codex,  model: gpt-5.6-sol,   effort: xhigh, can_merge_to_main: false}
+    lane_verifier:      {harness: cli-claude, model: claude-opus-5, effort: high, can_merge_to_main: false}
+    aggregate_reviewer: {harness: cli-claude, model: claude-opus-5, effort: high, can_merge_to_main: false}
+  reviewer_lineage_required: anthropic
+  verdicts: {prose_fallback: true}
+  promotion:
+    mode: report        # off | report | enforce; env OMNIAGENTOS_AUTO_PROMOTE wins
+    pause_s: 1800
+    gate_targets: [tests/doctrine, tests/gates_scripts]

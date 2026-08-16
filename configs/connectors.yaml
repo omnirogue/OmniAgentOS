@@ -1,0 +1,2103 @@
+# OmniAgentOS connector registry.
+#
+# Every external system an agent may touch is declared here. This file contains
+# NO SECRETS -- only the *names* of environment variables that the credential
+# broker (omniagentos/connectors/broker.py) resolves at call time. Agents receive
+# capabilities, never credentials.
+#
+# Each capability declares an ActionClass (contracts.py:132). The class -- not the
+# connector -- decides whether a call runs unattended, parks for approval, or is
+# refused outright:
+#
+#   read_only            -> auto. Never mutates anything.
+#   sandboxed_creation   -> auto. Produces artifacts in the run workspace only.
+#   internal_reversible  -> auto-write. Mutates our own systems; trivially undone.
+#   external_reversible  -> APPROVAL. A human/customer sees it; undoable with effort.
+#   consequential        -> ALWAYS HUMAN. Moves money, spends budget, or can destroy
+#                           data/infrastructure. policy.yaml pins always_human: true,
+#                           and broker.py additionally hard-blocks these in code so
+#                           that no config edit can ever promote them into the auto
+#                           tier. Both gates must be removed by hand to change this.
+#
+# Adding a connector: give every write capability the HIGHEST class you can defend.
+# The registry is a denylist of last resort, not a wish list.
+
+version: 1
+
+groups:
+  payments:   { label: "Payments & banking", danger: true }
+  ads:        { label: "Advertising",        danger: true }
+  crm:        { label: "CRM & customers",    danger: false }
+  comms:      { label: "Communications",     danger: false }
+  analytics:  { label: "Analytics & experimentation", danger: false }
+  ai:         { label: "AI & media generation", danger: false }
+  infra:      { label: "Infrastructure",     danger: true }
+  monitoring: { label: "Monitoring",         danger: false }
+  knowledge:   { label: "Knowledge base",     danger: false }
+  google:     { label: "Google Workspace",   danger: false }
+
+connectors:
+
+  # ------------------------------------------------------------- first light --
+  # Credential-free, network-free proof of the capability lifecycle.  The
+  # broker recognizes the reviewed inprocess:// scheme and dispatches this one
+  # exact capability to omniagentos.provision.connectors.echo.  There is no
+  # env: name because Echo never resolves a credential.
+  echo:
+    label: "Echo — capability first light"
+    group: monitoring
+    env: []
+    capabilities:
+      echo.ping:
+        label: "Validate and echo a bounded ping payload"
+        action_class: read_only
+        http:
+          base_url: "inprocess://echo"
+          methods: [POST]
+          path_prefixes: [/ping]
+          path_regex: "^/ping$"
+
+  knowledge:
+    label: "OmniAgentOS knowledge base"
+    group: knowledge
+    env: []
+    capabilities:
+      knowledge.read:
+        label: "Read active knowledge facts and graph"
+        action_class: read_only
+      knowledge.write:
+        label: "Ingest web and chat knowledge into quarantine"
+        action_class: internal_reversible
+
+  # ---------------------------------------------------------------- payments --
+  # Reads are freely grantable. Every write here is consequential: these
+  # credentials can move real money out of real accounts.
+
+  stripe_acmeuni:
+    label: "Stripe — AcmeUni"
+    group: payments
+    env:
+      - ACMEUNI_STRIPE_PRIMARY_SECRET_KEY
+      - ACMEUNI_STRIPE_SECONDARY_SECRET_KEY
+    capabilities:
+      stripe_acmeuni.read:
+        label: "Read charges, customers, subscriptions, payouts"
+        action_class: read_only
+        # GET-only, and only on read paths. This allowlist -- NOT the credential --
+        # is what makes this capability read-only: the same secret key could refund.
+        # /v1/refunds is deliberately absent from path_prefixes.
+        http:
+          base_url: "https://api.stripe.com"
+          methods: [GET]
+          path_prefixes:
+            - /v1/charges
+            - /v1/customers
+            - /v1/subscriptions
+            - /v1/payment_intents
+            - /v1/balance
+            - /v1/payouts
+            - /v1/invoices
+          auth: "bearer:ACMEUNI_STRIPE_PRIMARY_SECRET_KEY"
+      stripe_acmeuni.refund:
+        label: "Issue a refund"
+        action_class: consequential
+      stripe_acmeuni.charge:
+        label: "Create a charge or subscription"
+        action_class: consequential
+
+  stripe_initech:
+    label: "Stripe — Initech"
+    group: payments
+    env:
+      - INITECH_STRIPE_PRIMARY_SECRET_KEY
+    capabilities:
+      stripe_initech.read:
+        label: "Read charges, customers, subscriptions, payouts"
+        action_class: read_only
+        # GET-only, read paths only — mirrors stripe_acmeuni.read. This allowlist,
+        # NOT the credential, is what makes the Initech key read-only: the same
+        # secret could refund. /v1/refunds is deliberately absent. Reviewed for the
+        # revenue/P&L collector (revenue_facts, vertical=Initech, source=stripe).
+        http:
+          base_url: "https://api.stripe.com"
+          methods: [GET]
+          path_prefixes:
+            - /v1/charges
+            - /v1/customers
+            - /v1/subscriptions
+            - /v1/payment_intents
+            - /v1/balance
+            - /v1/balance_transactions
+            - /v1/payouts
+            - /v1/invoices
+          auth: "bearer:INITECH_STRIPE_PRIMARY_SECRET_KEY"
+      stripe_initech.refund:
+        label: "Issue a refund"
+        action_class: consequential
+      stripe_initech.charge:
+        label: "Create a charge or subscription"
+        action_class: consequential
+
+  # These accounts are global payment rails, not tied to an individual brand.
+  # Keep them separate because each key selects a distinct Stripe account.
+  stripe_primary:
+    label: "Stripe — global primary account"
+    group: payments
+    env:
+      - STRIPE_PRIMARY_SECRET_KEY
+    capabilities:
+      stripe_primary.read:
+        label: "Read global primary-account charges"
+        action_class: read_only
+        http:
+          base_url: "https://api.stripe.com"
+          methods: [GET]
+          path_prefixes:
+            - /v1/charges
+            - /v1/balance_transactions
+          auth: "bearer:STRIPE_PRIMARY_SECRET_KEY"
+
+  stripe_secondary:
+    label: "Stripe — global secondary account"
+    group: payments
+    env:
+      - STRIPE_SECONDARY_SECRET_KEY
+    capabilities:
+      stripe_secondary.read:
+        label: "Read global secondary-account charges"
+        action_class: read_only
+        http:
+          base_url: "https://api.stripe.com"
+          methods: [GET]
+          path_prefixes:
+            - /v1/charges
+            - /v1/balance_transactions
+          auth: "bearer:STRIPE_SECONDARY_SECRET_KEY"
+
+  slash_bank:
+    label: "Slash — business banking (charge card + cash)"
+    group: payments
+    env:
+      - SLASH_API_KEY
+      - SLASH_API_KEY_ACMEUNI
+      - SLASH_API_KEY_INITECH
+    capabilities:
+      slash_bank.read:
+        label: "Read accounts, balances, transactions"
+        action_class: read_only
+        # GET-only. /card is deliberately absent from path_prefixes -- card
+        # endpoints can expose PANs, and no agent needs them to do reporting.
+        # Slash rejects bearer-token auth; it wants a bare X-Api-Key header (the
+        # "header:" scheme). Cursor pagination via ?cursor=, no limit param.
+        http:
+          base_url: "https://api.joinslash.com"
+          methods: [GET]
+          path_prefixes:
+            - /account
+            - /transaction
+            - /balance
+          auth: "header:X-Api-Key:SLASH_API_KEY"
+      # Per-brand Slash accounts. The operator runs separate Slash keys per brand;
+      # each is a distinct account/org, so each gets its own read capability keyed
+      # to its own X-Api-Key env. Same GET-only allowlist as slash_bank.read (no
+      # /card). Reviewed for the Cash / banking collector (bank_facts, provider=slash).
+      slash_bank.read_acmeuni:
+        label: "Read AcmeUni Slash accounts, balances, transactions"
+        action_class: read_only
+        http:
+          base_url: "https://api.joinslash.com"
+          methods: [GET]
+          path_prefixes:
+            - /account
+            - /transaction
+            - /balance
+          auth: "header:X-Api-Key:SLASH_API_KEY_ACMEUNI"
+      slash_bank.read_initech:
+        label: "Read Initech Slash accounts, balances, transactions"
+        action_class: read_only
+        http:
+          base_url: "https://api.joinslash.com"
+          methods: [GET]
+          path_prefixes:
+            - /account
+            - /transaction
+            - /balance
+          auth: "header:X-Api-Key:SLASH_API_KEY_INITECH"
+      slash_bank.transfer:
+        label: "Move money out of Slash (transfer / payment / recipient)"
+        action_class: consequential
+
+  paypal:
+    label: "PayPal"
+    group: payments
+    env:
+      - PAYPAL_READONLY_CLIENT_ID
+      - PAYPAL_READONLY_CLIENT_SECRET
+      - PAYPAL_WRITE_CLIENT_ID
+      - PAYPAL_WRITE_CLIENT_SECRET
+    capabilities:
+      paypal.read:
+        label: "Read transactions and balances (uses the read-only client)"
+        action_class: read_only
+      paypal.refund:
+        label: "Refund a transaction (uses the write client)"
+        action_class: consequential
+      paypal.payout:
+        label: "Send a payout"
+        action_class: consequential
+
+  paypal_claude:
+    label: "PayPal — Agent Pro Academy"
+    group: payments
+    env:
+      - PAYPAL_CLAUDE_CLIENT_ID
+      - PAYPAL_CLAUDE_CLIENT_SECRET
+      - PAYPAL_CLAUDE_ENV
+    capabilities:
+      paypal_claude.read:
+        label: "Read transactions and balances"
+        action_class: read_only
+      paypal_claude.refund:
+        label: "Refund a transaction"
+        action_class: consequential
+      paypal_claude.payout:
+        label: "Send a payout"
+        action_class: consequential
+
+  nmi_fortpoint:
+    label: "NMI — Fortpoint gateway"
+    group: payments
+    env:
+      - FORTPOINT_NMI_SECURITY_KEY
+      - FORTPOINT_NMI_USERNAME
+      - FORTPOINT_NMI_API_BASE
+    capabilities:
+      nmi_fortpoint.read:
+        label: "Query transactions"
+        action_class: read_only
+        # NMI's *query* API is POST-only but cannot move money. The exact route is
+        # pinned in both the registry and broker; transact.php is unreachable.
+        http:
+          base_url: "https://secure.nmi.com"
+          methods: [POST]
+          path_prefixes: [/api/query.php]
+          path_regex: "^/api/query\\.php$"
+          auth: "form:security_key:FORTPOINT_NMI_SECURITY_KEY"
+      nmi_fortpoint.refund:
+        label: "Refund or void a transaction"
+        action_class: consequential
+
+  nmi_glacier:
+    label: "NMI — Glacier gateway"
+    group: payments
+    env:
+      - GLACIER_NMI_SECURITY_KEY
+      - GLACIER_NMI_USERNAME
+      - GLACIER_NMI_API_BASE
+    capabilities:
+      nmi_glacier.read:
+        label: "Query transactions"
+        action_class: read_only
+        # Query-only route; never permit NMI's transact.php endpoint here.
+        http:
+          base_url: "https://secure.nmi.com"
+          methods: [POST]
+          path_prefixes: [/api/query.php]
+          path_regex: "^/api/query\\.php$"
+          auth: "form:security_key:GLACIER_NMI_SECURITY_KEY"
+      nmi_glacier.refund:
+        label: "Refund or void a transaction"
+        action_class: consequential
+
+  chargeblast:
+    label: "ChargeBlast (chargeback alerts)"
+    group: payments
+    env:
+      - ACMEUNI_CHARGEBLAST_PRIMARY_API_KEY
+      - ACMEUNI_CHARGEBLAST_SECONDARY_API_KEY
+      - INITECH_CHARGEBLAST_API_KEY
+    capabilities:
+      chargeblast.read:
+        label: "Read chargeback and dispute alerts"
+        action_class: read_only
+      chargeblast.refund:
+        label: "Pre-emptively refund an alerted transaction"
+        # NOTE: the stack has CHARGEBLAST_AUTO_REFUND_ENABLED. That is a *service*
+        # setting and is deliberately NOT reachable as an agent capability. An agent
+        # refunding on its own recognisance is exactly the failure this tier exists
+        # to prevent.
+        action_class: consequential
+
+  vandelay:
+    label: "Vandelay"
+    group: payments
+    env:
+      - VANDELAY_LOGIN_ID
+      - VANDELAY_PASSWORD
+      - VANDELAY_BASE_URL
+    capabilities:
+      vandelay.read:
+        label: "Read orders, transactions, rebill schedules"
+        action_class: read_only
+      vandelay.refund:
+        label: "Refund or cancel an order"
+        action_class: consequential
+      vandelay.rebill_edit:
+        label: "Change a customer's rebill schedule"
+        action_class: consequential
+
+  fanbasis:
+    label: "FanBasis"
+    group: payments
+    env:
+      - FANBASIS_API_KEY
+    capabilities:
+      fanbasis.read:
+        label: "Read payments and payouts"
+        action_class: read_only
+        # FanBasis documents its API behind an authenticated portal. These are the
+        # only harmless collection paths the revenue collector may probe.
+        http:
+          base_url: "https://api.fanbasis.com"
+          methods: [GET]
+          path_prefixes:
+            - /v1/transactions
+            - /v1/orders
+            - /v1/payouts
+          auth: "bearer:FANBASIS_API_KEY"
+
+  teller:
+    label: "Teller (bank accounts)"
+    group: payments
+    env:
+      - TELLER_APPLICATION_ID
+      - TELLER_CERT_PATH
+      - TELLER_CERT_KEY_PATH
+      - TELLER_ENV
+      - TELLER_ACCESS_TOKEN
+      - TELLER_API_BASE
+    capabilities:
+      teller.read:
+        label: "Read bank balances and transactions"
+        action_class: read_only
+        # GET-only on Teller's read surface (accounts, per-account balances and
+        # transactions). Teller authenticates with mutual-TLS client cert
+        # (TELLER_CERT_PATH + TELLER_CERT_KEY_PATH) plus HTTP Basic auth using
+        # TELLER_ACCESS_TOKEN as the username with an empty password. The broker's
+        # "mtls" auth scheme handles both. Reviewed for the Cash / banking
+        # collector.
+        http:
+          base_url: "https://api.teller.io"
+          methods: [GET]
+          path_regex: '^/accounts$|^/accounts/[^/]+/balances$|^/accounts/[^/]+/transactions$'
+          auth: "mtls:TELLER_CERT_PATH:TELLER_CERT_KEY_PATH:TELLER_ACCESS_TOKEN"
+      # No transfer/payment capability is declared. Teller is read-only by design
+      # and there is no agent-reachable path to move funds out of a bank account.
+
+  # Per-bank Teller variants. Each Teller enrollment token is scoped to ONE
+  # institution's login, so Chase and Bank of America each get their own read
+  # capability keyed to their own access token. Same mTLS scheme, same GET-only
+  # read surface as teller.read; no transfer capability. Tokens were enrolled via
+  # the CRM (Teller app app_0000000000000000000000, development env) and reused here.
+  teller_chase:
+    label: "Teller — Chase (business checking)"
+    group: payments
+    env: [TELLER_APPLICATION_ID, TELLER_CERT_PATH, TELLER_CERT_KEY_PATH, TELLER_ENV, TELLER_ACCESS_TOKEN_CHASE, TELLER_API_BASE]
+    capabilities:
+      teller_chase.read:
+        label: "Read Chase balances and transactions"
+        action_class: read_only
+        http:
+          base_url: "https://api.teller.io"
+          methods: [GET]
+          path_regex: '^/accounts$|^/accounts/[^/]+/balances$|^/accounts/[^/]+/transactions$'
+          auth: "mtls:TELLER_CERT_PATH:TELLER_CERT_KEY_PATH:TELLER_ACCESS_TOKEN_CHASE"
+
+  teller_bank_of_america:
+    label: "Teller — Bank of America (business checking)"
+    group: payments
+    env: [TELLER_APPLICATION_ID, TELLER_CERT_PATH, TELLER_CERT_KEY_PATH, TELLER_ENV, TELLER_ACCESS_TOKEN_BANK_OF_AMERICA, TELLER_API_BASE]
+    capabilities:
+      teller_bank_of_america.read:
+        label: "Read Bank of America balances and transactions"
+        action_class: read_only
+        http:
+          base_url: "https://api.teller.io"
+          methods: [GET]
+          path_regex: '^/accounts$|^/accounts/[^/]+/balances$|^/accounts/[^/]+/transactions$'
+          auth: "mtls:TELLER_CERT_PATH:TELLER_CERT_KEY_PATH:TELLER_ACCESS_TOKEN_BANK_OF_AMERICA"
+
+  slash:
+    label: "Slash (banking / cards)"
+    group: payments
+    env:
+      - SLASH_API_KEY
+    capabilities:
+      slash.read:
+        label: "Read account balances and card transactions"
+        action_class: read_only
+
+  # -------------------------------------------------------------------- ads --
+  # Reads and analysis are free. Anything that can change what is *spent* is
+  # consequential -- an agent in a loop with a budget key is an unbounded burn.
+
+  meta_acmeuni:
+    label: "Meta Ads — AcmeUni"
+    group: ads
+    env:
+      - ACMEUNI_META_ACCESS_TOKEN
+      - ACMEUNI_META_AD_ACCOUNT_IDS
+    capabilities:
+      meta_acmeuni.read:
+        label: "Read campaigns, ad sets, ads, insights, spend"
+        action_class: read_only
+        # Ambiguous: GET-only Graph API access -- read-only access prevents mutating live campaigns or budgets (which are POSTs).
+        input_examples:
+          - "GET /act_123456/campaigns — Fetch marketing campaigns for a Facebook ad account"
+          - "GET /act_123456/insights — Retrieve campaign performance and spend insights"
+        # GET-only on the Graph API. Meta mutations are POSTs, so refusing every
+        # non-GET method is what keeps a "read" grant from touching a live budget.
+        http:
+          base_url: "https://graph.facebook.com/v21.0"
+          methods: [GET]
+          path_prefixes: ["/act_", "/"]
+          auth: "query:access_token:ACMEUNI_META_ACCESS_TOKEN"
+      meta_acmeuni.analyze:
+        label: "Produce optimisation recommendations (writes nothing to Meta)"
+        action_class: sandboxed_creation
+      meta_acmeuni.creative_draft:
+        label: "Upload a PAUSED creative or draft ad"
+        action_class: internal_reversible
+      meta_acmeuni.budget_change:
+        label: "Change a campaign or ad set budget"
+        action_class: consequential
+      meta_acmeuni.launch:
+        label: "Launch, unpause, or activate an ad"
+        action_class: consequential
+
+  meta_initech:
+    label: "Meta Ads — Initech"
+    group: ads
+    env:
+      - INITECH_META_ACCESS_TOKEN
+      - INITECH_META_AD_ACCOUNT_IDS
+    capabilities:
+      meta_initech.read:
+        label: "Read campaigns, ad sets, ads, insights, spend"
+        action_class: read_only
+        # GET-only on the Graph API — mirrors meta_acmeuni.read. Meta mutations are
+        # POSTs, so refusing every non-GET method keeps this "read" grant off a
+        # live budget. Reviewed for the revenue/P&L collector (per-campaign
+        # insights, vertical=Initech, source=meta).
+        http:
+          base_url: "https://graph.facebook.com/v21.0"
+          methods: [GET]
+          path_prefixes: ["/act_", "/"]
+          auth: "query:access_token:INITECH_META_ACCESS_TOKEN"
+      meta_initech.analyze:
+        label: "Produce optimisation recommendations (writes nothing to Meta)"
+        action_class: sandboxed_creation
+      meta_initech.creative_draft:
+        label: "Upload a PAUSED creative or draft ad"
+        action_class: internal_reversible
+      meta_initech.budget_change:
+        label: "Change a campaign or ad set budget"
+        action_class: consequential
+      meta_initech.launch:
+        label: "Launch, unpause, or activate an ad"
+        action_class: consequential
+
+  meta_globex:
+    label: "Meta Ads — Globex"
+    group: ads
+    env:
+      - GLOBEX_META_ACCESS_TOKEN
+      - GLOBEX_META_AD_ACCOUNT_ID
+      - GLOBEX_META_APP_ID
+      - GLOBEX_META_APP_SECRET
+      - GLOBEX_META_BM_ID
+      - GLOBEX_META_PAGE_ID
+      - GLOBEX_META_PIXEL_ID
+    capabilities:
+      meta_globex.read:
+        label: "Read campaigns, ad sets, ads, insights, spend"
+        action_class: read_only
+      meta_globex.analyze:
+        label: "Produce optimisation recommendations (writes nothing to Meta)"
+        action_class: sandboxed_creation
+      meta_globex.creative_draft:
+        label: "Upload a PAUSED creative or draft ad"
+        action_class: internal_reversible
+      meta_globex.budget_change:
+        label: "Change a campaign or ad set budget"
+        action_class: consequential
+      meta_globex.launch:
+        label: "Launch, unpause, or activate an ad"
+        action_class: consequential
+
+  meta_agentpro:
+    label: "Meta Ads — Agent Pro Academy"
+    group: ads
+    env:
+      - ACMEUNI_AGENTPRO_META_ACCESS_TOKEN
+      - ACMEUNI_AGENTPRO_META_PIXEL_ID
+    capabilities:
+      meta_agentpro.read:
+        label: "Read campaigns, ad sets, ads, insights, spend"
+        action_class: read_only
+      meta_agentpro.analyze:
+        label: "Produce optimisation recommendations (writes nothing to Meta)"
+        action_class: sandboxed_creation
+      meta_agentpro.creative_draft:
+        label: "Upload a PAUSED creative or draft ad"
+        action_class: internal_reversible
+      meta_agentpro.budget_change:
+        label: "Change a campaign or ad set budget"
+        action_class: consequential
+      meta_agentpro.launch:
+        label: "Launch, unpause, or activate an ad"
+        action_class: consequential
+
+  metapi:
+    label: "MetAPI (competitor ad intelligence)"
+    group: ads
+    env:
+      - METAPI_API_KEY
+      - METAPI_BASE_URL
+    capabilities:
+      metapi.read:
+        label: "Read competitor ad libraries"
+        action_class: read_only
+
+  # TN.9 — local-only Studio on 127.0.0.1:4700 (Grok product).
+  # external_reversible: local media gen under full-auto; still broker-audited.
+  # Paid ad launch / spend stays on meta_* consequential + HARD_HUMAN.
+  globex:
+    label: "Globex Studio (local media generation)"
+    group: ai
+    env: []
+    capabilities:
+      globex.generate_image:
+        label: "Generate image via Globex Studio"
+        action_class: external_reversible
+        http:
+          base_url: "http://127.0.0.1:4700"
+          methods: [POST]
+          path_regex: '^/v1/generate/(image|images)$'
+      globex.generate_video:
+        label: "Generate video via Globex Studio"
+        action_class: external_reversible
+        http:
+          base_url: "http://127.0.0.1:4700"
+          methods: [POST]
+          path_regex: '^/v1/generate/(video|videos)$'
+
+  # ------------------------------------------------------------------- crm --
+  # The auto-write tier lives here. Notes and tags are internal, reversible, and
+  # invisible to the customer. Anything the customer *sees* needs approval.
+
+  piedpiper_acmeuni:
+    label: "PiedPiper — AcmeUni"
+    group: crm
+    env:
+      - PIEDPIPER_ACMEUNI_TOKEN
+      - PIEDPIPER_ACMEUNI_LOCATION_ID
+      - PIEDPIPER_COMPANY_ID
+    capabilities:
+      piedpiper_acmeuni.read:
+        label: "Read contacts, opportunities, pipelines, conversations"
+        action_class: read_only
+        http:
+          base_url: "https://services.leadconnectorhq.com"
+          methods: [GET]
+          path_prefixes:
+            - /contacts
+            - /opportunities
+            - /pipelines
+            - /conversations
+            - /calendars
+          auth: "bearer:PIEDPIPER_ACMEUNI_TOKEN"
+          headers: { Version: "2021-07-28" }
+      piedpiper_acmeuni.note_write:
+        label: "Add an internal note to a contact"
+        action_class: internal_reversible
+        # An auto-write, so its scope is pinned exactly. path_regex confines it to
+        # the /notes subresource of one contact: a POST to /contacts/{id} itself
+        # (which edits customer-visible fields) is NOT reachable here -- that is
+        # piedpiper_acmeuni.contact_edit, external_reversible, which parks for approval.
+        # The regex, not the prefix, is what carries that guarantee.
+        http:
+          base_url: "https://services.leadconnectorhq.com"
+          methods: [POST]
+          path_prefixes: [/contacts/]
+          path_regex: '^/contacts/[A-Za-z0-9_-]+/notes/?$'
+          auth: "bearer:PIEDPIPER_ACMEUNI_TOKEN"
+          headers: { Version: "2021-07-28" }
+      piedpiper_acmeuni.tag_write:
+        label: "Add or remove a contact tag"
+        action_class: internal_reversible
+        http:
+          base_url: "https://services.leadconnectorhq.com"
+          methods: [POST, DELETE]
+          path_prefixes: [/contacts/]
+          path_regex: '^/contacts/[A-Za-z0-9_-]+/tags(/[A-Za-z0-9_-]+)?$'
+          auth: "bearer:PIEDPIPER_ACMEUNI_TOKEN"
+          headers: { Version: "2021-07-28" }
+      piedpiper_acmeuni.opportunity_move:
+        label: "Move an opportunity between pipeline stages"
+        action_class: internal_reversible
+        http:
+          base_url: "https://services.leadconnectorhq.com"
+          methods: [PUT]
+          path_prefixes: [/opportunities/]
+          path_regex: '^/opportunities/[A-Za-z0-9_-]+/status/?$'
+          auth: "bearer:PIEDPIPER_ACMEUNI_TOKEN"
+          headers: { Version: "2021-07-28" }
+      piedpiper_acmeuni.contact_edit:
+        label: "Edit customer-visible contact fields"
+        action_class: external_reversible
+      piedpiper_acmeuni.message_send:
+        label: "Send an SMS or email to a contact"
+        action_class: external_reversible
+      # TN.6 — customer-visible conversation send; broker-proxied and always-human.
+      piedpiper_acmeuni.conversation_send:
+        label: "Send a message on a PiedPiper conversation"
+        action_class: consequential
+        http:
+          base_url: "https://services.leadconnectorhq.com"
+          methods: [POST]
+          path_prefixes: [/conversations/]
+          path_regex: '^/conversations/messages/?$'
+          auth: "bearer:PIEDPIPER_ACMEUNI_TOKEN"
+          headers: { Version: "2021-07-28" }
+      # Customer-visible steward email is a two-call workflow. Both the contact
+      # upsert and the final send remain behind the same always-human capability.
+      piedpiper_acmeuni.email_send:
+        label: "Upsert a contact and send a customer-visible email"
+        action_class: consequential
+        http:
+          base_url: "https://services.leadconnectorhq.com"
+          methods: [POST]
+          path_prefixes: [/contacts/upsert, /conversations/messages]
+          path_regex: '^/(contacts/upsert|conversations/messages)/?$'
+          auth: "bearer:PIEDPIPER_ACMEUNI_TOKEN"
+          headers: { Version: "2021-07-28" }
+
+  piedpiper_initech:
+    label: "PiedPiper — Initech"
+    group: crm
+    env:
+      - PIEDPIPER_INITECH_TOKEN
+      - PIEDPIPER_INITECH_LOCATION_ID
+      - PIEDPIPER_COMPANY_ID
+    capabilities:
+      piedpiper_initech.read:
+        label: "Read contacts, opportunities, pipelines, conversations"
+        action_class: read_only
+      piedpiper_initech.note_write:
+        label: "Add an internal note to a contact"
+        action_class: internal_reversible
+      piedpiper_initech.tag_write:
+        label: "Add or remove a contact tag"
+        action_class: internal_reversible
+      piedpiper_initech.message_send:
+        label: "Send an SMS or email to a contact"
+        action_class: external_reversible
+
+  piedpiper_globex:
+    label: "PiedPiper — Globex"
+    group: crm
+    env:
+      - PIEDPIPER_GLOBEX_TOKEN
+      - PIEDPIPER_GLOBEX_LOCATION_ID
+      - PIEDPIPER_COMPANY_ID
+    capabilities:
+      piedpiper_globex.read:
+        label: "Read contacts, opportunities, pipelines, conversations"
+        action_class: read_only
+      piedpiper_globex.note_write:
+        label: "Add an internal note to a contact"
+        action_class: internal_reversible
+      piedpiper_globex.tag_write:
+        label: "Add or remove a contact tag"
+        action_class: internal_reversible
+      piedpiper_globex.message_send:
+        label: "Send an SMS or email to a contact"
+        action_class: external_reversible
+
+  customerio_acmeuni:
+    label: "Customer.io — AcmeUni"
+    group: crm
+    env:
+      - CUSTOMERIO_APP_API_KEY
+    capabilities:
+      customerio_acmeuni.read:
+        label: "Read campaigns, newsletters, segments, broadcasts, activities, and customers"
+        action_class: read_only
+        # Customer.io's read-shaped POST endpoints are deliberately omitted:
+        # this capability exposes only App API resources available via GET.
+        http:
+          base_url: "https://api.customer.io"
+          methods: [GET]
+          path_prefixes:
+            - /v1/campaigns
+            - /v1/newsletters
+            - /v1/segments
+            - /v1/broadcasts
+            - /v1/activities
+            - /v1/customers
+          auth: "bearer:CUSTOMERIO_APP_API_KEY"
+      # TN.6 ESP broadcast trigger. The reviewed App API route is intentionally
+      # exact: campaign selection and send remain a human/grant decision.
+      customerio_acmeuni.trigger_broadcast:
+        label: "Trigger a Customer.io broadcast / campaign send"
+        action_class: consequential
+        http:
+          base_url: "https://api.customer.io"
+          methods: [POST]
+          path_regex: '^/v1/campaigns/[0-9]+/triggers/?$'
+          auth: "bearer:CUSTOMERIO_APP_API_KEY"
+
+  customerio_initech:
+    label: "Customer.io — Initech"
+    group: crm
+    env:
+      - CUSTOMERIO_INITECH_APP_API_KEY
+    capabilities:
+      customerio_initech.read:
+        label: "Read campaigns, newsletters, segments, broadcasts, activities, and customers"
+        action_class: read_only
+        # Mirrors the AcmeUni GET-only App API boundary; no read-shaped POSTs.
+        http:
+          base_url: "https://api.customer.io"
+          methods: [GET]
+          path_prefixes:
+            - /v1/campaigns
+            - /v1/newsletters
+            - /v1/segments
+            - /v1/broadcasts
+            - /v1/activities
+            - /v1/customers
+          auth: "bearer:CUSTOMERIO_INITECH_APP_API_KEY"
+
+  clickup:
+    label: "ClickUp"
+    group: crm
+    env:
+      - CLICKUP_API_TOKEN
+    capabilities:
+      clickup.read:
+        label: "Read lists, tasks, teams, spaces, and folders"
+        action_class: read_only
+        # GET-only workspace data; task/list mutation routes stay unreachable.
+        http:
+          base_url: "https://api.clickup.com"
+          methods: [GET]
+          path_prefixes:
+            - /api/v2/list
+            - /api/v2/task
+            - /api/v2/team
+            - /api/v2/space
+            - /api/v2/folder
+          auth: "header:Authorization:CLICKUP_API_TOKEN"
+
+  # NOTE: CRM_ADMIN_SERVICE_TOKEN / CRM_INTERNAL_SERVICE_TOKEN / CRM_BASIC_AUTH are
+  # the CRM's actual vault credential names (the previous CRM_API_SECRET_KEY /
+  # CRM_REPORTS_ADMIN_SERVICE_TOKEN names here did not exist in the vault -- fixed
+  # so this connector resolves against real credentials). CRM_DATABASE_URL is a
+  # separate, more dangerous credential (direct Postgres access to the CRM's own
+  # database, distinct from the platform's own `postgres` connector) so its reads
+  # and writes are declared as their own capabilities, mirroring the postgres
+  # connector's read/write split. CRM_APP_URL, CRM_SSH_HOST, and
+  # CRM_PG_TUNNEL_CMD are connection-routing config (a URL, a hostname, a shell
+  # command), not credentials, and are intentionally not listed here.
+  crm_internal:
+    label: "Initech CRM (fb.initech.ai)"
+    group: crm
+    env:
+      - CRM_ADMIN_SERVICE_TOKEN
+      - CRM_INTERNAL_SERVICE_TOKEN
+      - CRM_BASIC_AUTH
+      - CRM_DATABASE_URL
+    capabilities:
+      crm_internal.read:
+        label: "Read CRM reports, funnels, live sessions, and bank cash-flow"
+        action_class: read_only
+        # GET-only against the CRM's internal API. The cash-flow endpoints expose
+        # the bank balances/transactions the CRM syncs from Teller (Chase/BofA etc.),
+        # so OmniAgentOS reads bank data from the CRM (single source of truth) rather
+        # than holding a second copy of the Teller enrollment tokens. Auth is the
+        # CRM's own internal service-token header; POST paths (save/sync enrollment)
+        # are unreachable because only GET is allowed.
+        http:
+          base_url: "https://fb.initech.ai"
+          methods: [GET]
+          path_prefixes:
+            - /api/cash-flow
+            - /api/reports
+          auth: "header:x-internal-service-token:CRM_INTERNAL_SERVICE_TOKEN"
+      crm_internal.annotate:
+        label: "Write internal annotations and report notes"
+        action_class: internal_reversible
+      crm_internal.db_read:
+        label: "Run read-only SELECT queries against the CRM database"
+        action_class: read_only
+        # Ambiguous: this is the CRM's OWN database (CRM_DATABASE_URL) -- a DIFFERENT
+        # store from the platform's `postgres` connector, which sits two lines away in
+        # the reader's mind and one grant away in the UI.
+        # No http spec is pinned here, so callable_now is false. The examples therefore
+        # describe the intended QUERY and deliberately do NOT name an HTTP route, which
+        # would imply a reviewed call path that does not exist.
+        input_examples:
+          - "SELECT email FROM leads WHERE country = 'US' — no reviewed route yet"
+          - "SELECT count(*) FROM sessions WHERE logged_in = 1 — read-only aggregate"
+      crm_internal.db_write:
+        label: "Run INSERT/UPDATE/DELETE/DDL against the CRM database"
+        action_class: consequential
+
+  clerk:
+    label: "Clerk (user auth)"
+    group: crm
+    env:
+      - CLERK_SECRET_KEY
+      - ACMEUNI_CLERK_SECRET_KEY
+      - INITECH_CLERK_SECRET_KEY
+    capabilities:
+      clerk.read:
+        label: "Read user accounts and sessions"
+        action_class: read_only
+      clerk.acmeuni_read:
+        label: "Read AcmeUni user accounts, organizations, and sessions"
+        action_class: read_only
+        # Brand-split reads prevent one Clerk secret from selecting both tenants.
+        http:
+          base_url: "https://api.clerk.com"
+          methods: [GET]
+          path_prefixes:
+            - /v1/users
+            - /v1/organizations
+            - /v1/sessions
+          auth: "bearer:ACMEUNI_CLERK_SECRET_KEY"
+      clerk.initech_read:
+        label: "Read Initech user accounts, organizations, and sessions"
+        action_class: read_only
+        http:
+          base_url: "https://api.clerk.com"
+          methods: [GET]
+          path_prefixes:
+            - /v1/users
+            - /v1/organizations
+            - /v1/sessions
+          auth: "bearer:INITECH_CLERK_SECRET_KEY"
+      clerk.user_edit:
+        label: "Edit user metadata or entitlements"
+        action_class: external_reversible
+      clerk.user_delete:
+        label: "Delete or ban a user account"
+        action_class: consequential
+
+  livesession:
+    label: "LiveSession"
+    group: crm
+    env:
+      - ACMEUNI_LIVESESSION_PAT
+    capabilities:
+      livesession.read:
+        label: "Read session recordings and funnel events"
+        action_class: read_only
+
+  webinarjam:
+    label: "WebinarJam / EverWebinar"
+    group: crm
+    env:
+      - WEBINARJAM_API_KEY
+    capabilities:
+      webinarjam.read:
+        label: "Read webinars, registrants, and attendance analytics"
+        action_class: read_only
+
+  # ----------------------------------------------------------------- comms --
+
+  freshdesk_acmeuni:
+    label: "Freshdesk — AcmeUni"
+    group: comms
+    env:
+      - FRESHDESK_API_KEY
+      - FRESHDESK_BASIC_PW
+    capabilities:
+      freshdesk_acmeuni.read:
+        label: "Read tickets, searches, contacts, and agents"
+        action_class: read_only
+        # GET-only support records; the API key remains broker-contained.
+        http:
+          base_url: "https://acmeuni-help.freshdesk.com"
+          methods: [GET]
+          path_prefixes:
+            - /api/v2/tickets
+            - /api/v2/search
+            - /api/v2/contacts
+            - /api/v2/agents
+          auth: "basic:FRESHDESK_API_KEY:FRESHDESK_BASIC_PW"
+
+  freshdesk_initech:
+    label: "Freshdesk — Initech"
+    group: comms
+    env:
+      - FRESHDESK_INITECH_API_KEY
+      - FRESHDESK_BASIC_PW
+    capabilities:
+      freshdesk_initech.read:
+        label: "Read tickets, searches, contacts, and agents"
+        action_class: read_only
+        http:
+          base_url: "https://initech.freshdesk.com"
+          methods: [GET]
+          path_prefixes:
+            - /api/v2/tickets
+            - /api/v2/search
+            - /api/v2/contacts
+            - /api/v2/agents
+          auth: "basic:FRESHDESK_INITECH_API_KEY:FRESHDESK_BASIC_PW"
+
+  zendesk:
+    label: "Zendesk — Initech"
+    group: comms
+    env:
+      - ZENDESK_BASIC_USER
+      - ZENDESK_API_TOKEN
+    capabilities:
+      zendesk.read:
+        label: "Read tickets, searches, and users"
+        action_class: read_only
+        # GET-only support records; ticket mutations are outside the allowlist.
+        http:
+          base_url: "https://initechinc-19569.zendesk.com"
+          methods: [GET]
+          path_prefixes:
+            - /api/v2/tickets
+            - /api/v2/search.json
+            - /api/v2/users
+          auth: "basic:ZENDESK_BASIC_USER:ZENDESK_API_TOKEN"
+
+  slack:
+    label: "Slack"
+    group: comms
+    env:
+      - SLACK_WEBHOOK_URL
+      - OPS_ALERT_SLACK_WEBHOOK_URL
+    capabilities:
+      slack.post_internal:
+        label: "Post to your own ops/alert channels"
+        action_class: internal_reversible
+
+  # Deliberately SEPARATE from `slack` above, not folded into it. Credential scope
+  # in broker.resolve_for is CONNECTOR-scoped (broker._declared_env_names), so
+  # adding the ingest tokens to `slack` would silently widen what
+  # slack.post_internal can resolve. Two connectors keep the two scopes exact.
+  slack_ingest:
+    label: "Slack ingestion (Socket Mode push + reconciliation poll)"
+    group: comms
+    env:
+      - SLACK_BOT_TOKEN
+      - SLACK_APP_TOKEN
+    capabilities:
+      slack_ingest.stream:
+        label: "Read public-channel messages (Socket Mode stream + conversations.history)"
+        action_class: read_only
+        # No http spec on purpose, so callable_now stays FALSE and nothing can
+        # route an arbitrary request through this id. The tokens are consumed by
+        # slack_sdk's own transports (a WebSocket for the app token, Web API GETs
+        # for the bot token), not by broker.call's HTTP allowlist; what this
+        # capability exists to pin is the CREDENTIAL SCOPE.
+        #
+        # Its two consumers, as a COMMENT and deliberately not `input_examples`:
+        # that field marks a capability AMBIGUOUS for the tool-search
+        # disambiguation surface (tests/toolplane/test_access_search_route.py
+        # pins the exact set), and a capability with no http spec is not
+        # routable, so it can never be the answer to a tool search.
+        #   omniagentos.comms.sockets.slack        Socket Mode listener (app token)
+        #   omniagentos.comms.poll --source slack  reconciliation sweep (bot token)
+
+  # Deliberately SEPARATE from `slack` and `slack_ingest` (same reasoning as the
+  # slack_ingest split above): credential scope is connector-scoped, so giving the
+  # posting capability its own connector keeps SLACK_APP_TOKEN unresolvable from a
+  # post and keeps the webhook connector unable to resolve the bot token.
+  slack_post:
+    label: "Slack posting (bot token, named internal channels)"
+    group: comms
+    env:
+      - SLACK_BOT_TOKEN
+    capabilities:
+      slack_post.channel_message:
+        label: "Post a message to a Slack channel as the bot"
+        # consequential, NOT internal_reversible: the broker allowlist validates
+        # the route but never inspects the `channel` body field, and
+        # chat.postMessage accepts user IDs (opens a DM) and Slack Connect
+        # channels -- so an unattended post could reach an external human. The
+        # webhook-based slack.post_internal is not a precedent: it has no http
+        # spec and is not broker-routable. Until a fail-closed channel-ID
+        # allowlist is enforced at the broker seam, every bot post rides the
+        # always-human rail (a bounded durable grant can cover a session).
+        action_class: consequential
+        http:
+          base_url: "https://slack.com"
+          methods: [POST]
+          path_prefixes:
+            - /api/chat.postMessage
+          path_regex: '^/api/chat\.postMessage$'
+          auth: "bearer:SLACK_BOT_TOKEN"
+
+  zapier:
+    label: "Zapier (MCP-connected apps)"
+    group: comms
+    env:
+      - ZAPIER_MCP_CONFIG_URL
+    capabilities:
+      zapier.read:
+        label: "Search and read data from connected apps"
+        action_class: read_only
+      zapier.trigger:
+        label: "Trigger a configured Zap / connected-app action"
+        # Ambiguous: the LABEL sounds like one bounded action; the actual reach is
+        # whatever the MCP config exposes across 9000+ apps. Two "triggers" that read
+        # identically here can be a Slack post and a wire transfer. No http spec is
+        # pinned (callable_now is false), so these name the ACTION, not a route.
+        input_examples:
+          - "Zap 'ops-alert' — post a message to an internal Slack channel (reversible)"
+          - "Zap 'billing-sync' — write to an external billing system (may move money)"
+        # Scope is whatever the MCP config exposes -- unknown and variable across
+        # 9000+ apps, and a Zap can invoke arbitrary actions (move money, delete
+        # production data, message customers) that are individually irreversible
+        # and unauditable ahead of time. That is the consequential tier, not
+        # external_reversible -- policy.yaml pins consequential to always_human
+        # and broker.HARD_HUMAN_CLASSES hard-blocks it in code.
+        action_class: consequential
+
+  # ------------------------------------------------------- google workspace --
+  # The Google Workspace connectors share one refresh-token credential set. auth is the
+  # pinned "oauth2:REFRESH_TOKEN_ENV:CLIENT_ID_ENV:CLIENT_SECRET_ENV" scheme: the
+  # broker exchanges the refresh token for a short-lived access token and sets
+  # an authorization header carrying it on the outbound request -- it never
+  # hands the refresh token or the access token to an agent subprocess. The
+  # `google` group is deliberately NOT in broker.INJECTABLE_GROUPS (== {"ai"}),
+  # so none of this env is ever injected into an agent process even for a read
+  # grant.
+
+  # Per-account variants: clone as `gmail_<acct>` and point the REFRESH env at
+  # `GOOGLE_OAUTH_REFRESH_TOKEN_<ACCT>`. The OAuth token cache keys by env NAME,
+  # so account-specific refresh tokens cannot collide.
+  gmail:
+    label: "Gmail"
+    group: google
+    env: [GOOGLE_OAUTH_REFRESH_TOKEN, GOOGLE_OAUTH_CLIENT_ID, GOOGLE_OAUTH_CLIENT_SECRET]
+    capabilities:
+      gmail.search:
+        label: "Search messages and threads"
+        action_class: read_only
+        # Ambiguous: Gmail "search" only returns list message/thread IDs -- reading actual email bodies requires gmail.get_message.
+        input_examples:
+          - "GET /gmail/v1/users/me/messages?q=from:stripe — Search and retrieve message IDs of Stripe emails"
+          - "GET /gmail/v1/users/me/threads?q=subject:invoice — Search thread IDs matching a subject line"
+        # Gmail search rides the q query parameter on these GET collections.
+        http:
+          base_url: "https://gmail.googleapis.com"
+          methods: [GET]
+          path_regex: '^/gmail/v1/users/me/(messages|threads)$'
+          auth: "oauth2:GOOGLE_OAUTH_REFRESH_TOKEN:GOOGLE_OAUTH_CLIENT_ID:GOOGLE_OAUTH_CLIENT_SECRET"
+      gmail.get_message:
+        label: "Read a message or message attachment"
+        action_class: read_only
+        http:
+          base_url: "https://gmail.googleapis.com"
+          methods: [GET]
+          path_regex: '^/gmail/v1/users/me/messages/[A-Za-z0-9_-]+(/attachments/[A-Za-z0-9_-]+)?$'
+          auth: "oauth2:GOOGLE_OAUTH_REFRESH_TOKEN:GOOGLE_OAUTH_CLIENT_ID:GOOGLE_OAUTH_CLIENT_SECRET"
+      gmail.get_thread:
+        label: "Read a thread"
+        action_class: read_only
+        http:
+          base_url: "https://gmail.googleapis.com"
+          methods: [GET]
+          path_regex: '^/gmail/v1/users/me/threads/[A-Za-z0-9_-]+$'
+          auth: "oauth2:GOOGLE_OAUTH_REFRESH_TOKEN:GOOGLE_OAUTH_CLIENT_ID:GOOGLE_OAUTH_CLIENT_SECRET"
+      # TN.6 — outbound send. CONSEQUENTIAL: requires human approval OR a live
+      # campaign grant (TN.7). Never injectable; broker-proxied only.
+      gmail.send:
+        label: "Send an email (users.messages.send)"
+        action_class: consequential
+        http:
+          base_url: "https://gmail.googleapis.com"
+          methods: [POST]
+          path_regex: '^/gmail/v1/users/me/messages/send$'
+          auth: "oauth2:GOOGLE_OAUTH_REFRESH_TOKEN:GOOGLE_OAUTH_CLIENT_ID:GOOGLE_OAUTH_CLIENT_SECRET"
+
+  # Second Gmail account (example-org@example.com) — the per-account variant pattern.
+  # Same client, but the REFRESH env is suffixed so the oauth cache keys distinctly.
+  gmail_ownera:
+    label: "Gmail — example-org@example.com"
+    group: google
+    env: [GOOGLE_OAUTH_REFRESH_TOKEN_OWNERA, GOOGLE_OAUTH_CLIENT_ID, GOOGLE_OAUTH_CLIENT_SECRET]
+    capabilities:
+      gmail_ownera.search:
+        label: "Search messages and threads"
+        action_class: read_only
+        http:
+          base_url: "https://gmail.googleapis.com"
+          methods: [GET]
+          path_regex: '^/gmail/v1/users/me/(messages|threads)$'
+          auth: "oauth2:GOOGLE_OAUTH_REFRESH_TOKEN_OWNERA:GOOGLE_OAUTH_CLIENT_ID:GOOGLE_OAUTH_CLIENT_SECRET"
+      gmail_ownera.get_message:
+        label: "Read a message or message attachment"
+        action_class: read_only
+        http:
+          base_url: "https://gmail.googleapis.com"
+          methods: [GET]
+          path_regex: '^/gmail/v1/users/me/messages/[A-Za-z0-9_-]+(/attachments/[A-Za-z0-9_-]+)?$'
+          auth: "oauth2:GOOGLE_OAUTH_REFRESH_TOKEN_OWNERA:GOOGLE_OAUTH_CLIENT_ID:GOOGLE_OAUTH_CLIENT_SECRET"
+      gmail_ownera.get_thread:
+        label: "Read a thread"
+        action_class: read_only
+        http:
+          base_url: "https://gmail.googleapis.com"
+          methods: [GET]
+          path_regex: '^/gmail/v1/users/me/threads/[A-Za-z0-9_-]+$'
+          auth: "oauth2:GOOGLE_OAUTH_REFRESH_TOKEN_OWNERA:GOOGLE_OAUTH_CLIENT_ID:GOOGLE_OAUTH_CLIENT_SECRET"
+      # Outbound reply. CONSEQUENTIAL: human approval OR a live campaign grant, same as
+      # gmail.send. Requires the refresh token to be minted with the gmail.send scope.
+      gmail_ownera.send:
+        label: "Send an email (users.messages.send)"
+        action_class: consequential
+        http:
+          base_url: "https://gmail.googleapis.com"
+          methods: [POST]
+          path_regex: '^/gmail/v1/users/me/messages/send$'
+          auth: "oauth2:GOOGLE_OAUTH_REFRESH_TOKEN_OWNERA:GOOGLE_OAUTH_CLIENT_ID:GOOGLE_OAUTH_CLIENT_SECRET"
+
+  # Third Gmail account (owner@initech.example) — same per-account variant pattern.
+  gmail_initech:
+    label: "Gmail — owner@initech.example"
+    group: google
+    env: [GOOGLE_OAUTH_REFRESH_TOKEN_INITECH, GOOGLE_OAUTH_CLIENT_ID, GOOGLE_OAUTH_CLIENT_SECRET]
+    capabilities:
+      gmail_initech.search:
+        label: "Search messages and threads"
+        action_class: read_only
+        http:
+          base_url: "https://gmail.googleapis.com"
+          methods: [GET]
+          path_regex: '^/gmail/v1/users/me/(messages|threads)$'
+          auth: "oauth2:GOOGLE_OAUTH_REFRESH_TOKEN_INITECH:GOOGLE_OAUTH_CLIENT_ID:GOOGLE_OAUTH_CLIENT_SECRET"
+      gmail_initech.get_message:
+        label: "Read a message or message attachment"
+        action_class: read_only
+        http:
+          base_url: "https://gmail.googleapis.com"
+          methods: [GET]
+          path_regex: '^/gmail/v1/users/me/messages/[A-Za-z0-9_-]+(/attachments/[A-Za-z0-9_-]+)?$'
+          auth: "oauth2:GOOGLE_OAUTH_REFRESH_TOKEN_INITECH:GOOGLE_OAUTH_CLIENT_ID:GOOGLE_OAUTH_CLIENT_SECRET"
+      gmail_initech.get_thread:
+        label: "Read a thread"
+        action_class: read_only
+        http:
+          base_url: "https://gmail.googleapis.com"
+          methods: [GET]
+          path_regex: '^/gmail/v1/users/me/threads/[A-Za-z0-9_-]+$'
+          auth: "oauth2:GOOGLE_OAUTH_REFRESH_TOKEN_INITECH:GOOGLE_OAUTH_CLIENT_ID:GOOGLE_OAUTH_CLIENT_SECRET"
+      # Outbound reply. CONSEQUENTIAL: human approval OR a live campaign grant, same as
+      # gmail.send. Requires the refresh token to be minted with the gmail.send scope.
+      # NB: the W2 loop historically quarantined @initech.example outbound — sends stay
+      # approval-gated here regardless.
+      gmail_initech.send:
+        label: "Send an email (users.messages.send)"
+        action_class: consequential
+        http:
+          base_url: "https://gmail.googleapis.com"
+          methods: [POST]
+          path_regex: '^/gmail/v1/users/me/messages/send$'
+          auth: "oauth2:GOOGLE_OAUTH_REFRESH_TOKEN_INITECH:GOOGLE_OAUTH_CLIENT_ID:GOOGLE_OAUTH_CLIENT_SECRET"
+
+  # Fourth Gmail account (owner@acmeuni.example) — same per-account variant.
+  gmail_acmeuni:
+    label: "Gmail — owner@acmeuni.example"
+    group: google
+    env: [GOOGLE_OAUTH_REFRESH_TOKEN_ACMEUNI, GOOGLE_OAUTH_CLIENT_ID, GOOGLE_OAUTH_CLIENT_SECRET]
+    capabilities:
+      gmail_acmeuni.search:
+        label: "Search messages and threads"
+        action_class: read_only
+        http:
+          base_url: "https://gmail.googleapis.com"
+          methods: [GET]
+          path_regex: '^/gmail/v1/users/me/(messages|threads)$'
+          auth: "oauth2:GOOGLE_OAUTH_REFRESH_TOKEN_ACMEUNI:GOOGLE_OAUTH_CLIENT_ID:GOOGLE_OAUTH_CLIENT_SECRET"
+      gmail_acmeuni.get_message:
+        label: "Read a message or message attachment"
+        action_class: read_only
+        http:
+          base_url: "https://gmail.googleapis.com"
+          methods: [GET]
+          path_regex: '^/gmail/v1/users/me/messages/[A-Za-z0-9_-]+(/attachments/[A-Za-z0-9_-]+)?$'
+          auth: "oauth2:GOOGLE_OAUTH_REFRESH_TOKEN_ACMEUNI:GOOGLE_OAUTH_CLIENT_ID:GOOGLE_OAUTH_CLIENT_SECRET"
+      gmail_acmeuni.get_thread:
+        label: "Read a thread"
+        action_class: read_only
+        http:
+          base_url: "https://gmail.googleapis.com"
+          methods: [GET]
+          path_regex: '^/gmail/v1/users/me/threads/[A-Za-z0-9_-]+$'
+          auth: "oauth2:GOOGLE_OAUTH_REFRESH_TOKEN_ACMEUNI:GOOGLE_OAUTH_CLIENT_ID:GOOGLE_OAUTH_CLIENT_SECRET"
+      # Outbound reply. CONSEQUENTIAL: human approval OR a live campaign grant, same as
+      # gmail.send. Requires the refresh token to be minted with the gmail.send scope.
+      gmail_acmeuni.send:
+        label: "Send an email (users.messages.send)"
+        action_class: consequential
+        http:
+          base_url: "https://gmail.googleapis.com"
+          methods: [POST]
+          path_regex: '^/gmail/v1/users/me/messages/send$'
+          auth: "oauth2:GOOGLE_OAUTH_REFRESH_TOKEN_ACMEUNI:GOOGLE_OAUTH_CLIENT_ID:GOOGLE_OAUTH_CLIENT_SECRET"
+
+  # Fifth Gmail account (owner@hooli.example) — its own Google account.
+  gmail_hooli:
+    label: "Gmail — owner@hooli.example"
+    group: google
+    env: [GOOGLE_OAUTH_REFRESH_TOKEN_HOOLI, GOOGLE_OAUTH_CLIENT_ID, GOOGLE_OAUTH_CLIENT_SECRET]
+    capabilities:
+      gmail_hooli.search:
+        label: "Search messages and threads"
+        action_class: read_only
+        http:
+          base_url: "https://gmail.googleapis.com"
+          methods: [GET]
+          path_regex: '^/gmail/v1/users/me/(messages|threads)$'
+          auth: "oauth2:GOOGLE_OAUTH_REFRESH_TOKEN_HOOLI:GOOGLE_OAUTH_CLIENT_ID:GOOGLE_OAUTH_CLIENT_SECRET"
+      gmail_hooli.get_message:
+        label: "Read a message or message attachment"
+        action_class: read_only
+        http:
+          base_url: "https://gmail.googleapis.com"
+          methods: [GET]
+          path_regex: '^/gmail/v1/users/me/messages/[A-Za-z0-9_-]+(/attachments/[A-Za-z0-9_-]+)?$'
+          auth: "oauth2:GOOGLE_OAUTH_REFRESH_TOKEN_HOOLI:GOOGLE_OAUTH_CLIENT_ID:GOOGLE_OAUTH_CLIENT_SECRET"
+      gmail_hooli.get_thread:
+        label: "Read a thread"
+        action_class: read_only
+        http:
+          base_url: "https://gmail.googleapis.com"
+          methods: [GET]
+          path_regex: '^/gmail/v1/users/me/threads/[A-Za-z0-9_-]+$'
+          auth: "oauth2:GOOGLE_OAUTH_REFRESH_TOKEN_HOOLI:GOOGLE_OAUTH_CLIENT_ID:GOOGLE_OAUTH_CLIENT_SECRET"
+      gmail_hooli.send:
+        label: "Send an email (users.messages.send)"
+        action_class: consequential
+        http:
+          base_url: "https://gmail.googleapis.com"
+          methods: [POST]
+          path_regex: '^/gmail/v1/users/me/messages/send$'
+          auth: "oauth2:GOOGLE_OAUTH_REFRESH_TOKEN_HOOLI:GOOGLE_OAUTH_CLIENT_ID:GOOGLE_OAUTH_CLIENT_SECRET"
+
+  google_sheets:
+    label: "Google Sheets"
+    group: google
+    env: [GOOGLE_OAUTH_REFRESH_TOKEN, GOOGLE_OAUTH_CLIENT_ID, GOOGLE_OAUTH_CLIENT_SECRET]
+    capabilities:
+      google_sheets.read:
+        label: "Read spreadsheet metadata and cell values"
+        action_class: read_only
+        # GET-only: spreadsheet metadata, values.get, and values.batchGet.
+        http:
+          base_url: "https://sheets.googleapis.com"
+          methods: [GET]
+          path_regex: '^/v4/spreadsheets/[A-Za-z0-9_-]+(/values/.+|/values:batchGet.*)?$'
+          auth: "oauth2:GOOGLE_OAUTH_REFRESH_TOKEN:GOOGLE_OAUTH_CLIENT_ID:GOOGLE_OAUTH_CLIENT_SECRET"
+      google_sheets.write:
+        label: "Overwrite a range's values"
+        action_class: external_reversible
+        # Ambiguous: PUT to values.update on ONE range only -- deliberately NOT batchUpdate, which could restructure columns/rows/tabs.
+        input_examples:
+          - "PUT /v4/spreadsheets/sheet123/values/Sheet1!A1:B10 — Overwrite a specific grid region with cell values"
+          - "PUT /v4/spreadsheets/sheet456/values/Sheet1!C5 — Set a single cell's value in a spreadsheet"
+        # PUT to values.update on exactly one range -- NOT values:batchUpdate,
+        # which can restructure the sheet (add/delete rows, columns, tabs).
+        http:
+          base_url: "https://sheets.googleapis.com"
+          methods: [PUT]
+          path_regex: '^/v4/spreadsheets/[A-Za-z0-9_-]+/values/[^/]+$'
+          auth: "oauth2:GOOGLE_OAUTH_REFRESH_TOKEN:GOOGLE_OAUTH_CLIENT_ID:GOOGLE_OAUTH_CLIENT_SECRET"
+      google_sheets.append:
+        label: "Append rows to a range"
+        action_class: external_reversible
+        http:
+          base_url: "https://sheets.googleapis.com"
+          methods: [POST]
+          path_regex: '^/v4/spreadsheets/[A-Za-z0-9_-]+/values/[^/]+:append$'
+          auth: "oauth2:GOOGLE_OAUTH_REFRESH_TOKEN:GOOGLE_OAUTH_CLIENT_ID:GOOGLE_OAUTH_CLIENT_SECRET"
+
+  google_docs:
+    label: "Google Docs"
+    group: google
+    env: [GOOGLE_OAUTH_REFRESH_TOKEN, GOOGLE_OAUTH_CLIENT_ID, GOOGLE_OAUTH_CLIENT_SECRET]
+    capabilities:
+      google_docs.read:
+        label: "Read a document's content and structure"
+        action_class: read_only
+        http:
+          base_url: "https://docs.googleapis.com"
+          methods: [GET]
+          path_regex: '^/v1/documents/[A-Za-z0-9_-]+$'
+          auth: "oauth2:GOOGLE_OAUTH_REFRESH_TOKEN:GOOGLE_OAUTH_CLIENT_ID:GOOGLE_OAUTH_CLIENT_SECRET"
+      google_docs.write:
+        label: "Apply edits to a document"
+        action_class: external_reversible
+        http:
+          base_url: "https://docs.googleapis.com"
+          methods: [POST]
+          path_regex: '^/v1/documents/[A-Za-z0-9_-]+:batchUpdate$'
+          auth: "oauth2:GOOGLE_OAUTH_REFRESH_TOKEN:GOOGLE_OAUTH_CLIENT_ID:GOOGLE_OAUTH_CLIENT_SECRET"
+
+  google_drive_files:
+    label: "Google Drive (files)"
+    group: google
+    env: [GOOGLE_OAUTH_REFRESH_TOKEN, GOOGLE_OAUTH_CLIENT_ID, GOOGLE_OAUTH_CLIENT_SECRET]
+    capabilities:
+      google_drive_files.find:
+        label: "Search or list files"
+        action_class: read_only
+        http:
+          base_url: "https://www.googleapis.com"
+          methods: [GET]
+          path_regex: '^/drive/v3/files$'
+          auth: "oauth2:GOOGLE_OAUTH_REFRESH_TOKEN:GOOGLE_OAUTH_CLIENT_ID:GOOGLE_OAUTH_CLIENT_SECRET"
+      google_drive_files.get:
+        label: "Read one file's metadata or content"
+        action_class: read_only
+        http:
+          base_url: "https://www.googleapis.com"
+          methods: [GET]
+          path_regex: '^/drive/v3/files/[A-Za-z0-9_-]+$'
+          auth: "oauth2:GOOGLE_OAUTH_REFRESH_TOKEN:GOOGLE_OAUTH_CLIENT_ID:GOOGLE_OAUTH_CLIENT_SECRET"
+
+  # ------------------------------------------------------------- analytics --
+
+  vwo:
+    label: "VWO (experimentation)"
+    group: analytics
+    env:
+      - VWO_API_KEY
+      - VWO_ACCOUNT_ID
+    capabilities:
+      vwo.read:
+        label: "Read experiments and results"
+        action_class: read_only
+      vwo.experiment_edit:
+        label: "Start, stop, or change a live experiment"
+        action_class: external_reversible
+
+  kowboykit:
+    label: "KowboyKit (landers / offers / rotators)"
+    group: analytics
+    env:
+      - KOWBOYKIT_API_KEY
+      - KOWBOYKIT_API_BASE
+      - KOWBOYKIT_GROUP_ID
+    capabilities:
+      kowboykit.read:
+        label: "Read offers, landers, rotators, and reports"
+        action_class: read_only
+      kowboykit.lander_draft:
+        label: "Write an unpublished lander draft"
+        action_class: internal_reversible
+      kowboykit.offer_write:
+        label: "Change a live offer or rotator"
+        action_class: external_reversible
+
+  checkly:
+    label: "Checkly (uptime monitoring)"
+    group: monitoring
+    env:
+      - CHECKLY_API_KEY
+      - CHECKLY_ACCOUNT_ID
+    capabilities:
+      checkly.read:
+        label: "Read uptime checks and incidents"
+        action_class: read_only
+
+  # ------------------------------------------------------------------- ai --
+  # Model and media providers. Generation is sandboxed: output lands in the run
+  # workspace. These cost money per call, so budgets (not approval) bound them.
+
+  anthropic:
+    label: "Anthropic"
+    group: ai
+    env: [ANTHROPIC_API_KEY]
+    capabilities:
+      anthropic.generate:
+        label: "Generate text"
+        action_class: sandboxed_creation
+
+  openai:
+    label: "OpenAI"
+    group: ai
+    env: [OPENAI_API_KEY, OPENAI_ORG_ID]
+    capabilities:
+      openai.generate:
+        label: "Generate text"
+        action_class: sandboxed_creation
+
+  openrouter:
+    label: "OpenRouter"
+    group: ai
+    env: [OPENROUTER_API_KEY, OPENROUTER_API_BASE]
+    capabilities:
+      openrouter.generate:
+        label: "Generate text via any routed model"
+        action_class: sandboxed_creation
+
+  artificial_analysis:
+    label: "Artificial Analysis"
+    group: ai
+    env: [AA_API_KEY]
+    capabilities:
+      artificial_analysis.read:
+        label: "Read public model intelligence benchmarks"
+        action_class: read_only
+
+  # LOCAL proxy on 127.0.0.1:8443 — LiteLLM translating Anthropic-format
+  # /v1/messages requests to OpenRouter, giving agents OpenRouter's model
+  # catalog (Kimi, DeepSeek, Qwen, Gemini, Llama, GPT, Grok) through an
+  # Anthropic-compatible API under a $50/day HARD spend cap: the in-proxy
+  # BudgetGuard returns 429 budget_exceeded at the cap, and a launchd watchdog
+  # (spend-guard.sh, every 5 min) stops the proxy and writes a day tripwire
+  # that start-proxy.sh refuses to start past. Loopback-only by design; never
+  # rebind to 0.0.0.0. Clients authenticate with the proxy's OWN master key
+  # (x-api-key, .master_key); OPENROUTER_API_KEY is sourced from the vault by
+  # start-proxy.sh into the proxy host process only and never rides an agent
+  # request. Ops home: ~/OmniAgentOS/Ops/litellm-openrouter (README).
+  litellm_openrouter:
+    label: "LiteLLM -> OpenRouter (local proxy)"
+    group: ai
+    env: [OPENROUTER_API_KEY]
+    capabilities:
+      litellm_openrouter.generate:
+        label: "Chat/completion via the local Anthropic-format endpoint ($50/day cap)"
+        action_class: sandboxed_creation
+        # Local endpoint, no pinned auth scheme (same shape as globex):
+        # the client credential is the proxy's .master_key file, not a vault
+        # env var, so the broker never touches the OpenRouter key on this call.
+        http:
+          base_url: "https://127.0.0.1:8443"
+          methods: [POST]
+          path_prefixes: [/v1/messages]
+          path_regex: '^/v1/messages$'
+      litellm_openrouter.spend_read:
+        label: "Read today's proxy spend, cap, and tripwire state"
+        action_class: read_only
+        # No http spec (callable_now stays false by design): spend truth is the
+        # proxy's local ledger and tripwire files, read via spend-guard.sh —
+        # not an HTTP surface.
+
+  xai:
+    label: "xAI (Grok)"
+    group: ai
+    env: [XAI_API_KEY]
+    capabilities:
+      xai.generate:
+        label: "Generate text"
+        action_class: sandboxed_creation
+
+  google_ai:
+    label: "Google AI"
+    group: ai
+    # GOOGLE_API_KEY is the name the OpenHands/LiteLLM adapter looks for
+    # (harnesses/openhands/adapter.py); GEMINI_API_KEY and GOOGLE_AI_API_KEY are
+    # the vault's actual current credential names for the same Gemini access.
+    # Kept together since they authenticate the same provider.
+    env: [GOOGLE_API_KEY, GEMINI_API_KEY, GOOGLE_AI_API_KEY]
+    capabilities:
+      google_ai.generate:
+        label: "Generate text"
+        action_class: sandboxed_creation
+
+  moonshot:
+    label: "Moonshot AI (Kimi)"
+    group: ai
+    env: [MOONSHOT_API_KEY]
+    capabilities:
+      moonshot.generate:
+        label: "Generate text"
+        action_class: sandboxed_creation
+
+  fireworks:
+    label: "Fireworks AI"
+    group: ai
+    env: [FIREWORKS_API_KEY]
+    capabilities:
+      fireworks.generate:
+        label: "Generate text"
+        action_class: sandboxed_creation
+
+  mistral:
+    label: "Mistral"
+    group: ai
+    env: [MISTRAL_API_KEY]
+    capabilities:
+      mistral.generate:
+        label: "Generate text"
+        action_class: sandboxed_creation
+
+  together:
+    label: "Together AI"
+    group: ai
+    env: [TOGETHER_API_KEY]
+    capabilities:
+      together.generate:
+        label: "Generate text or run a hosted model"
+        action_class: sandboxed_creation
+
+  vllm:
+    label: "vLLM (self-hosted model serving)"
+    group: ai
+    env: [VLLM_API_KEY]
+    capabilities:
+      vllm.generate:
+        label: "Generate text via a self-hosted model"
+        action_class: sandboxed_creation
+
+  huggingface:
+    label: "Hugging Face"
+    group: ai
+    env: [HF_TOKEN]
+    capabilities:
+      huggingface.generate:
+        label: "Run inference against a hosted model"
+        action_class: sandboxed_creation
+
+  elevenlabs:
+    label: "ElevenLabs (voice)"
+    group: ai
+    env: [ELEVENLABS_API_KEY, ELEVENLABS_API_KEY_WEBINAR, ELEVENLABS_VOICE_ID_OWNER, ELEVENLABS_VOICE_ID_OWNERA_PRO]
+    capabilities:
+      elevenlabs.generate:
+        label: "Generate speech audio"
+        action_class: sandboxed_creation
+      elevenlabs.tts:
+        label: "Text-to-speech (ElevenLabs)"
+        action_class: sandboxed_creation
+        http:
+          base_url: "https://api.elevenlabs.io"
+          methods: [GET, POST]
+          path_prefixes:
+            - /v1/voices
+            - /v1/text-to-speech
+          # Pin GET voices list + POST synthesize to one voice id.
+          path_regex: '^/v1/(voices/?|text-to-speech/[A-Za-z0-9_-]+/?)$'
+          auth: "header:xi-api-key:ELEVENLABS_API_KEY"
+
+  # xAI voice: no verified public REST TTS surface at build time — probe-driven via steward.yaml xai_candidates
+  xai_voice:
+    label: "xAI voice (probe-driven TTS)"
+    group: ai
+    env: [XAI_API_KEY]
+    capabilities:
+      xai_voice.tts:
+        label: "Text-to-speech (xAI, config-probed)"
+        action_class: sandboxed_creation
+
+  replicate:
+    label: "Replicate"
+    group: ai
+    env: [REPLICATE_API_TOKEN]
+    capabilities:
+      replicate.generate:
+        label: "Run an image/video model"
+        action_class: sandboxed_creation
+        http:
+          base_url: "https://api.replicate.com/v1"
+          methods: [GET, POST]
+          # Exactly two routes, pinned by regex rather than prefix: create ONE
+          # prediction for a named model, and read ONE prediction back by id.
+          # A prefix would admit POST /models/<x>/<y>/anything; the loop seam
+          # additionally restricts <owner>/<model> to a reviewed allowlist
+          # (loop_effects.REPLICATE_MODELS), because a model id is code we pay
+          # to run.  No DELETE and no /trainings: cancel and train are not
+          # sandboxed creation.
+          path_regex: '^/(models/[A-Za-z0-9][A-Za-z0-9._-]*/[A-Za-z0-9][A-Za-z0-9._-]*/predictions|predictions/[A-Za-z0-9_-]+)/?$'
+          auth: "bearer:REPLICATE_API_TOKEN"
+          headers:
+            # Block for the prediction instead of polling from tick zero. Still
+            # bounded upstream (Replicate caps the wait) and still polled by the
+            # caller when it comes back unfinished.
+            Prefer: "wait"
+
+  higgsfield:
+    label: "Higgsfield (video)"
+    group: ai
+    env: [HIGGSFIELD_API_KEY, HIGGSFIELD_API_SECRET]
+    capabilities:
+      higgsfield.generate:
+        label: "Generate video"
+        action_class: sandboxed_creation
+
+  fastlane:
+    label: "Fastlane (creative generation)"
+    group: ai
+    env: [FASTLANE_API_KEY, FASTLANE_API_BASE_URL]
+    capabilities:
+      fastlane.generate:
+        label: "Generate ad creative"
+        action_class: sandboxed_creation
+
+  synclabs:
+    label: "Sync Labs (lip-sync video)"
+    group: ai
+    env: [SYNC_API_KEY]
+    capabilities:
+      synclabs.generate:
+        label: "Generate lip-synced video"
+        action_class: sandboxed_creation
+
+  piapi:
+    label: "PiAPI (media generation)"
+    group: ai
+    env: [PIAPI_KEY, PIAPI_BASE]
+    capabilities:
+      piapi.generate:
+        label: "Generate an image or video"
+        action_class: sandboxed_creation
+
+  jamendo:
+    label: "Jamendo (royalty-free music)"
+    group: ai
+    env: [JAMENDO_CLIENT_ID, JAMENDO_CLIENT_SECRET]
+    capabilities:
+      jamendo.read:
+        label: "Search and stream royalty-free music tracks"
+        action_class: read_only
+
+  pixabay:
+    label: "Pixabay (stock media)"
+    group: ai
+    env: [PIXABAY_API_KEY]
+    capabilities:
+      pixabay.read:
+        label: "Search and read stock images, video, and music"
+        action_class: read_only
+
+  pexels:
+    label: "Pexels (stock media)"
+    group: ai
+    env: [PEXELS_API_KEY]
+    capabilities:
+      pexels.read:
+        label: "Search and read stock photos and video"
+        action_class: read_only
+
+  # ---------------------------------------------------------------- infra --
+  # Everything here can destroy or expose the business. Reads are grantable;
+  # writes are consequential without exception.
+
+  postgres:
+    label: "Postgres (primary database)"
+    group: infra
+    env: [DATABASE_URL]
+    capabilities:
+      postgres.read:
+        label: "Run read-only SELECT queries"
+        action_class: read_only
+      postgres.write:
+        label: "Run INSERT/UPDATE/DELETE/DDL"
+        action_class: consequential
+
+  redis:
+    label: "Redis"
+    group: infra
+    env: [REDIS_URL]
+    capabilities:
+      redis.read:
+        label: "Read keys"
+        action_class: read_only
+
+  aws:
+    label: "AWS (S3 / backups)"
+    group: infra
+    env: [AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_REGION, S3_BUCKET]
+    capabilities:
+      aws.s3_read:
+        label: "Read objects from S3"
+        action_class: read_only
+      aws.s3_write:
+        label: "Write objects to S3"
+        action_class: internal_reversible
+      aws.s3_delete:
+        label: "Delete objects from S3 (backups live here)"
+        action_class: consequential
+
+  cloudflare:
+    label: "Cloudflare (DNS / CDN)"
+    group: infra
+    env: [CLOUDFLARE_API_TOKEN, CLOUDFLARE_ZONE_ID, CLOUDFLARE_ACCOUNT_ID]
+    capabilities:
+      cloudflare.read:
+        label: "Read DNS records and zone settings"
+        action_class: read_only
+        # GET-only zone/DNS inventory. Purge, rules, and settings writes stay
+        # spec-less: this allowlist -- NOT the token -- is what makes it a read.
+        http:
+          base_url: "https://api.cloudflare.com"
+          methods: [GET]
+          path_prefixes:
+            - /client/v4/zones
+          auth: "bearer:CLOUDFLARE_API_TOKEN"
+      cloudflare.dns_write:
+        label: "Change DNS records (can take every site offline)"
+        action_class: consequential
+        # Pinned to the dns_records subresource only -- a valid human grant for a
+        # DNS change must not be spendable on zone settings, rules, or purges.
+        # consequential: policy.yaml pins always_human and broker.HARD_HUMAN_CLASSES
+        # hard-blocks unattended calls in code; this spec only makes the APPROVED
+        # path executable instead of dying at no_call_path.
+        http:
+          base_url: "https://api.cloudflare.com"
+          methods: [POST, PUT, PATCH, DELETE]
+          path_prefixes:
+            - /client/v4/zones/
+          path_regex: '^/client/v4/zones/[0-9a-f]+/dns_records(/[0-9a-f]+)?/?$'
+          auth: "bearer:CLOUDFLARE_API_TOKEN"
+
+  namecom:
+    label: "Name.com (domain registrar)"
+    group: infra
+    env: [NAMECOM_API_USERNAME, NAMECOM_API_TOKEN]
+    capabilities:
+      namecom.read:
+        label: "Read owned domains and their DNS records"
+        action_class: read_only
+        # GET-only. Availability/search is a read-shaped POST on this API and is
+        # deliberately NOT folded in here (Customer.io precedent): read caps stay
+        # structurally GET. The full-match regex excludes colon-verb subresources
+        # -- GET /v4/domains/{domain}:getAuthCode returns the registrar transfer
+        # authorization code, which is a secret, not an inventory read.
+        http:
+          base_url: "https://api.name.com"
+          methods: [GET]
+          path_prefixes:
+            - /v4/domains
+            - /v4/hello
+          path_regex: '^/v4/(hello|domains(/[^/:]+(/records(/[0-9]+)?)?)?)/?$'
+          auth: "basic:NAMECOM_API_USERNAME:NAMECOM_API_TOKEN"
+      namecom.purchase:
+        label: "Purchase a domain (spends real money)"
+        action_class: consequential
+        # Exactly the create-domain route, full-match. Renewals, transfers, and
+        # everything else stay spec-less until individually reviewed.
+        http:
+          base_url: "https://api.name.com"
+          methods: [POST]
+          path_prefixes:
+            - /v4/domains
+          path_regex: '^/v4/domains$'
+          auth: "basic:NAMECOM_API_USERNAME:NAMECOM_API_TOKEN"
+      namecom.dns_write:
+        label: "Change DNS records on an owned domain"
+        # Same tier as cloudflare.dns_write for the same reason: a records change
+        # can take a live site offline, so it rides the always-human rail.
+        action_class: consequential
+        http:
+          base_url: "https://api.name.com"
+          methods: [POST, PUT, DELETE]
+          path_prefixes:
+            - /v4/domains/
+          path_regex: '^/v4/domains/[^/]+/records(/[0-9]+)?/?$'
+          auth: "basic:NAMECOM_API_USERNAME:NAMECOM_API_TOKEN"
+
+  vultr:
+    label: "Vultr (VPS compute)"
+    group: infra
+    env: [VULTR_API_KEY]
+    capabilities:
+      vultr.read:
+        label: "Read instances, plans, regions, and account balance"
+        action_class: read_only
+        # Full-match regex pins list + instance detail only. The bare prefix
+        # would admit GET /v2/instances/{id}/user-data, whose base64 cloud-init
+        # payload routinely embeds bootstrap credentials -- that is a secret
+        # read, not an inventory read, and it stays spec-less.
+        http:
+          base_url: "https://api.vultr.com"
+          methods: [GET]
+          path_prefixes:
+            - /v2/instances
+            - /v2/plans
+            - /v2/regions
+            - /v2/os
+            - /v2/account
+          path_regex: '^/v2/(plans|regions|os|account|instances(/[0-9a-f-]+)?)/?$'
+          auth: "bearer:VULTR_API_KEY"
+      vultr.instance_create:
+        label: "Create a VPS instance (spends money by the hour)"
+        action_class: consequential
+        http:
+          base_url: "https://api.vultr.com"
+          methods: [POST]
+          path_prefixes:
+            - /v2/instances
+          path_regex: '^/v2/instances$'
+          auth: "bearer:VULTR_API_KEY"
+      vultr.instance_destroy:
+        label: "Destroy a VPS instance (data is gone)"
+        action_class: consequential
+        http:
+          base_url: "https://api.vultr.com"
+          methods: [DELETE]
+          path_prefixes:
+            - /v2/instances/
+          path_regex: '^/v2/instances/[0-9a-f-]+$'
+          auth: "bearer:VULTR_API_KEY"
+
+  ovh:
+    label: "OVHcloud (Public Cloud compute)"
+    group: infra
+    # OVH does not use a bearer token; every request is SIGNED. The broker's
+    # `ovh:` auth scheme reads the app key / app secret / consumer key and signs
+    # method+url+body+timestamp per call, so only the app+consumer keys and a SHA1
+    # digest go out -- the application secret never leaves the broker.
+    #
+    # `env` lists ONLY the three signing secrets. The Public-Cloud project id is
+    # deliberately NOT here: `infra` is not in broker.INJECTABLE_GROUPS, so infra
+    # env vars are never handed to an agent subprocess -- and the project id is a
+    # URL-PATH component the CALLER must supply, not a signing secret. Declaring it
+    # would be misleading (the agent still could not read it) and it is not a
+    # secret anyway (a 32-char project identifier). The skill obtains it as an
+    # operator-provided task parameter and passes it in the `path`.
+    env: [OVH_APPLICATION_KEY, OVH_APPLICATION_SECRET, OVH_CONSUMER_KEY]
+    capabilities:
+      ovh.read:
+        label: "List Public Cloud instances, flavors, images, and regions"
+        action_class: read_only
+        # GET-only project inventory. The full-match regex pins the four list
+        # routes plus a single {id} detail segment and nothing deeper: OVH exposes
+        # secret-bearing subresources under an instance (e.g. .../instance/{id}/
+        # vnc, /rescueMode, credential-issuing calls) -- the same "secret read, not
+        # an inventory read" risk vultr.read fences off from user-data. Those stay
+        # spec-less: an extra path segment fails the fullmatch below.
+        http:
+          # EU/global control-plane endpoint. OVH also serves ca.api.ovh.com (CA)
+          # and us.ovhcloud.com (US); eu.api.ovh.com is the EU/global v1 API used
+          # by OVH_APPLICATION_NAME credentials minted on the EU endpoint.
+          base_url: "https://eu.api.ovh.com"
+          methods: [GET]
+          path_prefixes:
+            - /1.0/cloud/project/
+          path_regex: '^/1\.0/cloud/project/[0-9a-fA-F]+/(instance|flavor|image|region)(/[0-9a-zA-Z-]+)?/?$'
+          auth: "ovh:OVH_APPLICATION_KEY:OVH_APPLICATION_SECRET:OVH_CONSUMER_KEY"
+      ovh.instance_create:
+        label: "Create a Public Cloud instance (spends money by the hour)"
+        # Highest defensible class: creating an instance provisions billable
+        # compute, so it is consequential and hard-stops in auto mode (broker
+        # money/danger hard-block + a store-validated human grant), exactly like
+        # vultr.instance_create.
+        action_class: consequential
+        http:
+          base_url: "https://eu.api.ovh.com"
+          methods: [POST]
+          path_prefixes:
+            - /1.0/cloud/project/
+          path_regex: '^/1\.0/cloud/project/[0-9a-fA-F]+/instance$'
+          auth: "ovh:OVH_APPLICATION_KEY:OVH_APPLICATION_SECRET:OVH_CONSUMER_KEY"
+      ovh.instance_delete:
+        label: "Delete a Public Cloud instance (data is gone)"
+        action_class: consequential
+        http:
+          base_url: "https://eu.api.ovh.com"
+          methods: [DELETE]
+          path_prefixes:
+            - /1.0/cloud/project/
+          path_regex: '^/1\.0/cloud/project/[0-9a-fA-F]+/instance/[0-9a-zA-Z-]+$'
+          auth: "ovh:OVH_APPLICATION_KEY:OVH_APPLICATION_SECRET:OVH_CONSUMER_KEY"
+
+  bunny:
+    label: "Bunny CDN"
+    group: infra
+    env: [BUNNY_API_KEY, BUNNY_STORAGE_KEY, BUNNY_STORAGE_ZONE]
+    capabilities:
+      bunny.read:
+        label: "List CDN storage"
+        action_class: read_only
+        # GET-only control-plane inventory; upload and purge routes stay spec-less.
+        http:
+          base_url: "https://api.bunny.net"
+          methods: [GET]
+          path_prefixes:
+            - /pullzone
+            - /storagezone
+          auth: "header:AccessKey:BUNNY_API_KEY"
+      bunny.write:
+        label: "Upload CDN assets"
+        action_class: internal_reversible
+      bunny.purge:
+        label: "Purge the CDN cache"
+        action_class: external_reversible
+
+  runpod:
+    label: "RunPod (GPU compute)"
+    group: infra
+    env: [RUNPOD_API_KEY]
+    capabilities:
+      runpod.read:
+        label: "Read pod status, templates, and endpoints"
+        action_class: read_only
+      runpod.pod_create:
+        label: "Create a GPU pod (spends money by the hour)"
+        action_class: consequential
+      runpod.pod_delete:
+        label: "Delete a GPU pod"
+        action_class: consequential
+
+  # Dolphin{anty} drives real, logged-in browser profiles. Kept in `infra`
+  # (not `ai`) on purpose: infra is not in broker.INJECTABLE_GROUPS, so these
+  # credentials are never handed to an agent subprocess even though the group's
+  # danger flag is a defensible-but-not-catastrophic true (a launched profile can
+  # act as the logged-in account it belongs to, but does not itself move money or
+  # destroy infrastructure the way the rest of this group can).
+  dolphin_anty:
+    label: "Dolphin{anty} (browser profiles)"
+    group: infra
+    env: [DOLPHIN_TOKEN, DOLPHIN_CLOUD_BASE, DOLPHIN_LOCAL_BASE]
+    capabilities:
+      dolphin_anty.read:
+        label: "List and read browser profiles"
+        action_class: read_only
+      dolphin_anty.profile_control:
+        label: "Launch, stop, or modify a browser profile"
+        action_class: external_reversible
+
+  roblox:
+    label: "Roblox Open Cloud"
+    group: infra
+    env: [ROBLOX_API_KEY, ROBLOX_PLACE_ID, ROBLOX_UNIVERSE_ID, ROBLOX_USER_ID]
+    capabilities:
+      roblox.read:
+        label: "Read universe, place, and datastore metadata"
+        action_class: read_only
+      roblox.publish:
+        label: "Publish a place update to a live game"
+        action_class: external_reversible
+
+  # TN.6 ESP broadcast surface (generic). Track-API env names differ from the
+  # App API used by customerio_acmeuni.trigger_broadcast; left without http so
+  # callable_now is false until a reviewed Track/App path is pinned. Prefer
+  # customerio_acmeuni.trigger_broadcast for grant-backed sends.
+  customerio:
+    label: "Customer.io"
+    group: comms
+    env: [CUSTOMERIO_API_KEY, CUSTOMERIO_SITE_ID]
+    capabilities:
+      customerio.trigger_broadcast:
+        label: "Trigger a Customer.io broadcast / campaign send"
+        action_class: consequential
+
+  # ---------------------------------------------------------------- jira --
+  # JG-1 read-only client. Writes (transition/create/comment) land in JG-5
+  # behind OMNIAGENTOS_JIRA_WRITES=0. Live site: example-team.atlassian.net
+  # (G-A3). Project keys: ACM·CA·INI·HOO·OAOS (G-A2).
+  jira:
+    label: "Jira Cloud (example-team)"
+    group: crm
+    env:
+      - JIRA_EMAIL
+      - JIRA_API_TOKEN
+      - JIRA_BASE_URL
+    capabilities:
+      jira.read:
+        label: "Read projects, issues, statuses, users, and JQL search"
+        action_class: read_only
+        # GET-only: methods: [GET] refuses every POST (create, transition, comment,
+        # and even read-shaped search POST). Search uses GET /rest/api/3/search/jql
+        # (spec §5.1). POST search/write surface is a post-P3-BROKER (JG-5) hand-off.
+        http:
+          base_url: "https://example-team.atlassian.net"
+          methods: [GET]
+          path_prefixes:
+            - /rest/api/3/myself
+            - /rest/api/3/project
+            - /rest/api/3/issue
+            - /rest/api/3/search/jql
+            - /rest/api/3/user
+          path_regex: '^/rest/api/3/(myself|project(/.*)?|issue(/[^/]+)?(/transitions)?|issue/bulkfetch|search/jql|user(/.*)?)$'
+          auth: "basic:JIRA_EMAIL:JIRA_API_TOKEN"
+
+  # ---------------------------------------------------------------- web --
+  # U-N1: Web read connector — fetch and search with SSRF guard and bounds.
+  #
+  # COST CLASS DECISION (K2-14 BINDING):
+  # - web.fetch: COMPLETELY FREE (paid=false). Cost model: zero per-query overhead,
+  #   only bandwidth. Suitable for research workers on auto-grant floor.
+  # - web.search: METERED (paid=true, floor-excluded). Requires external search API
+  #   (Tavily, Brave-Search, Google Custom Search) with per-query charges ($0.01–0.05).
+  #   Requires operator decision on budget envelope via D-08.
+  #
+  # SSRF GUARD: Refuses loopback/link-local/private/reserved hosts (169.254.169.254,
+  # 127.0.0.0/8, 10.0.0.0/8, 192.168.0.0/16, 172.16.0.0/12, ::1, fe80::/10, fc00::/7).
+  # Refuses non-http(s) schemes and URL userinfo. EVERY hop — the first and every
+  # redirect target — is checked BEFORE the request is issued, and the connection is
+  # then PINNED to the address that check validated (Host header + TLS sni_hostname
+  # keep the real name), so no second DNS lookup can reach an unchecked address.
+  #
+  # AUTHORIZATION: both capabilities are store-backed only. web_read.fetch/search
+  # refuse a caller-supplied `granted` list (caller_supplied_grant) and require
+  # grant_store + grant_holder, so neither can vouch for itself.
+  #
+  # BOUNDS: 1 MB response cap (truncated, not refused), 10s timeout, 5 hops redirects.
+  # All responses routed through sanitize_for_persistence before storage.
+  #
+  # IMPLEMENTATION: omniagentos/connectors/web_read.py (brokered fetch + Tavily search).
+  # RUNTIME CALLER: omniagentos/scheduler/loop_effects.py (web.fetch parent-side seam).
+  # TEST: tests/connectors/test_web_read.py (fixture + all counterfeits).
+  web:
+    label: "Web (bounded fetch and search)"
+    group: ai
+    env: [TAVILY_API_KEY]
+    capabilities:
+      web.fetch:
+        label: "Fetch web content with SSRF guard and bounds"
+        action_class: read_only
+        # K2-14: Completely free; no search vendor; included on auto-grant floor.
+        # Cost class: paid=false. Response truncated at 1 MB, timeout 10s, 5 redirects.
+        # Free remote I/O still needs a durable intent + terminal audit pair.
+        http:
+          # Deliberately unreachable: web.fetch's target is chosen per call and is
+          # governed by the SSRF guard, not by base_url. This host exists so the
+          # capability is `callable_now` (a reviewed call path) and so any code that
+          # tried to route web.fetch through broker.call's transport fails loudly
+          # instead of silently reaching somewhere real.
+          base_url: "https://web-fetch.invalid"
+          # 2026-08-13 census (sha256:bda00c79): no production caller ever issues
+          # POST through this seam. omniagentos/scheduler/loop_effects.py
+          # (_run_web_fetch) is the sole runtime caller and only ever threads a
+          # `url` arg -- its ArgSpec has no `method` field, so a loop worker
+          # cannot even request POST. connectors/web_read.fetch()'s `method`
+          # kwarg defaults to GET and is never passed "POST" by anything in
+          # omniagentos/ or tests/. Fetch means read; GET-only matches
+          # action_class: read_only above and the auto-write path_regex guard.
+          methods: [GET]
+          path_prefixes: [/]
+      web.search:
+        label: "Search the web through Tavily (metered provider)"
+        action_class: read_only
+        # K2-14: Tavily Search charges API credits per query.
+        # Cost class: paid=true, floor-excluded. Needs operator budget decision via D-08.
+        http:
+          base_url: "https://api.tavily.com"
+          # 2026-08-13 census (sha256:bda00c79): connectors/web_read.py::search()
+          # is the sole caller-shape for this capability -- its broker_call always
+          # uses method="POST", path="/search" (both literal, never dynamic), so
+          # pinning to that exact path only matches what the code already does.
+          # It currently has NO runtime seam wired into
+          # loop_effects.py::CAPABILITIES (unlike web.fetch's _run_web_fetch);
+          # only tests/connectors/test_web_read.py imports and exercises
+          # search() directly. Genuinely POST-shaped (Tavily's search API), so
+          # branch 2b: keep POST, pin path_regex rather than dropping the method.
+          methods: [POST]
+          path_prefixes: [/search]
+          path_regex: "^/search$"
+          auth: "bearer:TAVILY_API_KEY"

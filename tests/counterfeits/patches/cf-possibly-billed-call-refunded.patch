@@ -1,0 +1,28 @@
+diff --git a/omniagentos/scheduler/loop_effects.py b/omniagentos/scheduler/loop_effects.py
+index 01bcfd0c..8cc6eb78 100644
+--- a/omniagentos/scheduler/loop_effects.py
++++ b/omniagentos/scheduler/loop_effects.py
+@@ -1127,22 +1127,7 @@ def execute(payload: Mapping[str, Any], *, db_path: str, budget_ledger: LoopBudg
+         if not (budget_ledger and reservation):
+             return
+         try:
+-            if may_have_billed:
+-                budget_ledger.settle(
+-                    reservation.id,
+-                    actual_usd=None,
+-                    cost_quality="unknown",
+-                    usage_available=False,
+-                )
+-                logger.warning(
+-                    "loop budget: charging reservation %s at its %.4f USD maximum — "
+-                    "%s may have been billed by the provider",
+-                    reservation.id,
+-                    reservation.max_usd,
+-                    reason,
+-                )
+-            else:
+-                budget_ledger.release(reservation.id)
++            budget_ledger.release(reservation.id)
+         except Exception as ex:  # noqa: BLE001
+             logger.exception("could not dispose of budget reservation: %s", ex)
+ 

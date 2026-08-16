@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<!-- Product-scoped OmniAgentOS job: North Star tier-1 certification, daily.
+     The arming state (NSCERT_GAPS_LIVE) is exported inside ProgramArguments so
+     the rendered artifact SHOWS whether this job can write to the loop queue. -->
+<dict>
+    <key>Label</key><string>{{LABEL}}</string>
+    <key>ProgramArguments</key>
+    {{PROGRAM_ARGS}}
+    <key>WorkingDirectory</key><string>{{WORKING_DIR}}</string>
+    <key>StartCalendarInterval</key>
+    <dict><key>Hour</key><integer>{{HOUR}}</integer><key>Minute</key><integer>{{MINUTE}}</integer></dict>
+    <key>RunAtLoad</key><false/>
+    <key>StandardOutPath</key><string>{{WORKING_DIR}}/var/log/nscert-t1.log</string>
+    <key>StandardErrorPath</key><string>{{WORKING_DIR}}/var/log/nscert-t1.log</string>
+</dict>
+</plist>

@@ -1,0 +1,213 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "omniagentos/workqueue/contract.schema.json",
+  "title": "Workqueue wire contract v1",
+  "description": "The HTTP contract between wq-server (:8487, bearer WQ_TOKEN, loopback bind — tailnet exposure via tailscale serve / ssh -R only) and HttpQueueClient. The store and the client implement the SAME method surface; this file freezes the JSON shapes. Changes go through a reviewed PR. Error envelope everywhere: {\"error\": {\"code\": str, \"message\": str, \"detail\": any}}.",
+  "$defs": {
+    "unit_submit": {
+      "type": "object",
+      "required": ["idempotency_key", "repo_url", "repo_slug", "base_sha", "branch", "owned_paths", "agent_profile", "acceptance_cmd", "risk_class"],
+      "properties": {
+        "idempotency_key": {"type": "string", "minLength": 8},
+        "repo_url": {"type": "string"},
+        "repo_slug": {"type": "string"},
+        "base_sha": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+        "base_ref": {"type": "string", "default": "main"},
+        "branch": {"type": "string"},
+        "owned_paths": {"type": "array", "items": {"type": "string"}, "minItems": 1},
+        "brief_inline": {"type": ["string", "null"]},
+        "brief_path": {"type": ["string", "null"]},
+        "submitted_by": {"type": "string", "default": "", "description": "person or agent id that offloaded this unit ('owner'/'bob'/'alice'/...), defaulted from env WQ_USER by `wq enqueue --by`. Optional and never inferred: absent means unattributed, reported as '(unattributed)' in status.offloads."},
+        "agent_profile": {"type": "string"},
+        "timeout_s": {"type": "integer", "minimum": 60, "maximum": 21600, "default": 3600},
+        "labels": {"type": "array", "items": {"type": "string"}, "default": []},
+        "risk_class": {"enum": ["mechanical", "standard", "sensitive"]},
+        "acceptance_cmd": {"type": "string"},
+        "acceptance_gate": {"type": ["string", "null"]},
+        "priority": {"type": "integer", "minimum": 0, "maximum": 4, "default": 2},
+        "max_attempts": {"type": "integer", "minimum": 1, "maximum": 5, "default": 3}
+      }
+    },
+    "claim_request": {
+      "type": "object",
+      "required": ["machine_id", "worker_id", "labels"],
+      "properties": {
+        "machine_id": {"type": "string"},
+        "worker_id": {"type": "string"},
+        "labels": {"type": "array", "items": {"type": "string"}},
+        "load1": {"type": ["number", "null"]}
+      }
+    },
+    "claim_response": {
+      "type": "object",
+      "description": "null body (HTTP 204) when nothing is claimable",
+      "required": ["unit", "lease_generation", "lease_expires_at", "attempt"],
+      "properties": {
+        "unit": {"type": "object"},
+        "lease_generation": {"type": "integer"},
+        "lease_expires_at": {"type": "string"},
+        "attempt": {"type": "integer"}
+      }
+    },
+    "heartbeat_request": {
+      "type": "object",
+      "required": ["owner", "lease_generation"],
+      "properties": {
+        "owner": {"type": "string", "description": "'<machine_id>:<worker_id>'"},
+        "lease_generation": {"type": "integer"}
+      }
+    },
+    "result_request": {
+      "type": "object",
+      "required": ["owner", "lease_generation", "outcome"],
+      "properties": {
+        "owner": {"type": "string"},
+        "lease_generation": {"type": "integer"},
+        "outcome": {"enum": ["pass", "candidate-defect", "instrument-error", "environment", "contention-flake", "unchanged-retry", "storm-parked", "lease-lost", "abandoned", "timeout"]},
+        "exit_code": {"type": ["integer", "null"]},
+        "gate_exit_code": {"type": ["integer", "null"]},
+        "input_key": {"type": ["string", "null"]},
+        "retryable": {"type": ["integer", "null"], "enum": [0, 1, null]},
+        "remedy": {"type": ["string", "null"]},
+        "head_sha": {"type": ["string", "null"]},
+        "result_branch": {"type": ["string", "null"]},
+        "result_sha": {"type": ["string", "null"]},
+        "log_path": {"type": ["string", "null"]}
+      }
+    },
+    "machine_enroll": {
+      "type": "object",
+      "required": ["machine_id", "hostname", "os", "labels", "max_concurrent"],
+      "properties": {
+        "machine_id": {"type": "string"},
+        "hostname": {"type": "string"},
+        "os": {"enum": ["darwin", "linux"]},
+        "ssh_target": {"type": ["string", "null"]},
+        "labels": {"type": "array", "items": {"type": "string"}},
+        "max_concurrent": {"type": "integer", "minimum": 0, "maximum": 16},
+        "agent_version": {"type": ["string", "null"]},
+        "ncpu": {"type": ["integer", "null"]},
+        "perf_cores": {"type": ["integer", "null"]},
+        "mem_gb": {"type": ["number", "null"]},
+        "ceiling_fraction": {"type": "number", "minimum": 0.1, "maximum": 1.0, "default": 0.75},
+        "device_class": {"type": ["string", "null"], "description": "INFORMATIONAL/AUDIT ONLY, never a security control — free text such as 'personal-laptop' / 'fleet-worker' / 'prod-host'. No authz path reads it."}
+      },
+      "description": "POST /v1/machines body. There is deliberately NO `role` key: role is SERVER-DERIVED from configs/workqueue.yaml:worker_allowlist (on the list ⇒ 'worker', otherwise ⇒ 'dispatcher'), and a `role` sent in the body is stripped, so a machine can never elevate itself by asking. Enrolling while not allowlisted SUCCEEDS — as a dispatcher, which submits and observes but never claims."
+    },
+    "machine_beat": {
+      "type": "object",
+      "required": ["load1"],
+      "properties": {
+        "load1": {"type": ["number", "null"]},
+        "load5": {"type": ["number", "null"]},
+        "mem_free_gb": {"type": ["number", "null"]},
+        "worker_id": {"type": ["string", "null"]},
+        "pid": {"type": ["integer", "null"]},
+        "current_unit_id": {"type": ["string", "null"]}
+      }
+    },
+    "refusal_row": {
+      "type": "object",
+      "required": ["input_key", "gate", "count", "refusal_class", "retryable", "remedy"],
+      "properties": {
+        "input_key": {"type": "string"},
+        "gate": {"type": "string"},
+        "count": {"type": "integer"},
+        "first_seen_at": {"type": "string"},
+        "last_seen_at": {"type": "string"},
+        "refusal_class": {"type": "string"},
+        "retryable": {"type": "integer", "enum": [0, 1]},
+        "remedy": {"type": "string"},
+        "parked_at": {"type": ["string", "null"]},
+        "alerted_at": {"type": ["string", "null"]}
+      }
+    },
+    "refusal_record": {
+      "type": "object",
+      "description": "POST /v1/refusals body — mirrors store.refusal_record(input_key, gate, refusal_class, retryable, remedy, unit_id=None). The pool-wide ledger is the whole multi-machine point of §4: without this route a remote gate would keep its refusals on its own box and Mac B would re-run what Mac A refused five times.",
+      "required": ["input_key", "gate", "refusal_class", "retryable"],
+      "properties": {
+        "input_key": {"type": "string"},
+        "gate": {"type": "string"},
+        "refusal_class": {"type": "string"},
+        "retryable": {"type": "integer", "enum": [0, 1]},
+        "remedy": {"type": ["string", "null"], "default": ""},
+        "unit_id": {"type": ["string", "null"]}
+      }
+    },
+    "refusal_clear": {
+      "type": "object",
+      "description": "POST /v1/refusals/{input_key}/clear carries NO body — input_key is the path segment and gate the query parameter, mirroring store.refusal_clear(input_key, gate). A pass DELETES the row; the ledger has no cached-pass path, so this route can only ever make it refuse less, never admit on stale evidence.",
+      "properties": {"gate": {"type": "string", "description": "query parameter"}},
+      "additionalProperties": false
+    },
+    "status_response": {
+      "type": "object",
+      "required": ["machines", "depth", "oldest_unclaimed_s", "unclaimable", "refusals_24h", "capacity"],
+      "properties": {
+        "machines": {"type": "array", "items": {"type": "object"}},
+        "depth": {
+          "type": "object",
+          "properties": {
+            "queued": {"type": "integer"}, "claimed": {"type": "integer"},
+            "running": {"type": "integer"}, "review": {"type": "integer"},
+            "done": {"type": "integer"}, "parked": {"type": "integer"}
+          }
+        },
+        "oldest_unclaimed_s": {"type": ["number", "null"]},
+        "unclaimable": {"type": "array", "items": {"type": "object"}},
+        "refusals_24h": {"type": "object"},
+        "lease_reclaims_1h": {"type": "integer"},
+        "double_executions": {"type": "integer"},
+        "alerts_sent": {"type": "integer"},
+        "parks": {"type": "integer", "description": "TERMINAL parks only (state='parked' AND terminal_reason IS NOT NULL) — the number paired with alerts_sent for the §6 1:1 ratio. Soft parks (unchanged-retry) announce nothing by design and are counted in depth.parked instead."},
+        "offloads": {
+          "type": "array",
+          "description": "the operator 2026-08-11 (ROUTING-DECISIONS §2): who currently has work in the pool, and on whose box it is running. One entry per submitted_by; units with none group under '(unattributed)'.",
+          "items": {
+            "type": "object",
+            "required": ["person", "queued", "running", "in_review", "machines"],
+            "properties": {
+              "person": {"type": "string"},
+              "queued": {"type": "integer"},
+              "running": {"type": "integer", "description": "states 'claimed' + 'running'"},
+              "in_review": {"type": "integer"},
+              "machines": {"type": "array", "items": {"type": "string"}, "description": "machine_ids from the lease_owner prefix of that person's in-flight units"}
+            }
+          }
+        },
+        "capacity": {
+          "type": "object",
+          "description": "the operator 2026-08-11: the pool knows every box's cores and load",
+          "properties": {
+            "total_cores": {"type": "integer"},
+            "total_perf_cores": {"type": "integer"},
+            "total_slots": {"type": "integer"},
+            "free_slots": {"type": "integer"},
+            "in_flight": {"type": "integer"}
+          }
+        }
+      }
+    }
+  },
+  "routes": {
+    "GET /v1/health": {"auth": false, "response": {"ok": true}},
+    "GET /v1/status": {"auth": true, "response": {"$ref": "#/$defs/status_response"}},
+    "POST /v1/units": {"auth": true, "request": {"$ref": "#/$defs/unit_submit"}, "response": {"id": "wq_...", "deduped": false}},
+    "POST /v1/claim": {"auth": true, "request": {"$ref": "#/$defs/claim_request"}, "response": {"$ref": "#/$defs/claim_response"}, "errors": {"403": "role refusal (D8a), only when WQ_ROLE_ENFORCE=1 on the server: message is the named reason 'dispatcher-role-cannot-claim' (the pool has this machine enrolled as a dispatcher) or 'machine-not-allowlisted' (its machine_id is absent from configs/workqueue.yaml:worker_allowlist). With the flag unset the claim proceeds and the would-deny is logged instead."}},
+    "POST /v1/units/{id}/heartbeat": {"auth": true, "request": {"$ref": "#/$defs/heartbeat_request"}, "response": {"ok": true}, "errors": {"409": "lease-lost"}},
+    "POST /v1/units/{id}/result": {"auth": true, "request": {"$ref": "#/$defs/result_request"}, "response": {"ok": true}, "errors": {"409": "lease-lost"}},
+    "POST /v1/units/{id}/cancel": {"auth": true, "response": {"ok": true}},
+    "POST /v1/units/{id}/requeue": {"auth": true, "request": null, "response": {"ok": true}, "errors": {"400": "not a soft park — use unpark", "404": "unknown unit"}},
+    "POST /v1/units/{id}/unpark": {"auth": true, "request": {"type": "object", "required": ["because"], "properties": {"because": {"type": "string", "minLength": 4}}}, "response": {"ok": true}},
+    "GET /v1/units/{id}": {"auth": true, "response": {"unit": {}, "attempts": []}},
+    "POST /v1/machines": {"auth": true, "request": {"$ref": "#/$defs/machine_enroll"}, "response": {"ok": true}},
+    "GET /v1/machines": {"auth": true, "response": {"machines": []}},
+    "POST /v1/machines/{id}/beat": {"auth": true, "request": {"$ref": "#/$defs/machine_beat"}, "response": {"drain": 0}},
+    "POST /v1/machines/{id}/drain": {"auth": true, "request": {"type": "object", "properties": {"undo": {"type": "boolean", "default": false}}}, "response": {"ok": true}},
+    "GET /v1/refusals/{input_key}": {"auth": true, "query": {"gate": "string"}, "response": {"$ref": "#/$defs/refusal_row"}, "errors": {"404": "no refusal recorded"}},
+    "POST /v1/refusals": {"auth": true, "request": {"$ref": "#/$defs/refusal_record"}, "response": {"$ref": "#/$defs/refusal_row"}},
+    "POST /v1/refusals/{input_key}/clear": {"auth": true, "query": {"$ref": "#/$defs/refusal_clear"}, "response": {"ok": true}},
+    "GET /v1/alerts": {"auth": true, "response": {"alerts": []}}
+  }
+}

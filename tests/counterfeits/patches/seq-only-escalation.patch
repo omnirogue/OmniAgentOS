@@ -1,0 +1,17 @@
+--- a/omniagentos/swarm/scheduler.py
++++ b/omniagentos/swarm/scheduler.py
+@@ -3492,11 +3492,12 @@
+ 
+     @staticmethod
+     def _escalate(tier: str) -> str:
++        # COUNTERFEIT: advance nothing — retries look like escalation by seq alone.
+         try:
+             position = TIER_LADDER.index(tier)
+         except ValueError:
+-            return TIER_LADDER[-1]
+-        return TIER_LADDER[min(position + 1, len(TIER_LADDER) - 1)]
++            return tier if tier else TIER_LADDER[-1]
++        return tier  # deliberately do not advance the model/tier
+ 
+     def _timeout_seconds(self, tier: str) -> float:
+         return float(self._timeouts.get(tier, self._timeouts.get("standard", 30.0))) * 60.0
